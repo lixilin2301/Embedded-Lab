@@ -202,26 +202,37 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
             {
 		        /* Include your control flag or processing code here */
 
+
                 switch(i) {
                     case 0:
                         mat1 = malloc(info->numTransfers * info->numTransfers * sizeof(int));
                         prod = malloc(info->numTransfers * info->numTransfers * sizeof(int));
+                        if (mat1 == NULL || prod == NULL)
+                        {
+							LOG_printf(&trace, "Malloc error");
+						}
                         memcpy(mat1, msg->arg1, PACK_LEN);
                         break;
                     case 1:
                         memcpy(mat1 + PACK_LEN, msg->arg1, PACK_LEN);
                         break;
-                    case 3:
+                    case 2:
                         mat2 = malloc(info->numTransfers * info->numTransfers * sizeof(int));
+                        if (mat2 == NULL)
+                        {
+							LOG_printf(&trace, "Malloc error");
+						}
                         memcpy(mat2, msg->arg1, PACK_LEN);
                         break;
-                    case 4:
+                    case 3:
                         memcpy(mat2 + PACK_LEN, msg->arg1, PACK_LEN);
-
                         matMult(mat1, mat2, prod, info->numTransfers);
+                        //matMult(mat1, mat2, prod, 32);
 
                         break;
                 }
+                
+				msg->arg1[0] = (info->numTransfers);
                 msg->command = 0x02;
                 //SYS_sprintf(msg->arg1, "Iteration %d is complete.", i);
 

@@ -323,7 +323,7 @@ extern "C"
             if (msg->command == 0x01)
                 SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
             else if (msg->command == 0x02)
-                SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
+                SYSTEM_1Print("Message received: %d\n", (Uint32) msg->arg1[0]);
 
             /* If the message received is the final one, free it. */
             if ((size != 0) && (i == (5)))
@@ -341,10 +341,10 @@ extern "C"
                     {
                         for(j=0; j<size*size/2; j++)
                         {
-                            msg->arg1[j+(i-2)*size*size/2] =
+                            msg->arg1[j] =
                                 (i <= 3)
                                 ? mat1[j+(i-2)*size*size/2]
-                                : mat2[j+(i-2)*size*size/2];
+                                : mat2[j+(i-4)*size*size/2];
                         }
                     }
                     status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
