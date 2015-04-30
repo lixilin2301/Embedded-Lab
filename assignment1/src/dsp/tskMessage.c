@@ -217,7 +217,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
                     case 4:
                         memcpy(mat2 + PACK_LEN, msg->arg1, PACK_LEN);
 
-                        matMult(*mat1, *mat2, *prod, msg->numTransfers);
+                        matMult(mat1, mat2, prod, msg->numTransfers);
 
                         break;
                 }
