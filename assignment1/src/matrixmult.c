@@ -17,7 +17,7 @@ int main()
 	{
 		for (j = 0; j < SIZE; j++)
 		{
-			mat1[j][i] = i+j*2;
+			mat1[i][j] = i+j*2;
 		}
 	}
 	
