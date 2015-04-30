@@ -27,6 +27,11 @@ int main(int argc, char **argv)
 	mat2 = malloc(size * size * sizeof(int));
 	prod = malloc(size * size * sizeof(int));
 
+	if (mat1 == NULL || mat2 == NULL || prod == NULL)
+	{
+		printf("Memory allocation error\n");
+		return 3;
+	}
 	
 	for (i = 0;i < size; i++)
 	{
