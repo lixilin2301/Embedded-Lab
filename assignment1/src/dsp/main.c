@@ -1,5 +1,5 @@
 /*  ----------------------------------- DSP/BIOS Headers            */
-#include "helloDSPcfg.h"
+#include "matMultcfg.h"
 #include <sys.h>
 #include <sem.h>
 #include <msgq.h>

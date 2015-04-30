@@ -18,7 +18,7 @@
 #include <pool.h>
 
 /*  ----------------------------------- Application Header              */
-#include <helloDSP.h>
+#include "matMult.h"
 #include <system_os.h>
 
 #include <stdio.h>

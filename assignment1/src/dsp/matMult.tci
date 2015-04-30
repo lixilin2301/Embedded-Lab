@@ -1,10 +1,11 @@
 /** ============================================================================
- *  @file   helloDSP.tci
+ *  @file   matMult.tci
  *
  *  @path   
  *
  *  @desc   Platform-independent configuration include file.
- *          This file defines common configuration for the helloDSP sample.
+ *          This file defines common configuration for matMult, based on the 
+ *          the helloDSP sample.
  *
  *  @ver    1.10
  *  ============================================================================

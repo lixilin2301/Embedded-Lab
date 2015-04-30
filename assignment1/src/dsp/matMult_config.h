@@ -1,9 +1,9 @@
 /** ============================================================================
- *  @file   helloDSP_config.h
+ *  @file   matMult_config.h
  *
  *  @path   
  *
- *  @desc   Header file for MSGQ and POOL configurations for helloDSP.
+ *  @desc   Header file for MSGQ and POOL configurations for matMult.
  *
  *  @ver    1.10
  *  ============================================================================
@@ -23,7 +23,7 @@ extern "C" {
 #endif /* defined (__cplusplus) */
 
 /*  ----------------------------------- DSP/BIOS Headers            */
-#include "helloDSPcfg.h"
+#include "matMultcfg.h"
 #include <msgq.h>
 #include <pool.h>
 
