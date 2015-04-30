@@ -166,7 +166,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 
     /* Execute the loop for the configured number of transfers  */
     /* A value of 0 in numTransfers implies infinite iterations */
-    for (i = 0; (((info->numTransfers == 0) || (i < info->numTransfers)) && (status == SYS_OK)); i++)
+    for (i = 0; ( ( (i <  2)) && (status == SYS_OK)); i++)
     {
         /* Receive a message from the GPP */
         status = MSGQ_get(info->localMsgq,(MSGQ_Msg*) &msg, SYS_FOREVER);
