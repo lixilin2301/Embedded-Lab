@@ -326,7 +326,7 @@ extern "C"
                 SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
 
             /* If the message received is the final one, free it. */
-            if ((size != 0) && (i == (size + 1)))
+            if ((size != 0) && (i == (3)))
             {
                 MSGQ_free((MsgqMsg) msg);
             }
@@ -337,7 +337,13 @@ extern "C"
                 {
                     msgId = MSGQ_getMsgId(msg);
                     MSGQ_setMsgId(msg, msgId);
-		    for(j=0;j<size*size/2;j++) msg->arg1[j+(i-2)*size*size/2] = mat1[j+(i-2)*size*size/2];
+		            if (i > 1) 
+                    {
+                        for(j=0; j<size*size/2; j++)
+                        {
+                            msg->arg1[j+(i-2)*size*size/2] = mat1[j+(i-2)*size*size/2];
+                        }
+                    }
                     status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
 		    
                     if (DSP_FAILED(status))
