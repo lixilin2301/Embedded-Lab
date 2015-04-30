@@ -28,10 +28,13 @@
 #include "matMult_config.h"
 #include <tskMessage.h>
 
+#include "matMult.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#define PACK_LEN    (msg->numTransfers * msg->numTransfers * sizeof(int) / 2)
 
 /* FILEID is used by SET_FAILURE_REASON macro. */
 #define FILEID  FID_APP_C
@@ -139,6 +142,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 {
     Int status = SYS_OK;
     ControlMsg* msg;
+    int *mat1, *mat2, *prod;
     Uint32 i;
 
     /* Allocate and send the message */
@@ -166,7 +170,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 
     /* Execute the loop for the configured number of transfers  */
     /* A value of 0 in numTransfers implies infinite iterations */
-    for (i = 0; ( ( (i <  2)) && (status == SYS_OK)); i++)
+    for (i = 0; ( ((i < 4)) && (status == SYS_OK)); i++)
     {
         /* Receive a message from the GPP */
         status = MSGQ_get(info->localMsgq,(MSGQ_Msg*) &msg, SYS_FOREVER);
@@ -195,7 +199,28 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
             }
             else
             {
-		/* Include your control flag or processing code here */
+		        /* Include your control flag or processing code here */
+
+                switch(i) {
+                    case 0:
+                        mat1 = malloc(msg->numTransfers * msg->numTransfers * sizeof(int));
+                        prod = malloc(msg->numTransfers * msg->numTransfers * sizeof(int));
+                        memcpy(mat1, msg->arg1, PACK_LEN);
+                        break;
+                    case 1:
+                        memcpy(mat1 + PACK_LEN, msg->arg1, PACK_LEN);
+                        break;
+                    case 3:
+                        mat2 = malloc(msg->numTransfers * msg->numTransfers * sizeof(int));
+                        memcpy(mat2, msg->arg1, PACK_LEN);
+                        break;
+                    case 4:
+                        memcpy(mat2 + PACK_LEN, msg->arg1, PACK_LEN);
+
+                        matMult(*mat1, *mat2, *prod, msg->numTransfers);
+
+                        break;
+                }
                 msg->command = 0x02;
                 //SYS_sprintf(msg->arg1, "Iteration %d is complete.", i);
 

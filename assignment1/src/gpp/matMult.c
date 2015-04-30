@@ -300,7 +300,7 @@ extern "C"
 #endif
 
 	//        for (i = 1 ; ((size == 0) || (i <= (size + 1))) && (DSP_SUCCEEDED (status)); i++)
-        for (i = 1 ; (i <= 3) && (DSP_SUCCEEDED (status)); i++)
+        for (i = 1 ; (i <= 5) && (DSP_SUCCEEDED (status)); i++)
         {
             /* Receive the message. */
             status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
@@ -326,7 +326,7 @@ extern "C"
                 SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
 
             /* If the message received is the final one, free it. */
-            if ((size != 0) && (i == (3)))
+            if ((size != 0) && (i == (5)))
             {
                 MSGQ_free((MsgqMsg) msg);
             }
@@ -341,7 +341,10 @@ extern "C"
                     {
                         for(j=0; j<size*size/2; j++)
                         {
-                            msg->arg1[j+(i-2)*size*size/2] = mat1[j+(i-2)*size*size/2];
+                            msg->arg1[j+(i-2)*size*size/2] =
+                                (i <= 3)
+                                ? mat1[j+(i-2)*size*size/2]
+                                : mat2[j+(i-2)*size*size/2];
                         }
                     }
                     status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
