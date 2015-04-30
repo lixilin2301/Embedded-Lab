@@ -1,36 +1,51 @@
 #include<stdio.h>
 #include "Timer.h"
 
-#define SIZE 128
+void matMult(int *mat1, int *mat2, int *prod, unsigned int size);
 
-void matMult(int mat1[SIZE][SIZE], int mat2[SIZE][SIZE], int prod[SIZE][SIZE]);
-
-int main()
+int main(int argc, char **argv)
 {
+	unsigned int size;
     Timer totalTime;
+	int *mat1, *mat2, *prod;
+	int i, j;
     initTimer(&totalTime, "Total Time");
 
-	int mat1[SIZE][SIZE], mat2[SIZE][SIZE], prod[SIZE][SIZE];
-	int i, j;
-	
-	for (i = 0;i < SIZE; i++)
+
+	if (argc != 2)
 	{
-		for (j = 0; j < SIZE; j++)
+		printf("Usage: %s matrix_size\n", argv[0]);
+		return 1;
+	}
+
+	if (sscanf(argv[1], "%u", &size) != 1)
+	{
+		printf("Parameter is not a valid integer\n");
+		return 2;
+	}
+	mat1 = malloc(size * size * sizeof(int));
+	mat2 = malloc(size * size * sizeof(int));
+	prod = malloc(size * size * sizeof(int));
+
+	
+	for (i = 0;i < size; i++)
+	{
+		for (j = 0; j < size; j++)
 		{
-			mat1[i][j] = i+j*2;
+			mat1[size * i + j] = i+j*2;
 		}
 	}
 	
-	for(i = 0; i < SIZE; i++)
+	for(i = 0; i < size; i++)
 	{
-		for (j = 0; j < SIZE; j++)
+		for (j = 0; j < size; j++)
 		{
-			mat2[i][j] = i+j*3;
+			mat2[size * i + j] = i+j*3;
 		}
 	}
 
     startTimer(&totalTime);
-	matMult(mat1,mat2,prod);
+	matMult(mat1,mat2,prod,size);
     stopTimer(&totalTime);
     printTimer(&totalTime);	
 	/*
@@ -39,7 +54,7 @@ int main()
 		printf("\n");
 		for (j = 0; j < SIZE; j++)
 		{
-			printf("\t%d ", prod[i][j]);
+			printf("\t%d ", prod[size * i + j]);
 		}
 	}*/
 	
@@ -47,16 +62,16 @@ int main()
 	return 0;
 }
 
-void matMult(int mat1[SIZE][SIZE], int mat2[SIZE][SIZE], int prod[SIZE][SIZE])
+void matMult(int *mat1, int *mat2, int *prod, unsigned int size)
 {
 	int i, j, k;
-	for (i = 0;i < SIZE; i++)
+	for (i = 0;i < size; i++)
 	{
-		for (j = 0; j < SIZE; j++)
+		for (j = 0; j < size; j++)
 		{
-			prod[i][j]=0;
-			for(k=0;k<SIZE;k++)
-				prod[i][j] = prod[i][j]+mat1[i][k] * mat2[k][j];
+			prod[size * i + j]=0;
+			for(k=0;k<size;k++)
+				prod[size * i + j] = prod[size * i + j]+mat1[size * i + k] * mat2[size * k + j];
 		}
 	}
 }
