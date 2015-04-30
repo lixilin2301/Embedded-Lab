@@ -9,7 +9,7 @@
 
 /*  ----------------------------------- Application Header            */
 #include <system_os.h>
-#include <helloDSP.h>
+#include "matMult.h"
 
 
 #if defined (__cplusplus)
