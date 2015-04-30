@@ -34,7 +34,7 @@
 extern "C" {
 #endif
 
-#define PACK_LEN    (msg->numTransfers * msg->numTransfers * sizeof(int) / 2)
+#define PACK_LEN    (info->numTransfers * info->numTransfers * sizeof(int) / 2)
 
 /* FILEID is used by SET_FAILURE_REASON macro. */
 #define FILEID  FID_APP_C
@@ -203,21 +203,21 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 
                 switch(i) {
                     case 0:
-                        mat1 = malloc(msg->numTransfers * msg->numTransfers * sizeof(int));
-                        prod = malloc(msg->numTransfers * msg->numTransfers * sizeof(int));
+                        mat1 = malloc(info->numTransfers * info->numTransfers * sizeof(int));
+                        prod = malloc(info->numTransfers * info->numTransfers * sizeof(int));
                         memcpy(mat1, msg->arg1, PACK_LEN);
                         break;
                     case 1:
                         memcpy(mat1 + PACK_LEN, msg->arg1, PACK_LEN);
                         break;
                     case 3:
-                        mat2 = malloc(msg->numTransfers * msg->numTransfers * sizeof(int));
+                        mat2 = malloc(info->numTransfers * info->numTransfers * sizeof(int));
                         memcpy(mat2, msg->arg1, PACK_LEN);
                         break;
                     case 4:
                         memcpy(mat2 + PACK_LEN, msg->arg1, PACK_LEN);
 
-                        matMult(mat1, mat2, prod, msg->numTransfers);
+                        matMult(mat1, mat2, prod, info->numTransfers);
 
                         break;
                 }
