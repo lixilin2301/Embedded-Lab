@@ -48,7 +48,7 @@ DEBUG :=
 LDFLAGS := -lpthread
 CFLAGS := -DPROFILE
 LIBS :=
-BIN := helloDSPgpp
+BIN := matMultgpp
 
 #   ----------------------------------------------------------------------------
 #   Compiler and Linker flags for Debug
