@@ -1,9 +1,9 @@
 /** ============================================================================
- *  @file   helloDSP.cmd
+ *  @file   matMult.cmd
  *
  *  @path   
  *
- *  @desc   Linker command file for the helloDSP example.
+ *  @desc   Linker command file for matMult.
  *
  *  @ver    1.10
  *  ============================================================================
