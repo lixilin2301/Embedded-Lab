@@ -18,6 +18,7 @@
 #include <sem.h>
 #include <msgq.h>
 #include <pool.h>
+ #include <stdlib.h>
 
 /*  ----------------------------------- DSP/BIOS LINK Headers       */
 #include <dsplink.h>
