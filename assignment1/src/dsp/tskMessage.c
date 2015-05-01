@@ -12,13 +12,12 @@
 
 
 /*  ----------------------------------- DSP/BIOS Headers            */
-#include "matMultcfg.h"
+#include "helloDSPcfg.h"
 #include <gbl.h>
 #include <sys.h>
 #include <sem.h>
 #include <msgq.h>
 #include <pool.h>
- #include <stdlib.h>
 
 /*  ----------------------------------- DSP/BIOS LINK Headers       */
 #include <dsplink.h>
@@ -26,16 +25,13 @@
 #include <failure.h>
 
 /*  ----------------------------------- Sample Headers              */
-#include "matMult_config.h"
+#include <helloDSP_config.h>
 #include <tskMessage.h>
-
-#include "matMult.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define PACK_LEN    (info->numTransfers * info->numTransfers * sizeof(int) / 2)
 
 /* FILEID is used by SET_FAILURE_REASON macro. */
 #define FILEID  FID_APP_C
@@ -45,6 +41,7 @@ Uint8 dspMsgQName[DSP_MAX_STRLEN];
 
 /* Number of iterations message transfers to be done by the application. */
 extern Uint16 numTransfers;
+
 
 
 /** ============================================================================
@@ -143,8 +140,8 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 {
     Int status = SYS_OK;
     ControlMsg* msg;
-    int *mat1, *mat2, *prod;
-    Uint32 i;
+    Uint32 i, j, k;
+  
 
     /* Allocate and send the message */
     status = MSGQ_alloc(SAMPLE_POOL_ID, (MSGQ_Msg*) &msg, APP_BUFFER_SIZE);
@@ -154,7 +151,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
         MSGQ_setMsgId((MSGQ_Msg) msg, info->sequenceNumber);
         MSGQ_setSrcQueue((MSGQ_Msg) msg, info->localMsgq);
         msg->command = 0x01;
-        msg->arg1[0]=(int)'A';
+        SYS_sprintf(msg->arg1, "DSP is awake!");
 
         status = MSGQ_put(info->locatedMsgq, (MSGQ_Msg) msg);
         if (status != SYS_OK)
@@ -171,7 +168,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 
     /* Execute the loop for the configured number of transfers  */
     /* A value of 0 in numTransfers implies infinite iterations */
-    for (i = 0; ( ((i < 4)) && (status == SYS_OK)); i++)
+    for (i = 0; (((info->numTransfers == 0) || (i < info->numTransfers)) && (status == SYS_OK)); i++)
     {
         /* Receive a message from the GPP */
         status = MSGQ_get(info->localMsgq,(MSGQ_Msg*) &msg, SYS_FOREVER);
@@ -200,41 +197,22 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
             }
             else
             {
-		        /* Include your control flag or processing code here */
-
-
-                switch(i) {
-                    case 0:
-                        mat1 = malloc(info->numTransfers * info->numTransfers * sizeof(int));
-                        prod = malloc(info->numTransfers * info->numTransfers * sizeof(int));
-                        if (mat1 == NULL || prod == NULL)
-                        {
-							LOG_printf(&trace, "Malloc error");
-						}
-                        memcpy(mat1, msg->arg1, PACK_LEN);
-                        break;
-                    case 1:
-                        memcpy(mat1 + PACK_LEN, msg->arg1, PACK_LEN);
-                        break;
-                    case 2:
-                        mat2 = malloc(info->numTransfers * info->numTransfers * sizeof(int));
-                        if (mat2 == NULL)
-                        {
-							LOG_printf(&trace, "Malloc error");
-						}
-                        memcpy(mat2, msg->arg1, PACK_LEN);
-                        break;
-                    case 3:
-                        memcpy(mat2 + PACK_LEN, msg->arg1, PACK_LEN);
-                        matMult(mat1, mat2, prod, info->numTransfers);
-                        //matMult(mat1, mat2, prod, 32);
-
-                        break;
-                }
-                
-				msg->arg1[0] = (info->numTransfers);
+		/* Include your control flag or processing code here */
+		////////////////////////////////////////////////////////////////////////////////////////////
+	
+		for (k = 0;k < SIZE; k++)
+		{
+			for (j = 0; j < SIZE; j++)
+			{
+				msg->mat[k][j] +=1;
+			}
+		}
+		
+		///////////////////////////////////////////////////////////////////////////////////////////
+				
+		
                 msg->command = 0x02;
-                //SYS_sprintf(msg->arg1, "Iteration %d is complete.", i);
+                SYS_sprintf(msg->arg1, "Iteration %d is complete.", i);
 
                 /* Increment the sequenceNumber for next received message */
                 info->sequenceNumber++;

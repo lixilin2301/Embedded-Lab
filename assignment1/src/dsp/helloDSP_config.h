@@ -1,9 +1,9 @@
 /** ============================================================================
- *  @file   matMult_config.h
+ *  @file   helloDSP_config.h
  *
  *  @path   
  *
- *  @desc   Header file for MSGQ and POOL configurations for matMult.
+ *  @desc   Header file for MSGQ and POOL configurations for helloDSP.
  *
  *  @ver    1.10
  *  ============================================================================
@@ -23,7 +23,7 @@ extern "C" {
 #endif /* defined (__cplusplus) */
 
 /*  ----------------------------------- DSP/BIOS Headers            */
-#include "matMultcfg.h"
+#include "helloDSPcfg.h"
 #include <msgq.h>
 #include <pool.h>
 
@@ -43,7 +43,8 @@ extern "C" {
 #define SAMPLE_POOL_ID      0
 
 /* Argument size passed to the control message queue */
-#define ARG_SIZE 64*128
+#define ARG_SIZE 256
+#define SIZE 4
 
 /* Control message data structure. */
 /* Must contain a reserved space for the header */
@@ -51,7 +52,8 @@ typedef struct ControlMsg
 {
     MSGQ_MsgHeader header;
     Uint16 command;
-    int arg1[ARG_SIZE];
+    Char arg1[ARG_SIZE];
+    int mat[SIZE][SIZE];
 } ControlMsg;
 
 /* Messaging buffer used by the application.

@@ -3,7 +3,7 @@
 #
 #  @path   
 #
-#  @desc   Makefile for matMultgpp (Debug and Release versions)
+#  @desc   Makefile for helloDSPgpp (Debug and Release versions)
 #
 #  @ver    1.10
 #   ----------------------------------------------------------------------------
@@ -42,13 +42,13 @@ DSPLINK := /data/usr/local/share/bbframework/platform/beagle-linux/tools/dsplink
 #   ----------------------------------------------------------------------------
 #   General options, sources and libraries
 #   ----------------------------------------------------------------------------
-SRCS := matMult.c system_os.c main.c
+SRCS := helloDSP.c system_os.c main.c
 OBJS :=
 DEBUG :=
 LDFLAGS := -lpthread
 CFLAGS := -DPROFILE
 LIBS :=
-BIN := matMultgpp
+BIN := helloDSPgpp
 
 #   ----------------------------------------------------------------------------
 #   Compiler and Linker flags for Debug
@@ -164,7 +164,7 @@ $(OBJDIR_R)/%.o : %.c
 	@$(BASE_TOOLCHAIN)/bin/$(CC) $(DEFS) $(ALL_CFLAGS) -o$@ $<
 
 send:
-	scp $(BINDIR_R)/$(BIN) root@192.168.0.202:/home/root/esLAB/matMult/.
+	scp $(BINDIR_R)/$(BIN) root@192.168.0.202:/home/root/esLAB/helloDSP/.
 
 .PHONY: clean
 clean:

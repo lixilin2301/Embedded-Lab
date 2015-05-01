@@ -36,7 +36,7 @@ extern "C"
      *
      *  @arg    dspExecutable
      *              DSP executable name.
-     *  @arg    strSize
+     *  @arg    strNumIterations
      *              Number of iterations for which a message is transferred between
      *              GPP and DSP in string format.
      *  @arg    processorId
@@ -54,7 +54,7 @@ extern "C"
      *  @see    helloDSP_Delete
      *  ============================================================================
      */
-    NORMAL_API DSP_STATUS helloDSP_Create (IN Char8* dspExecutable, IN Char8* strSize, IN Uint8 processorId);
+    NORMAL_API DSP_STATUS helloDSP_Create (IN Char8* dspExecutable, IN Char8* strNumIterations, IN Uint8 processorId);
 
 
     /** ============================================================================
@@ -62,7 +62,7 @@ extern "C"
      *
      *  @desc   This function implements the execute phase for this application.
      *
-     *  @arg    size
+     *  @arg    numIterations
      *              Number of times to send the message to the DSP.
      *
      *  @arg    processorId
@@ -80,7 +80,7 @@ extern "C"
      *  @see    helloDSP_Delete , helloDSP_Create
      *  ============================================================================
      */
-    NORMAL_API DSP_STATUS helloDSP_Execute(IN Uint32 size, IN Uint8 processorId);
+    NORMAL_API DSP_STATUS helloDSP_Execute(IN Uint32 numIterations, IN Uint8 processorId);
 
 
     /** ============================================================================
@@ -118,7 +118,7 @@ extern "C"
      *
      *  @arg    dspExecutable
      *              Name of the DSP executable file.
-     *  @arg    strSize
+     *  @arg    strNumIterations
      *              Number of iterations a message is transferred between
      *              GPP and DSP in string format.
      *  @arg    strProcessorId
@@ -134,7 +134,7 @@ extern "C"
      *  @see    helloDSP_Create, helloDSP_Execute, helloDSP_Delete
      *  ============================================================================
      */
-    NORMAL_API Void helloDSP_Main(IN Char8* dspExecutable, IN Char8* strSize, IN Char8* strProcessorId);
+    NORMAL_API Void helloDSP_Main(IN Char8* dspExecutable, IN Char8* strNumIterations, IN Char8* strProcessorId);
 
 
 #if defined (DA8XXGEM)

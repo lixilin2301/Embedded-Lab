@@ -3,7 +3,7 @@
 #
 #  @path   
 #
-#  @desc   Makefile for matMult (Debug and Release versions)
+#  @desc   Makefile for helloDSP (Debug and Release versions)
 #
 #  @ver    1.10
 #   ----------------------------------------------------------------------------
@@ -49,10 +49,10 @@ DSPLINK := /data/usr/local/share/bbframework/platform/beagle-linux/tools/dsplink
 #   This variable can be used to set all source/BIOS/object filenames
 #   For clarity, in this example it sets only the .OUT .CMD and .MAP filenames
 #   ----------------------------------------------------------------------------
-PROJNAME := matMult
+PROJNAME := helloDSP
 
 #   ----------------------------------------------------------------------------
-#   Global variables for building matMult
+#   Global variables for building helloDSP
 #   Note that common debug, compiler and linker flags are already
 #   set in the lower part of this Makefile
 #   CSRCS are for C-source files, ASRCS for asm and BIOSTCF is the BIOS TCF file
@@ -61,9 +61,9 @@ DEBUG :=
 CFLAGS := -I$(BASE_BSL)/dsp/include
 LDFLAGS := -i$(BASE_BSL)/dsp/lib
 #CSRCS := tskMessage.c helloDSP_config.c main.c led_test.c
-CSRCS := tskMessage.c matMult_config.c matMult.c main.c 
+CSRCS := tskMessage.c helloDSP_config.c main.c 
 ASRCS :=
-BIOSTCF := matMult.tcf
+BIOSTCF := helloDSP.tcf
 OBJS :=
 LIBS := -ldsplink.lib -ldsplinkpool.lib -ldsplinkmpcs.lib -ldsplinkmplist.lib -ldsplinkmsg.lib -ldsplinknotify.lib -ldsplinkringio.lib -ldsplinkdata.lib
 # If the DSP/Link was rebuilt by the user, add -ldsplinkdata.lib to the line above
@@ -240,7 +240,7 @@ $(OBJDIR_R)/%.obj : %.s62
 	@$(BASE_COMPILER)/bin/$(CC) $(DEFS) $(CFLAGS_R) $(CINCLUDES) -fr$(OBJDIR_R) $<
 
 send:
-	scp $(BINDIR_R)/$(BIN) root@192.168.0.202:/home/root/esLAB/matMult/.
+	scp $(BINDIR_R)/$(BIN) root@192.168.0.202:/home/root/esLAB/helloDSP/.
 
 .PHONY: clean
 clean:

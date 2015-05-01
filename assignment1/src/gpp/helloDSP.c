@@ -18,11 +18,12 @@
 #include <pool.h>
 
 /*  ----------------------------------- Application Header              */
-#include "matMult.h"
+#include <helloDSP.h>
 #include <system_os.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 #if defined (__cplusplus)
@@ -34,7 +35,7 @@ extern "C"
 #define NUM_ARGS 1
 
     /* Argument size passed to the control message queue */
-#define ARG_SIZE 64*128
+#define ARG_SIZE 256
 
     /* ID of the POOL used by helloDSP. */
 #define SAMPLE_POOL_ID  0
@@ -47,6 +48,7 @@ extern "C"
 #define NUMMSGINPOOL1   2
 #define NUMMSGINPOOL2   2
 #define NUMMSGINPOOL3   4
+#define SIZE 4
 
     /* Control message data structure. */
     /* Must contain a reserved space for the header */
@@ -54,9 +56,12 @@ extern "C"
     {
         MSGQ_MsgHeader header;
         Uint16 command;
-        int arg1[ARG_SIZE];
+        Char8 arg1[ARG_SIZE];
+        int mat[SIZE][SIZE];
     } ControlMsg;
 
+	int mat1[SIZE][SIZE];
+     	
     /* Messaging buffer used by the application.
      * Note: This buffer must be aligned according to the alignment expected
      * by the device/platform. */
@@ -112,22 +117,6 @@ extern "C"
     /* Extern declaration to the default DSP/BIOS LINK configuration structure. */
     extern LINKCFG_Object LINKCFG_config;
 
-  int *mat1, *mat2, *prod;
-
-  void matMult(int *mat1, int *mat2, int *prod, unsigned int size)
-  {
-    int i, j, k;
-    for (i = 0;i < size; i++)
-      {
-	for (j = 0; j < size; j++)
-	  {
-	    prod[size * i + j]=0;
-	    for(k=0;k<size;k++)
-	      prod[size * i + j] = prod[size * i + j]+mat1[size * i + k] * mat2[size * k + j];
-	  }
-      }
-  }
-
 #if defined (VERIFY_DATA)
     /** ============================================================================
      *  @func   helloDSP_VerifyData
@@ -135,7 +124,7 @@ extern "C"
      *  @desc   This function verifies the data-integrity of given message.
      *  ============================================================================
      */
-  STATIC NORMAL_API DSP_STATUS helloDSP_VerifyData(IN MSGQ_Msg msg, IN Uint16 sequenceNumber, IN Uint32 size);
+    STATIC NORMAL_API DSP_STATUS helloDSP_VerifyData(IN MSGQ_Msg msg, IN Uint16 sequenceNumber);
 #endif
 
 
@@ -148,7 +137,7 @@ extern "C"
      *  @modif  helloDSP_InpBufs , helloDSP_OutBufs
      *  ============================================================================
      */
-    NORMAL_API DSP_STATUS helloDSP_Create(IN Char8* dspExecutable, IN Char8* strSize, IN Uint8 processorId)
+    NORMAL_API DSP_STATUS helloDSP_Create(IN Char8* dspExecutable, IN Char8* strNumIterations, IN Uint8 processorId)
     {
         DSP_STATUS status = DSP_SOK;
         Uint32 numArgs = NUM_ARGS;
@@ -207,7 +196,7 @@ extern "C"
         /* Load the executable on the DSP. */
         if (DSP_SUCCEEDED(status))
         {
-            args [0] = strSize;
+            args [0] = strNumIterations;
             {
                 status = PROC_load(processorId, dspExecutable, numArgs, args);
             }
@@ -216,7 +205,9 @@ extern "C"
                 SYSTEM_1Print("PROC_load () failed. Status = [0x%x]\n", status);
             }
         }
-
+	
+		 SYSTEM_0Print("  Executable loaded onto DSP! \n");
+		 
         /* Start execution on DSP. */
         if (DSP_SUCCEEDED(status))
         {
@@ -258,8 +249,9 @@ extern "C"
                 }
             }
         }
-
-        SYSTEM_0Print("Leaving helloDSP_Create ()\n");
+        
+		SYSTEM_0Print("  DSP opened a message queue named \"DSPMSGQ\" \n");
+        SYSTEM_0Print("Leaving helloDSP_Create ()\n\n");
         return status;
     }
 
@@ -272,35 +264,21 @@ extern "C"
      *  @modif  None
      *  ============================================================================
      */
-    NORMAL_API DSP_STATUS helloDSP_Execute(IN Uint32 size, Uint8 processorId)
+    NORMAL_API DSP_STATUS helloDSP_Execute(IN Uint32 numIterations, Uint8 processorId)
     {
         DSP_STATUS  status = DSP_SOK;
         Uint16 sequenceNumber = 0;
         Uint16 msgId = 0;
+        Uint32 i, j, k;
         ControlMsg *msg;
-	int i, j;
-	
+
         SYSTEM_0Print("Entered helloDSP_Execute ()\n");
-
-	mat1 = malloc(size * size * sizeof(int));
-	mat2 = malloc(size * size * sizeof(int));
-	prod = malloc(size * size * sizeof(int));
-
-	for (i = 0;i < size; i++)
-	{
-		for (j = 0; j < size; j++)
-		{
-			mat1[size * i + j] = i+j*2;
-			mat2[size * i + j] = i+j*3;
-		}
-	}
 
 #if defined (PROFILE)
         SYSTEM_GetStartTime();
 #endif
 
-	//        for (i = 1 ; ((size == 0) || (i <= (size + 1))) && (DSP_SUCCEEDED (status)); i++)
-        for (i = 1 ; (i <= 5) && (DSP_SUCCEEDED (status)); i++)
+        for (i = 1 ; ((numIterations == 0) || (i <= (numIterations + 1))) && (DSP_SUCCEEDED (status)); i++)
         {
             /* Receive the message. */
             status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
@@ -323,11 +301,23 @@ extern "C"
             if (msg->command == 0x01)
                 SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
             else if (msg->command == 0x02)
-                SYSTEM_1Print("Message received: %d\n", (Uint32) msg->arg1[0]);
+                SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
 
             /* If the message received is the final one, free it. */
-            if ((size != 0) && (i == (5)))
+            if ((numIterations != 0) && (i == (numIterations + 1)))
             {
+				/////////////////////////////////////
+					for (k = 0; k < SIZE; k++)
+					{
+						printf("\n");
+						for (j = 0; j < SIZE; j++)
+						{
+							printf("\t%d ", msg->mat[k][j]);
+						}
+					}
+		
+				/////////////////////////////////////
+				
                 MSGQ_free((MsgqMsg) msg);
             }
             else
@@ -337,18 +327,10 @@ extern "C"
                 {
                     msgId = MSGQ_getMsgId(msg);
                     MSGQ_setMsgId(msg, msgId);
-		            if (i > 1) 
-                    {
-                        for(j=0; j<size*size/2; j++)
-                        {
-                            msg->arg1[j] =
-                                (i <= 3)
-                                ? mat1[j+(i-2)*size*size/2]
-                                : mat2[j+(i-4)*size*size/2];
-                        }
-                    }
+                    
+                    memcpy(msg->mat, mat1, SIZE*SIZE*sizeof(int));
+                    
                     status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
-		    
                     if (DSP_FAILED(status))
                     {
                         MSGQ_free((MsgqMsg) msg);
@@ -377,7 +359,7 @@ extern "C"
         if (DSP_SUCCEEDED(status))
         {
             SYSTEM_GetEndTime();
-            SYSTEM_GetProfileInfo(size);
+            SYSTEM_GetProfileInfo(numIterations);
         }
 #endif
 
@@ -483,19 +465,43 @@ extern "C"
      *  @modif  None
      *  ============================================================================
      */
-    NORMAL_API Void helloDSP_Main(IN Char8* dspExecutable, IN Char8* strSize, IN Char8* strProcessorId)
+     
+    NORMAL_API Void helloDSP_Main(IN Char8* dspExecutable, IN Char8* strNumIterations, IN Char8* strProcessorId)
     {
         DSP_STATUS status = DSP_SOK;
-        Uint32 size = 0;
+        Uint32 numIterations = 0;
         Uint8 processorId = 0;
+        ///////////////////////////////////////////////////////////////
+        
+			int i, j;
+			
+			for (i = 0;i < 4; i++)
+			{
+				for (j = 0; j < 4; j++)
+				{
+					mat1[i][j] = i+j*2;
+				}
+				
+	}
+	
+		for (i = 0;i < SIZE; i++)
+		{
+			printf("\n");
+			for (j = 0; j < SIZE; j++)
+			{
+				printf("\t%d ", mat1[i][j]);
+			}
+		}
+		
+	  /////////////////////////////////////////////////////////////////
 
-        SYSTEM_0Print ("========== Sample Application : helloDSP ==========\n");
+        SYSTEM_0Print ("========== Matrix Multiplication ==========\n");
 
-        if ((dspExecutable != NULL) && (strSize != NULL))
+        if ((dspExecutable != NULL) && (strNumIterations != NULL))
         {
-            size = SYSTEM_Atoi(strSize);
+            numIterations = SYSTEM_Atoi(strNumIterations);
 
-            if (size > 0xFFFF)
+            if (numIterations > 0xFFFF)
             {
                 status = DSP_EINVALIDARG;
                 SYSTEM_1Print("ERROR! Invalid arguments specified for helloDSP application.\n Max iterations = %d\n", 0xFFFF);
@@ -512,12 +518,12 @@ extern "C"
                 /* Specify the dsp executable file name for message creation phase. */
                 if (DSP_SUCCEEDED(status))
                 {
-                    status = helloDSP_Create(dspExecutable, strSize, processorId);
+                    status = helloDSP_Create(dspExecutable, strNumIterations, processorId);
 
                     /* Execute the message execute phase. */
                     if (DSP_SUCCEEDED(status))
                     {
-                        status = helloDSP_Execute(size, processorId);
+                        status = helloDSP_Execute(numIterations, processorId);
                     }
 
                     /* Perform cleanup operation. */
@@ -542,11 +548,11 @@ extern "C"
      *  @modif  None
      *  ============================================================================
      */
-  STATIC NORMAL_API DSP_STATUS helloDSP_VerifyData(IN MSGQ_Msg msg, IN Uint16 sequenceNumber, IN Uint32 size)
+    STATIC NORMAL_API DSP_STATUS helloDSP_VerifyData(IN MSGQ_Msg msg, IN Uint16 sequenceNumber)
     {
         DSP_STATUS status = DSP_SOK;
         Uint16 msgId;
-	Uint32 i=0;
+
         /* Verify the message */
         msgId = MSGQ_getMsgId(msg.header);
         if (msgId != sequenceNumber)
@@ -554,13 +560,6 @@ extern "C"
             status = DSP_EFAIL;
             SYSTEM_0Print("ERROR! Data integrity check failed\n");
         }
-
-	do{
-	  if(msg->arg1[i] != mat1[i]){
-            SYSTEM_0Print("ERROR! Matrices don't match\n");
-	    break;
-	  }
-	}while(i<size*size);
 
         return status;
     }
