@@ -57,6 +57,26 @@ typedef struct TSKMESSAGE_TransferInfo_tag {
     SEM_Obj    notifySemObj;
 } TSKMESSAGE_TransferInfo;
 
+/////////////////////
+
+/** ============================================================================
+ *  @func   matMult
+ *
+ *  @desc   Multiply two matricies
+ *
+ *  @arg    
+ *
+ *  @ret    int prod[SIZE][SIZE]
+ *
+ *  @enter  None
+ *
+ *  @leave  None
+ *
+ *  @see    None
+ *  ============================================================================
+ */
+
+
 
 /** ============================================================================
  *  @func   TSKMESSAGE_create

@@ -36,6 +36,8 @@ extern "C" {
 /* FILEID is used by SET_FAILURE_REASON macro. */
 #define FILEID  FID_APP_C
 
+//#define SIZE 20
+
 /* Place holder for the MSGQ name created on DSP */
 Uint8 dspMsgQName[DSP_MAX_STRLEN];
 
@@ -43,6 +45,25 @@ Uint8 dspMsgQName[DSP_MAX_STRLEN];
 extern Uint16 numTransfers;
 
 
+int prod[SIZE][SIZE];
+
+//Matrix multiplciation function
+
+/*
+void matMult(int mat1[SIZE][SIZE], int mat2[SIZE][SIZE], int prod[SIZE][SIZE])
+{
+	int i, j, k;
+	for (i = 0;i < SIZE; i++)
+	{
+		for (j = 0; j < SIZE; j++)
+		{
+			prod[i][j]=0;
+			for(k=0;k<SIZE;k++)
+				prod[i][j] = prod[i][j]+mat1[i][k] * mat2[k][j];
+		}
+	}
+}
+*/
 
 /** ============================================================================
  *  @func   TSKMESSAGE_create
@@ -141,6 +162,8 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
     Int status = SYS_OK;
     ControlMsg* msg;
     Uint32 i, j, k;
+    //
+   // int prod[SIZE][SIZE];
   
 
     /* Allocate and send the message */
@@ -199,15 +222,60 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
             {
 		/* Include your control flag or processing code here */
 		////////////////////////////////////////////////////////////////////////////////////////////
+		// Do stuff here on DSP!
+ 	
+ 	
+ 	  // incrementing all elements by one:
+		
+		/*
+		 * for (k = 0;k < SIZE; k++)
+		{
+			for (j = 0; j < SIZE; j++)
+			{
+				msg->mat1[k][j] +=1;
+			}
+		}
 	
+		for (k = 0;k < SIZE; k++)
+			{
+				for (j = 0; j < SIZE; j++)
+				{
+					msg->mat2[k][j] +=2;
+				}
+			}
+			* */
+			
+
+		
+		/////////// MATRIX MULTIPLICAION! ///////////////////////
+		
+			   
+		for (i = 0;i < SIZE; i++)
+		{
+			for (j = 0; j < SIZE; j++)
+			{
+				prod[i][j]=0;
+				for(k=0;k<SIZE;k++)
+					prod[i][j] = prod[i][j]+msg->mat1[i][k] * msg->mat2[k][j];
+			}
+		}
+				
+		//startTimer(&totalTime);
+		//matMult(msg->mat1, msg->mat2,prod);
+		//stopTimer(&totalTime);
+		
+		//copy product into msg.mat1
+		
+		
 		for (k = 0;k < SIZE; k++)
 		{
 			for (j = 0; j < SIZE; j++)
 			{
-				msg->mat[k][j] +=1;
+				msg->mat1[k][j] = prod[k][j];
 			}
 		}
 		
+	
 		///////////////////////////////////////////////////////////////////////////////////////////
 				
 		

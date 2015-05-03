@@ -48,7 +48,7 @@ extern "C"
 #define NUMMSGINPOOL1   2
 #define NUMMSGINPOOL2   2
 #define NUMMSGINPOOL3   4
-#define SIZE 4
+#define SIZE 90
 
     /* Control message data structure. */
     /* Must contain a reserved space for the header */
@@ -57,10 +57,12 @@ extern "C"
         MSGQ_MsgHeader header;
         Uint16 command;
         Char8 arg1[ARG_SIZE];
-        int mat[SIZE][SIZE];
+        int mat1[SIZE][SIZE];
+        int mat2[SIZE][SIZE];
+   
     } ControlMsg;
 
-	int mat1[SIZE][SIZE];
+	int mat1[SIZE][SIZE], mat2[SIZE][SIZE], prod[SIZE][SIZE];
      	
     /* Messaging buffer used by the application.
      * Note: This buffer must be aligned according to the alignment expected
@@ -269,7 +271,7 @@ extern "C"
         DSP_STATUS  status = DSP_SOK;
         Uint16 sequenceNumber = 0;
         Uint16 msgId = 0;
-        Uint32 i, j, k;
+        Uint32 i, j, k, l;
         ControlMsg *msg;
 
         SYSTEM_0Print("Entered helloDSP_Execute ()\n");
@@ -306,17 +308,72 @@ extern "C"
             /* If the message received is the final one, free it. */
             if ((numIterations != 0) && (i == (numIterations + 1)))
             {
-				/////////////////////////////////////
-					for (k = 0; k < SIZE; k++)
+				//////////////// printing /////////////////////
+				if (1)
+				{
+					for (k = SIZE-10; k < SIZE; k++)
 					{
 						printf("\n");
-						for (j = 0; j < SIZE; j++)
+						for (j = SIZE-10; j < SIZE; j++)
 						{
-							printf("\t%d ", msg->mat[k][j]);
+							printf("\t%d ", msg->mat1[k][j]);
 						}
 					}
-		
+				}
 				/////////////////////////////////////
+				
+				////// Verification  /////////////////////
+				
+				
+				// incrementing all elements by one:
+				/*
+					for (k = 0;k < SIZE; k++)
+					{
+						for (j = 0; j < SIZE; j++)
+						{
+							if (msg->mat1[k][j] != mat1[k][j] + 1 ) 
+							{  break;
+							   printf("Error \n");
+							}
+							else if ((j==SIZE-1) && (k==SIZE-1))  printf("\n Correct! \n\n");
+							
+							if (msg->mat2[k][j] != mat2[k][j] + 2 ) 
+							{  break;
+							   printf("Error \n");
+							}
+							else if ((j==SIZE-1) && (k==SIZE-1))  printf("\n Correct! \n\n");
+							
+						}
+					}
+				*/
+				
+				
+				// do the multiplication locally to check with the returned values later (can be moved down when the matricies are generated)
+				for (l = 0;l < SIZE; l++)
+				{
+					for (j = 0; j < SIZE; j++)
+					{
+						prod[l][j]=0;
+						for(k=0;k<SIZE;k++)
+							prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];
+					}
+				}
+				for (k = 0;k < SIZE; k++)
+					{
+						for (j = 0; j < SIZE; j++)
+						{
+							if (msg->mat1[k][j] != prod[k][j]) 
+							{  break;
+							   printf("Error \n");
+							}
+							else if ((j==SIZE-1) && (k==SIZE-1))  
+							   printf("\n Correct! \n\n");
+							
+							
+							
+						}
+					}
+				
 				
                 MSGQ_free((MsgqMsg) msg);
             }
@@ -328,7 +385,11 @@ extern "C"
                     msgId = MSGQ_getMsgId(msg);
                     MSGQ_setMsgId(msg, msgId);
                     
-                    memcpy(msg->mat, mat1, SIZE*SIZE*sizeof(int));
+                    //Sending the matrices to the DSP
+                    ///////////////////////////////////////////////////////
+                    memcpy(msg->mat1, mat1, SIZE*SIZE*sizeof(int));
+                    memcpy(msg->mat2, mat2, SIZE*SIZE*sizeof(int));
+                    ///////////////////////////////////////////////////////
                     
                     status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
                     if (DSP_FAILED(status))
@@ -471,29 +532,56 @@ extern "C"
         DSP_STATUS status = DSP_SOK;
         Uint32 numIterations = 0;
         Uint8 processorId = 0;
-        ///////////////////////////////////////////////////////////////
         
-			int i, j;
-			
-			for (i = 0;i < 4; i++)
-			{
-				for (j = 0; j < 4; j++)
-				{
-					mat1[i][j] = i+j*2;
-				}
-				
-	}
+        ///////////////////////////////////////////////////////////////
+        //GENERATING MATRICES
+		
+		int i, j;
 	
 		for (i = 0;i < SIZE; i++)
 		{
-			printf("\n");
 			for (j = 0; j < SIZE; j++)
 			{
-				printf("\t%d ", mat1[i][j]);
+				mat1[i][j] = i+j*2;
 			}
 		}
 		
-	  /////////////////////////////////////////////////////////////////
+		for(i = 0; i < SIZE; i++)
+		{
+			for (j = 0; j < SIZE; j++)
+			{
+				mat2[i][j] = i+j*3;
+			}
+		}
+	
+	
+		//printing last ten items for visual verification
+		if (1)
+		{
+			for (i = SIZE-10;i < SIZE; i++)
+			{
+				printf("\n");
+				for (j = SIZE-10; j < SIZE; j++)
+				{
+					printf("\t%d ", mat1[i][j]);
+				}
+			}
+		}
+		printf("\n");
+		
+			if (1)
+		{
+			for (i = SIZE-10;i < SIZE; i++)
+			{
+				printf("\n");
+				for (j = SIZE-10; j < SIZE; j++)
+				{
+					printf("\t%d ", mat2[i][j]);
+				}
+			}
+		}
+		printf("\n");
+		//////////////////////////////////////////////////
 
         SYSTEM_0Print ("========== Matrix Multiplication ==========\n");
 
