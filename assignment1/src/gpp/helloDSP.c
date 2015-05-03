@@ -25,11 +25,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "timer.h"
+
+
 
 #if defined (__cplusplus)
 extern "C"
 {
 #endif /* defined (__cplusplus) */
+
+
+////////////
+Timer totalTime;
+////////////
 
     /* Number of arguments specified to the DSP application. */
 #define NUM_ARGS 1
@@ -146,6 +154,9 @@ extern "C"
         MSGQ_LocateAttrs syncLocateAttrs;
         Char8* args[NUM_ARGS];
 
+		/////////////////////////////////////////////////////
+		initTimer(&totalTime, "Total Time");
+		/////////////////////////////////////////////////////
         SYSTEM_0Print("Entered helloDSP_Create ()\n");
 
         /* Create and initialize the proc object. */
@@ -308,6 +319,9 @@ extern "C"
             /* If the message received is the final one, free it. */
             if ((numIterations != 0) && (i == (numIterations + 1)))
             {
+				stopTimer(&totalTime);
+				printTimer(&totalTime);
+				
 				//////////////// printing /////////////////////
 				if (1)
 				{
@@ -386,6 +400,7 @@ extern "C"
                     MSGQ_setMsgId(msg, msgId);
                     
                     //Sending the matrices to the DSP
+                    startTimer(&totalTime);
                     ///////////////////////////////////////////////////////
                     memcpy(msg->mat1, mat1, SIZE*SIZE*sizeof(int));
                     memcpy(msg->mat2, mat2, SIZE*SIZE*sizeof(int));

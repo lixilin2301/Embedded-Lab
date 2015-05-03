@@ -33,6 +33,8 @@ extern "C" {
 #endif
 
 
+
+
 /* FILEID is used by SET_FAILURE_REASON macro. */
 #define FILEID  FID_APP_C
 
@@ -77,10 +79,12 @@ void matMult(int mat1[SIZE][SIZE], int mat2[SIZE][SIZE], int prod[SIZE][SIZE])
  */
 Int TSKMESSAGE_create(TSKMESSAGE_TransferInfo** infoPtr)
 {
+	
     Int status = SYS_OK;
     MSGQ_Attrs msgqAttrs = MSGQ_ATTRS;
     TSKMESSAGE_TransferInfo* info = NULL;
     MSGQ_LocateAttrs syncLocateAttrs;
+
 
     /* Allocate TSKMESSAGE_TransferInfo structure that will be initialized
      * and passed to other phases of the application */

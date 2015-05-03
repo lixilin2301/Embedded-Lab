@@ -12,6 +12,7 @@
 #include <helloDSP.h>
 
 
+
 #if defined (__cplusplus)
 extern "C"
 {
@@ -33,6 +34,8 @@ extern "C"
         Char8* strProcessorId = NULL;
         Uint8 processorId = 0;
 
+		
+		
         /*	long long _Fract value = atof("2.3");
         	printf("%k\n",value);	*/
 

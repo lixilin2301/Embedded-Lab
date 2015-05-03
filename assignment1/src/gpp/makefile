@@ -42,7 +42,7 @@ DSPLINK := /data/usr/local/share/bbframework/platform/beagle-linux/tools/dsplink
 #   ----------------------------------------------------------------------------
 #   General options, sources and libraries
 #   ----------------------------------------------------------------------------
-SRCS := helloDSP.c system_os.c main.c
+SRCS := helloDSP.c system_os.c main.c timer.c
 OBJS :=
 DEBUG :=
 LDFLAGS := -lpthread
