@@ -166,8 +166,6 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
     Int status = SYS_OK;
     ControlMsg* msg;
     Uint32 i, j, k;
-    //
-   // int prod[SIZE][SIZE];
   
 
     /* Allocate and send the message */
@@ -199,6 +197,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
     {
         /* Receive a message from the GPP */
         status = MSGQ_get(info->localMsgq,(MSGQ_Msg*) &msg, SYS_FOREVER);
+        //status = MSGQ_get(info->localMsgq,(MSGQ_Msg*) &msg, SYS_FOREVER);
         if (status == SYS_OK)
         {
             /* Check if the message is an asynchronous error message */

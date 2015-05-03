@@ -56,7 +56,8 @@ Timer totalTime;
 #define NUMMSGINPOOL1   2
 #define NUMMSGINPOOL2   2
 #define NUMMSGINPOOL3   4
-#define SIZE 90
+#define MAT_SIZE 10
+#define SIZE (MAT_SIZE/2)
 
     /* Control message data structure. */
     /* Must contain a reserved space for the header */
@@ -325,10 +326,10 @@ Timer totalTime;
 				//////////////// printing /////////////////////
 				if (1)
 				{
-					for (k = SIZE-10; k < SIZE; k++)
+					for (k = 0; k < SIZE; k++)
 					{
 						printf("\n");
-						for (j = SIZE-10; j < SIZE; j++)
+						for (j = 0; j < SIZE; j++)
 						{
 							printf("\t%d ", msg->mat1[k][j]);
 						}
@@ -337,29 +338,6 @@ Timer totalTime;
 				/////////////////////////////////////
 				
 				////// Verification  /////////////////////
-				
-				
-				// incrementing all elements by one:
-				/*
-					for (k = 0;k < SIZE; k++)
-					{
-						for (j = 0; j < SIZE; j++)
-						{
-							if (msg->mat1[k][j] != mat1[k][j] + 1 ) 
-							{  break;
-							   printf("Error \n");
-							}
-							else if ((j==SIZE-1) && (k==SIZE-1))  printf("\n Correct! \n\n");
-							
-							if (msg->mat2[k][j] != mat2[k][j] + 2 ) 
-							{  break;
-							   printf("Error \n");
-							}
-							else if ((j==SIZE-1) && (k==SIZE-1))  printf("\n Correct! \n\n");
-							
-						}
-					}
-				*/
 				
 				
 				// do the multiplication locally to check with the returned values later (can be moved down when the matricies are generated)
@@ -401,6 +379,8 @@ Timer totalTime;
                     
                     //Sending the matrices to the DSP
                     startTimer(&totalTime);
+                    
+                    //Sending first quarter
                     ///////////////////////////////////////////////////////
                     memcpy(msg->mat1, mat1, SIZE*SIZE*sizeof(int));
                     memcpy(msg->mat2, mat2, SIZE*SIZE*sizeof(int));
@@ -412,6 +392,22 @@ Timer totalTime;
                         MSGQ_free((MsgqMsg) msg);
                         SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
                     }
+                                 
+                    
+                  /*  
+                    //Sending second quarter
+                    ///////////////////////////////////////////////////////
+                    memcpy(msg->mat1, mat1 + SIZE*SIZE, SIZE*SIZE*sizeof(int));
+                    memcpy(msg->mat2, mat2 + SIZE*SIZE, SIZE*SIZE*sizeof(int));
+                    ///////////////////////////////////////////////////////
+                    
+                    status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
+                    if (DSP_FAILED(status))
+                    {
+                        MSGQ_free((MsgqMsg) msg);
+                        SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
+                    }
+                    */
                 }
 
                 sequenceNumber++;
@@ -573,10 +569,10 @@ Timer totalTime;
 		//printing last ten items for visual verification
 		if (1)
 		{
-			for (i = SIZE-10;i < SIZE; i++)
+			for (i = 0;i < SIZE; i++)
 			{
 				printf("\n");
-				for (j = SIZE-10; j < SIZE; j++)
+				for (j = 0; j < SIZE; j++)
 				{
 					printf("\t%d ", mat1[i][j]);
 				}
@@ -586,10 +582,10 @@ Timer totalTime;
 		
 			if (1)
 		{
-			for (i = SIZE-10;i < SIZE; i++)
+			for (i = 0;i < SIZE; i++)
 			{
 				printf("\n");
-				for (j = SIZE-10; j < SIZE; j++)
+				for (j = 0; j < SIZE; j++)
 				{
 					printf("\t%d ", mat2[i][j]);
 				}
