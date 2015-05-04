@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "timer.h"
-
+#include <stdint.h>
 
 
 #if defined (__cplusplus)
@@ -56,10 +56,10 @@ Timer totalTime;
 #define NUMMSGINPOOL1   2
 #define NUMMSGINPOOL2   2
 #define NUMMSGINPOOL3   4
-#define MAT_SIZE 10
+#define MAT_SIZE 128
 #define SIZE (MAT_SIZE/2)
 
-#define DEBUG
+//#define DEBUG
     /* Control message data structure. */
     /* Must contain a reserved space for the header */
     typedef struct ControlMsg
@@ -284,8 +284,9 @@ Timer totalTime;
         DSP_STATUS  status = DSP_SOK;
         Uint16 sequenceNumber = 0;
         Uint16 msgId = 0;
-        Uint32 i, j, k, l;
+        Uint32 i, j, k, l, success;
         ControlMsg *msg;
+        
 
         SYSTEM_0Print("Entered helloDSP_Execute ()\n");
 
@@ -328,7 +329,7 @@ Timer totalTime;
 				
 				//////////////// printing /////////////////////
 				#ifdef DEBUG
-					for (k = 0; k < SIZE; k++)
+				for (k = 0; k < SIZE; k++)
 					{
 						printf("\n");
 						for (j = 0; j < SIZE; j++)
@@ -336,13 +337,15 @@ Timer totalTime;
 							printf("\t%d ", msg->mat2[k][j]);
 						}
 					}
+					printf("\n");
 				#endif
-				/////////////////////////////////////
-				
+
 				////// Verification  /////////////////////
 				
 				
-				// do the multiplication locally to check with the returned values later (can be moved down when the matricies are generated)
+				//do the multiplication locally to check with the returned values later (can be moved down when the matricies are generated)
+				//#define DEBUG_mult
+				#ifdef DEBUG_mult
 				for (l = 0;l < SIZE; l++)
 				{
 					for (j = 0; j < SIZE; j++)
@@ -362,9 +365,38 @@ Timer totalTime;
 							}
 							else if ((j==SIZE-1) && (k==SIZE-1))  
 							   printf("\n Correct! \n\n");
-							
 						}
 					}
+				#endif
+				
+				// adding matricies locally! for debug purposes!
+				#define mat_add
+				#ifdef mat_add
+				for (l = 0;l < MAT_SIZE; l++)
+				{
+					for (j = 0; j < MAT_SIZE; j++)
+					{
+							prod[l][j] = mat1[l][j] + mat2[l][j];
+					}
+				}
+				
+				success = 1;
+				for (k = 0; (k < SIZE) && success; k++)
+				{
+					for (j = 0; j < SIZE; j++)
+					{
+						if (msg->mat1[k][j] != prod[k][j])
+						{  
+						   printf("Error \n");
+						   success = 0;
+						   break;
+						}
+						else if ((j==SIZE-1) && (k==SIZE-1))  
+						   printf("\n Correct! \n\n");
+					}
+				}
+				
+				#endif
 				
 				
                 MSGQ_free((MsgqMsg) msg);
@@ -591,7 +623,7 @@ Timer totalTime;
 		
 		int i, j;
 	
-		for (i = 0;i < MAT_SIZE; i++)
+		for (i = 0; i < MAT_SIZE; i++)
 		{
 			for (j = 0; j < MAT_SIZE; j++)
 			{
@@ -619,9 +651,8 @@ Timer totalTime;
 	 
 	  SYSTEM_0Print ("========== Initial matricies ==========\n");
 		//printing last ten items for visual verification
-		if (1)
-		{
-			for (i = 0;i < MAT_SIZE; i++)
+		#ifdef DEBUG
+		for (i = 0;i < MAT_SIZE; i++)
 			{
 				printf("\n");
 				for (j = 0; j < MAT_SIZE; j++)
@@ -629,12 +660,8 @@ Timer totalTime;
 					printf("\t%d ", mat1[i][j]);
 				}
 			}
-		}
-		printf("\n");
 		
-			if (1)
-		{
-			for (i = 0;i < MAT_SIZE; i++)
+		for (i = 0;i < MAT_SIZE; i++)
 			{
 				printf("\n");
 				for (j = 0; j < MAT_SIZE; j++)
@@ -642,8 +669,8 @@ Timer totalTime;
 					printf("\t%d ", mat2[i][j]);
 				}
 			}
-		}
-		printf("\n");
+			printf("\n");
+		#endif
 		//////////////////////////////////////////////////
 
         SYSTEM_0Print ("========== Matrix Multiplication ==========\n");

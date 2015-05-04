@@ -244,8 +244,13 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 					msg->command = 0x02;
 					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n", i);
 					
+					
+					//LAST ITERATION
 					if ((i == numTransfers-1) && TRUE)
 					{
+						
+						#define mat_add //Adding two matricies for debugging purposes
+						#ifdef mat_add
 						for (l = 0;l < MAT_SIZE; l++)
 							{
 								for (j = 0; j < MAT_SIZE; j++)
@@ -253,17 +258,15 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 										prod[l][j] = mat1[l][j] + mat2[l][j];
 								}
 							}
-	
-					//	memcpy(msg->mat1, prod , SIZE*SIZE*sizeof(int));
-					
+				    	//	memcpy(msg->mat1, prod , SIZE*SIZE*sizeof(int));
 						for (k = 0;k < SIZE; k++)
 							{
 								for (j = 0; j < SIZE; j++)
 								{
-									msg->mat2[k][j] =  prod[k][ j + SIZE]  ; // *(&prod[k][j]+SIZE*SIZE*3);
+									msg->mat1[k][j] =  prod[k][j]; //sending last quarter
 								}
 							}
-
+						#endif
 								
 					}
 					
