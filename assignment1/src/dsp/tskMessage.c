@@ -27,6 +27,7 @@
 /*  ----------------------------------- Sample Headers              */
 #include <helloDSP_config.h>
 #include <tskMessage.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,25 +48,10 @@ Uint8 dspMsgQName[DSP_MAX_STRLEN];
 extern Uint16 numTransfers;
 
 
-int prod[SIZE][SIZE];
+int prod[MAT_SIZE][MAT_SIZE];
+int mat1[MAT_SIZE][MAT_SIZE];
+int mat2[MAT_SIZE][MAT_SIZE];
 
-//Matrix multiplciation function
-
-/*
-void matMult(int mat1[SIZE][SIZE], int mat2[SIZE][SIZE], int prod[SIZE][SIZE])
-{
-	int i, j, k;
-	for (i = 0;i < SIZE; i++)
-	{
-		for (j = 0; j < SIZE; j++)
-		{
-			prod[i][j]=0;
-			for(k=0;k<SIZE;k++)
-				prod[i][j] = prod[i][j]+mat1[i][k] * mat2[k][j];
-		}
-	}
-}
-*/
 
 /** ============================================================================
  *  @func   TSKMESSAGE_create
@@ -165,7 +151,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 {
     Int status = SYS_OK;
     ControlMsg* msg;
-    Uint32 i, j, k;
+    Uint32 i, j, k, l;
   
 
     /* Allocate and send the message */
@@ -226,64 +212,88 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 		/* Include your control flag or processing code here */
 		////////////////////////////////////////////////////////////////////////////////////////////
 		// Do stuff here on DSP!
- 	
- 	
- 	  // incrementing all elements by one:
-		
-		/*
-		 * for (k = 0;k < SIZE; k++)
-		{
-			for (j = 0; j < SIZE; j++)
-			{
-				msg->mat1[k][j] +=1;
-			}
-		}
-	
-		for (k = 0;k < SIZE; k++)
-			{
-				for (j = 0; j < SIZE; j++)
-				{
-					msg->mat2[k][j] +=2;
-				}
-			}
-			* */
-			
-
-		
 		/////////// MATRIX MULTIPLICAION! ///////////////////////
 		
-			   
-		for (i = 0;i < SIZE; i++)
-		{
-			for (j = 0; j < SIZE; j++)
-			{
-				prod[i][j]=0;
-				for(k=0;k<SIZE;k++)
-					prod[i][j] = prod[i][j]+msg->mat1[i][k] * msg->mat2[k][j];
-			}
-		}
-				
-		//startTimer(&totalTime);
-		//matMult(msg->mat1, msg->mat2,prod);
-		//stopTimer(&totalTime);
+		/*
+		if (i == 0)
+				{
+					//Recieving first quarter
+					///////////////////////////////////////////////////////
+					memcpy(mat1, msg->mat1, SIZE*SIZE*sizeof(int));
+					memcpy(mat2, msg->mat2, SIZE*SIZE*sizeof(int));
+
+					msg->command = 0x02; //What is dit?
+					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n  -- First quarter recieved", i);
+					//maybe send a null back? because now we are sendting all the data back again.
+				}
 		
-		//copy product into msg.mat1
-		
-		
-		for (k = 0;k < SIZE; k++)
-		{
-			for (j = 0; j < SIZE; j++)
-			{
-				msg->mat1[k][j] = prod[k][j];
-			}
-		}
-		
+		if (i == 1)
+				{
+					memcpy(&mat1[SIZE][SIZE], msg->mat1, SIZE*SIZE*sizeof(int));
+					memcpy(&mat2[SIZE][SIZE], msg->mat2, SIZE*SIZE*sizeof(int));
+					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n  -- Second quarter recieved %d", i , msg->mat1[0][1]);
+				}
+	*/	
+					memcpy(&mat1[i*SIZE][i*SIZE], msg->mat1, SIZE*SIZE*sizeof(int));
+					memcpy(&mat2[i*SIZE][i*SIZE], msg->mat2, SIZE*SIZE*sizeof(int));
+					
+					msg->command = 0x02;
+					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n", i);
+					
+					if (i == numTransfers-1)
+					{
+						for (l = 0;l < SIZE; l++)
+							{
+								for (j = 0; j < SIZE; j++)
+								{						
+										prod[l][j] = mat1[l][j] + mat2[l][j];
+								}
+							}
 	
-		///////////////////////////////////////////////////////////////////////////////////////////
+					//	memcpy(msg->mat1, prod , SIZE*SIZE*sizeof(int));
+					
+						for (k = 0;k < SIZE; k++)
+							{
+								for (j = 0; j < SIZE; j++)
+								{
+									msg->mat1[k][j] = prod[k][j];
+								}
+							}
+
+								
+					}
+					
+		/*	   
+					for (l = 0;l < SIZE; l++)
+					{
+						for (j = 0; j < SIZE; j++)
+						{
+							prod[l][j]=0;
+							for(k=0;k<SIZE;k++)
+								prod[l][j] = prod[l][j]+msg->mat1[l][k] * msg->mat2[k][j];
+						}
+					}
+							
+					//startTimer(&totalTime);
+					//matMult(msg->mat1, msg->mat2,prod);
+					//stopTimer(&totalTime);
+					
+					//copy product into msg.mat1
+					for (k = 0;k < SIZE; k++)
+					{
+						for (j = 0; j < SIZE; j++)
+						{
+							msg->mat1[k][j] = prod[k][j];
+						}
+					}
+					
+					
+					*/
+				
+					///////////////////////////////////////////////////////////////////////////////////////////
 				
 		
-                msg->command = 0x02;
-                SYS_sprintf(msg->arg1, "Iteration %d is complete.", i);
+               
 
                 /* Increment the sequenceNumber for next received message */
                 info->sequenceNumber++;
