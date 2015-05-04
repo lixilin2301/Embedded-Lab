@@ -234,17 +234,21 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n  -- Second quarter recieved %d", i , msg->mat1[0][1]);
 				}
 	*/	
-					memcpy(&mat1[i*SIZE][i*SIZE], msg->mat1, SIZE*SIZE*sizeof(int));
-					memcpy(&mat2[i*SIZE][i*SIZE], msg->mat2, SIZE*SIZE*sizeof(int));
+	
+					memcpy(&mat1[0][0] + i*SIZE*SIZE , msg->mat1, SIZE*SIZE*sizeof(int));
+					memcpy(&mat2[0][0] + i*SIZE*SIZE , msg->mat2, SIZE*SIZE*sizeof(int));
+					
+				//	memcpy(&mat1[(i/2)*SIZE][(i%2)*SIZE], msg->mat1, SIZE*SIZE*sizeof(int));
+					//memcpy(&mat2[(i/2)*SIZE][(i%2)*SIZE], msg->mat2, SIZE*SIZE*sizeof(int));
 					
 					msg->command = 0x02;
 					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n", i);
 					
-					if (i == numTransfers-1)
+					if ((i == numTransfers-1) && TRUE)
 					{
-						for (l = 0;l < SIZE; l++)
+						for (l = 0;l < MAT_SIZE; l++)
 							{
-								for (j = 0; j < SIZE; j++)
+								for (j = 0; j < MAT_SIZE; j++)
 								{						
 										prod[l][j] = mat1[l][j] + mat2[l][j];
 								}
@@ -256,7 +260,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 							{
 								for (j = 0; j < SIZE; j++)
 								{
-									msg->mat1[k][j] = prod[k][j];
+									msg->mat2[k][j] =  prod[k][ j + SIZE]  ; // *(&prod[k][j]+SIZE*SIZE*3);
 								}
 							}
 

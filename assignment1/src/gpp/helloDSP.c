@@ -333,7 +333,7 @@ Timer totalTime;
 						printf("\n");
 						for (j = 0; j < SIZE; j++)
 						{
-							printf("\t%d ", msg->mat1[k][j]);
+							printf("\t%d ", msg->mat2[k][j]);
 						}
 					}
 				#endif
@@ -363,8 +363,6 @@ Timer totalTime;
 							else if ((j==SIZE-1) && (k==SIZE-1))  
 							   printf("\n Correct! \n\n");
 							
-							
-							
 						}
 					}
 				
@@ -376,20 +374,16 @@ Timer totalTime;
                 /* Send the same message received in earlier MSGQ_get () call. */
                 if (DSP_SUCCEEDED(status))
                 {
-						//Sending the matrices to the DSP
-					if (i == 1)
+					//Sending the matrices to the DSP
+					if (i == 1) //Sending first quarter
 					{
 						msgId = MSGQ_getMsgId(msg);
 						MSGQ_setMsgId(msg, msgId);
-						
 					
-						startTimer(&totalTime);
+						startTimer(&totalTime); // START TIMER
 						
-						//Sending first quarter
-						///////////////////////////////////////////////////////	
 						memcpy(msg->mat1, mat1, SIZE*SIZE*sizeof(int));
 						memcpy(msg->mat2, mat2, SIZE*SIZE*sizeof(int));
-						///////////////////////////////////////////////////////
 						
 						status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
 						if (DSP_FAILED(status))
@@ -398,31 +392,63 @@ Timer totalTime;
 							SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
 						}
 					}
-					
-					else if (i == 2)
+					else if (i == 2) //Sending second quarter
 					{
 						msgId = MSGQ_getMsgId(msg);
 						MSGQ_setMsgId(msg, msgId);
-						
-				
-						
-						//Sending second quarter
-						///////////////////////////////////////////////////////
-						
+
 						memcpy(msg->mat1, (&mat1[0][0] + SIZE*SIZE), SIZE*SIZE*sizeof(int));
 						memcpy(msg->mat2, (&mat2[0][0] + SIZE*SIZE), SIZE*SIZE*sizeof(int));
-						///////////////////////////////////////////////////////
-			#ifdef DEBUG		
+
+#ifdef DEBUG		
 						SYSTEM_1Print("debug: %d \n", *(&mat1[SIZE][SIZE]));
 						SYSTEM_1Print("debug: %d \n",  mat1[SIZE][SIZE]);
-			#endif
+#endif
 						status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
 						if (DSP_FAILED(status))
 						{
 							MSGQ_free((MsgqMsg) msg);
 							SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
 						}
-					}				 
+					}	
+				    else if (i == 3) //Sending third quarter
+					{
+						msgId = MSGQ_getMsgId(msg);
+						MSGQ_setMsgId(msg, msgId);
+
+						memcpy(msg->mat1, (&mat1[0][0] + 2*SIZE*SIZE), SIZE*SIZE*sizeof(int));
+						memcpy(msg->mat2, (&mat2[0][0] + 2*SIZE*SIZE), SIZE*SIZE*sizeof(int));
+
+#ifdef DEBUG		
+						SYSTEM_1Print("debug: %d \n", *(&mat1[SIZE][SIZE]));
+						SYSTEM_1Print("debug: %d \n",  mat1[SIZE][SIZE]);
+#endif
+						status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
+						if (DSP_FAILED(status))
+						{
+							MSGQ_free((MsgqMsg) msg);
+							SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
+						}
+					}	
+					else if (i == 4) //Sending fourth quarter
+					{
+						msgId = MSGQ_getMsgId(msg);
+						MSGQ_setMsgId(msg, msgId);
+
+						memcpy(msg->mat1, (&mat1[0][0] + 3*SIZE*SIZE), SIZE*SIZE*sizeof(int));
+						memcpy(msg->mat2, (&mat2[0][0] + 3*SIZE*SIZE), SIZE*SIZE*sizeof(int));
+
+#ifdef DEBUG		
+						SYSTEM_1Print("debug: %d \n", *(&mat1[SIZE][SIZE]));
+						SYSTEM_1Print("debug: %d \n",  mat1[SIZE][SIZE]);
+#endif
+						status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
+						if (DSP_FAILED(status))
+						{
+							MSGQ_free((MsgqMsg) msg);
+							SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
+						}
+					}			 
                     
                 }
 
