@@ -56,16 +56,16 @@ at least four messages in this case. We thus decided to send a quarter of each
 matrix in each message.
 
 \begin{figure}[h]
-\begin{lstlisting}
+\begin{lstlisting}[language=C]
 #define ARG_SIZE 256
 
 typedef struct ControlMsg
 {
-    MSGQ_MsgHeader header;	// 20 bytes
-    Uint16 command;			// 2 bytes
-    Char8 arg1[ARG_SIZE];	// 256 bytes
-    int mat1[SIZE][SIZE];	// 4 * SIZE * SIZE bytes
-    int mat2[SIZE][SIZE];	// 4 * SIZE * SIZE bytes
+	MSGQ_MsgHeader header;	// 20 bytes
+	Uint16 command;				// 2 bytes
+	Char8 arg1[ARG_SIZE];	// 256 bytes
+	int mat1[SIZE][SIZE];	// 4 * SIZE * SIZE bytes
+	int mat2[SIZE][SIZE];	// 4 * SIZE * SIZE bytes
 
 } ControlMsg;
 \end{lstlisting}
