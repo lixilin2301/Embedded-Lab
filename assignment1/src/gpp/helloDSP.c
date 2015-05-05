@@ -28,7 +28,7 @@
 #include "timer.h"
 #include <stdint.h>
 
-
+#define DEBUG
 #if defined (__cplusplus)
 extern "C"
 {
@@ -420,16 +420,16 @@ Timer dsp_only;
 				//////////////// printing /////////////////////
 				#ifdef DEBUG
 				printf("\nMessage back from DSP: msg->mat1 \n");
-				matrix_print(msg->mat1, SIZE);
+				print_matrix(&(msg->mat1[0][0]), SIZE);
 					
 				printf("Message back from DSP: msg->mat2 \n");
-				matrix_print(msg->mat2, SIZE);
+				print_matrix(&(msg->mat2[0][0]), SIZE);
 				
 				printf("Calculated product: \n");
-				matrix_print(prod, MAT_SIZE);
+				print_matrix(&(prod[0][0]), MAT_SIZE);
 				
 				printf("Correct product: \n");
-				matrix_print(prod_ver, MAT_SIZE);
+				print_matrix(&(prod_ver[0][0]), MAT_SIZE);
 				#endif
 				
 				// adding matricies locally! for debug purposes!
