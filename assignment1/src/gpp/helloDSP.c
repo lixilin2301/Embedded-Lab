@@ -59,7 +59,7 @@ Timer dsp_only;
 #define NUMMSGINPOOL2   2
 #define NUMMSGINPOOL3   4
 
-#define MAT_SIZE 128
+#define MAT_SIZE 10
 #define SIZE (MAT_SIZE/2)
 
 //#define DEBUG
@@ -135,15 +135,17 @@ Timer dsp_only;
     /* Extern declaration to the default DSP/BIOS LINK configuration structure. */
     extern LINKCFG_Object LINKCFG_config;
 
-	#define print_matrix(mat, size, k, l)		\
-		for (k = 0; k < size; k++)				\
-		{										\
-			printf("\n");						\
-			for (j = 0; j < size; j++)			\
-			{									\
-				printf("\t%d ", mat[k][j]);		\
-			}									\
-		}										\
+	#define max(a, b) (a > b ? a : b)
+	
+	#define print_matrix(mat, size, k, j)				\
+		for (k = max(0, (size - 10)); k < size; k++)	\
+		{												\
+			printf("\n");								\
+			for (j = max(0, (size - 10)); j < size; j++)\
+			{											\
+				printf("\t%d ", mat[k][j]);				\
+			}											\
+		}												\
 		printf("\n");
 		
 
@@ -303,7 +305,7 @@ Timer dsp_only;
         Uint16 sequenceNumber = 0;
         Uint16 msgId = 0;
         Uint32 i, j, k, l;
-        ControlMsg *msg = NULL;
+        ControlMsg *msg;
         
 
         SYSTEM_0Print("Entered helloDSP_Execute ()\n");
@@ -311,6 +313,7 @@ Timer dsp_only;
 #if defined (PROFILE)
         SYSTEM_GetStartTime();
 #endif
+
 
         for (i = 1 ; ((numIterations == 0) || (i <= (numIterations + 1))) && (DSP_SUCCEEDED (status)); i++)
         {
@@ -342,7 +345,6 @@ Timer dsp_only;
             ///////// Final means end of story ///////
             if ((numIterations != 0) && (i == (numIterations + 1)))
             {
-				
 				stopTimer(&totalTime);
 				printf("\n Parallel calculation time includind communication overhead is: \n");
 				printTimer(&totalTime);
@@ -370,51 +372,21 @@ Timer dsp_only;
 				printf("%s\n", (helloDSP_VerifyCalculations() ? "Succes!" : "Failure!"));
 				
 				#endif
-				
 								
 				//////////////// printing /////////////////////
 				#ifdef DEBUG
 				printf("\nMessage back from DSP: msg->mat1 \n");
-				print_matrix(msg->mat1, SIZE, k, l);
+				print_matrix(msg->mat1, SIZE, k, j);
 					
 				printf("Message back from DSP: msg->mat2 \n");
-				print_matrix(msg->mat2, SIZE, k, l);
+				print_matrix(msg->mat2, SIZE, k, j);
 				
 				printf("Calculated product: \n");
-				print_matrix(prod, MAT_SIZE, k, l);
+				print_matrix(prod, MAT_SIZE, k, j);
 				
 				printf("Correct product: \n");
-				print_matrix(prod_ver, MAT_SIZE, k, l);
+				print_matrix(prod_ver, MAT_SIZE, k, j);
 				#endif
-				
-				// adding matricies locally! for debug purposes!
-				//#define mat_add
-				#ifdef mat_add
-				for (l = 0;l < MAT_SIZE; l++)
-				{
-					for (j = 0; j < MAT_SIZE; j++)
-					{
-							prod[l][j] = mat1[l][j] + mat2[l][j];
-					}
-				}
-				
-				success = 1;
-				for (k = 0; (k < SIZE) && success; k++)
-				{
-					for (j = 0; j < SIZE; j++)
-					{
-						if (msg->mat1[k][j] != prod[k][j])
-						{  
-						   printf("Error \n");
-						   success = 0;
-						   break;
-						}
-						else if ((j==SIZE-1) && (k==SIZE-1))  
-						   printf("\n Correct! \n\n");
-					}
-				}
-				#endif
-				
 				
                 MSGQ_free((MsgqMsg) msg);
             }
@@ -422,92 +394,37 @@ Timer dsp_only;
             {
                 /* Send the same message received in earlier MSGQ_get () call. */
                 if (DSP_SUCCEEDED(status))
-                {
-					//Sending the matrices to the DSP
-					if (i == 1) //Sending first quarter
-					{
-						msgId = MSGQ_getMsgId(msg);
-						MSGQ_setMsgId(msg, msgId);
+                {					
+					msgId = MSGQ_getMsgId(msg);
+					MSGQ_setMsgId(msg, msgId);
+				
+					startTimer(&totalTime); // START TIMER
 					
-						startTimer(&totalTime); // START TIMER
-						
-						memcpy(msg->mat1, mat1, SIZE*SIZE*sizeof(int));
-						memcpy(msg->mat2, mat2, SIZE*SIZE*sizeof(int));
-						
-						status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
-						if (DSP_FAILED(status))
-						{
-							MSGQ_free((MsgqMsg) msg);
-							SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
-						}
+					memcpy(msg->mat1, (&mat1[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int));
+					memcpy(msg->mat2, (&mat2[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int));
+					
+					status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
+					if (DSP_FAILED(status))
+					{
+						MSGQ_free((MsgqMsg) msg);
+						SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
 					}
-					else if (i == 2) //Sending second quarter
-					{
-						msgId = MSGQ_getMsgId(msg);
-						MSGQ_setMsgId(msg, msgId);
-
-						memcpy(msg->mat1, (&mat1[0][0] + SIZE*SIZE), SIZE*SIZE*sizeof(int));
-						memcpy(msg->mat2, (&mat2[0][0] + SIZE*SIZE), SIZE*SIZE*sizeof(int));
-
-						status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
-						if (DSP_FAILED(status))
-						{
-							MSGQ_free((MsgqMsg) msg);
-							SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
-						}
-					}	
-				    else if (i == 3) //Sending third quarter
-					{
-						msgId = MSGQ_getMsgId(msg);
-						MSGQ_setMsgId(msg, msgId);
-
-						memcpy(msg->mat1, (&mat1[0][0] + 2*SIZE*SIZE), SIZE*SIZE*sizeof(int));
-						memcpy(msg->mat2, (&mat2[0][0] + 2*SIZE*SIZE), SIZE*SIZE*sizeof(int));
-
-						status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
-						if (DSP_FAILED(status))
-						{
-							MSGQ_free((MsgqMsg) msg);
-							SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
-						}
-					}	
-					else if (i == 4) //Sending fourth quarter
-					{
-						msgId = MSGQ_getMsgId(msg);
-						MSGQ_setMsgId(msg, msgId);
-
-						memcpy(msg->mat1, (&mat1[0][0] + 3*SIZE*SIZE), SIZE*SIZE*sizeof(int));
-						memcpy(msg->mat2, (&mat2[0][0] + 3*SIZE*SIZE), SIZE*SIZE*sizeof(int));
-
-						status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
-						if (DSP_FAILED(status))
-						{
-							MSGQ_free((MsgqMsg) msg);
-							SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
-						}
-						
+					
+					if (i == 4) //Sent fourth quarter
+					{		
 						startTimer(&dsp_only); // START TIMER for DSP
 						
-						/*
-						 * We can start calculating the half here!
-						 */
-						 
-						 
 						//Do the multiplication here!
 						for (l = SIZE;l < MAT_SIZE; l++)   // <-- this is half of the product caluclations
-							{
-								for (j = 0; j < MAT_SIZE; j++)
-								{		
-									prod[l][j]=0;
-									for(k=0;k<MAT_SIZE;k++)
-										prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];				
-								}
+						{
+							for (j = 0; j < MAT_SIZE; j++)
+							{		
+								prod[l][j]=0;
+								for(k=0;k<MAT_SIZE;k++)
+									prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];				
 							}
-							
-							
-
-					}			 
-                    
+						}
+					}                    
                 }
 
                 sequenceNumber++;
@@ -653,46 +570,21 @@ Timer dsp_only;
 			{
 				#ifdef DEBUG
 				mat1[i][j] = i*MAT_SIZE+j;
-				#else
-				mat1[i][j] = i+j*2;
-				#endif
-			}
-		}
-		for( i = 0; i < MAT_SIZE; i++ )
-		{
-			for (j = 0; j < MAT_SIZE; j++)
-			{
-				#ifdef DEBUG
 				mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
 				//mat2[i][j] = (i == j) ; //identity matrix
 				#else
+				mat1[i][j] = i+j*2;
 				mat2[i][j] = i+j*3;
 				#endif
 			}
 		}
-	
 
 	  SYSTEM_0Print ("========== Initial matricies ==========\n");
-		//printing last ten items for visual verification
 		#ifdef DEBUG
-		for (i = 0;i < MAT_SIZE; i++)
-			{
-				printf("\n");
-				for (j = 0; j < MAT_SIZE; j++)
-				{
-					printf("%d ", mat1[i][j]);
-				}
-			}
 		
-		for (i = 0;i < MAT_SIZE; i++)
-			{
-				printf("\n");
-				for (j = 0; j < MAT_SIZE; j++)
-				{
-					printf(" %d ", mat2[i][j]);
-				}
-			}
-			printf("\n");
+		print_matrix(mat1, MAT_SIZE, i, j);
+		print_matrix(mat2, MAT_SIZE, i, j);
+		
 		#endif
 		//////////////////////////////////////////////////
 
@@ -795,7 +687,8 @@ Timer dsp_only;
 				if (prod_ver[k][j] != prod[k][j])
 				{
 				   success = 0;
-				   break;
+				   printf("Invalid values at %d %d\n", k, j);
+				   //break;
 				}
 			}
 		}
