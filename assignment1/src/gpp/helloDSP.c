@@ -135,6 +135,18 @@ Timer dsp_only;
     /* Extern declaration to the default DSP/BIOS LINK configuration structure. */
     extern LINKCFG_Object LINKCFG_config;
 
+	#define print_matrix(mat, size, k, l)		\
+		for (k = 0; k < size; k++)				\
+		{										\
+			printf("\n");						\
+			for (j = 0; j < size; j++)			\
+			{									\
+				printf("\t%d ", mat[k][j]);		\
+			}									\
+		}										\
+		printf("\n");
+		
+
 #if defined (VERIFY_DATA)
     /** ============================================================================
      *  @func   helloDSP_VerifyData
@@ -363,16 +375,16 @@ Timer dsp_only;
 				//////////////// printing /////////////////////
 				#ifdef DEBUG
 				printf("\nMessage back from DSP: msg->mat1 \n");
-				print_matrix(&(msg->mat1[0][0]), SIZE);
+				print_matrix(msg->mat1, SIZE, k, l);
 					
 				printf("Message back from DSP: msg->mat2 \n");
-				print_matrix(&(msg->mat2[0][0]), SIZE);
+				print_matrix(msg->mat2, SIZE, k, l);
 				
 				printf("Calculated product: \n");
-				print_matrix(&(prod[0][0]), MAT_SIZE);
+				print_matrix(prod, MAT_SIZE, k, l);
 				
 				printf("Correct product: \n");
-				print_matrix(&(prod_ver[0][0]), MAT_SIZE);
+				print_matrix(prod_ver, MAT_SIZE, k, l);
 				#endif
 				
 				// adding matricies locally! for debug purposes!
@@ -753,20 +765,6 @@ Timer dsp_only;
         return status;
     }
 #endif /* if defined (VERIFY_DATA) */
-
-	NORMAL_API void print_matrix(int *mat, int size)
-	{
-		int k, j;
-		for (k = 0; k < size; k++)
-		{
-			printf("\n");
-			for (j = 0; j < size; j++)
-			{
-				printf("\t%d ", mat[k * size + j]);
-			}
-		}
-		printf("\n");
-	}
 	
 	NORMAL_API int helloDSP_VerifyCalculations(void)
 	{
