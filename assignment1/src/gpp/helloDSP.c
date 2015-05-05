@@ -277,6 +277,79 @@ Timer dsp_only;
     }
 
 
+	NORMAL_API DSP_STATUS helloDSP_Recieve(ControlMsg *msg)
+	{
+		DSP_STATUS status = DSP_SOK;
+		/* Receive the message. */
+		status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
+		if (DSP_FAILED(status))
+		{
+			SYSTEM_1Print("MSGQ_get () failed. Status = [0x%x]\n", status);
+		}
+#if defined (VERIFY_DATA)
+		/* Verify correctness of data received. */
+		if (DSP_SUCCEEDED(status))
+		{
+			status = helloDSP_VerifyData(msg, sequenceNumber);
+			if (DSP_FAILED(status))
+			{
+				MSGQ_free((MsgqMsg) msg);
+			}
+		}
+#endif
+		return status;
+	}
+
+	NORMAL_API void print_matrix(int *mat, int size)
+	{
+		int k, j;
+		for (k = 0; k < size; k++)
+		{
+			printf("\n");
+			for (j = 0; j < size; j++)
+			{
+				printf("\t%d ", mat[k * size + j]);
+			}
+		}
+		printf("\n");
+	}
+	
+	NORMAL_API int helloDSP_VerifyCalculations(void)
+	{
+		int l, j, k, success;
+		
+		startTimer(&totalTime); // START TIMER
+				
+		for (l = 0;l < MAT_SIZE; l++)
+		{
+			for (j = 0; j < MAT_SIZE; j++)
+			{
+				prod_ver[l][j]=0;
+				for(k=0; k<MAT_SIZE;k++)
+					prod_ver[l][j] = prod_ver[l][j]+mat1[l][k] * mat2[k][j];
+			}
+		}
+		
+		stopTimer(&totalTime);
+		printf("\n Serial calculation time is: \n");
+		printTimer(&totalTime);
+		
+		printf("Verification: \n");
+		success = 1;
+		for (k = 0; (k < MAT_SIZE) && success; k++)
+		{
+			for (j = 0; j < MAT_SIZE; j++)
+			{
+				if (prod_ver[k][j] != prod[k][j])
+				{
+				   success = 0;
+				   break;
+				}
+			}
+		}
+		return success;
+	}
+
     /** ============================================================================
      *  @func   helloDSP_Execute
      *
@@ -287,11 +360,11 @@ Timer dsp_only;
      */
     NORMAL_API DSP_STATUS helloDSP_Execute(IN Uint32 numIterations, Uint8 processorId)
     {
-        DSP_STATUS  status = DSP_SOK;
+        DSP_STATUS status = DSP_SOK;
         Uint16 sequenceNumber = 0;
         Uint16 msgId = 0;
-        Uint32 i, j, k, l, success;
-        ControlMsg *msg;
+        Uint32 i, j, k, l;
+        ControlMsg *msg = NULL;
         
 
         SYSTEM_0Print("Entered helloDSP_Execute ()\n");
@@ -302,23 +375,7 @@ Timer dsp_only;
 
         for (i = 1 ; ((numIterations == 0) || (i <= (numIterations + 1))) && (DSP_SUCCEEDED (status)); i++)
         {
-            /* Receive the message. */
-            status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
-            if (DSP_FAILED(status))
-            {
-                SYSTEM_1Print("MSGQ_get () failed. Status = [0x%x]\n", status);
-            }
-#if defined (VERIFY_DATA)
-            /* Verify correctness of data received. */
-            if (DSP_SUCCEEDED(status))
-            {
-                status = helloDSP_VerifyData(msg, sequenceNumber);
-                if (DSP_FAILED(status))
-                {
-                    MSGQ_free((MsgqMsg) msg);
-                }
-            }
-#endif
+			status = helloDSP_Recieve(msg);
 
             if (msg->command == 0x01)
                 SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
@@ -342,100 +399,37 @@ Timer dsp_only;
 				//stich the stuff together
 				
 				for (l = 0;l < SIZE; l++)   // <-- this is half of the product caluclations
-					{
-						for (j = 0; j < SIZE; j++)
-						{		
-							prod[l][j] = msg->mat1[l][j];
-							prod[l][j+SIZE] = msg->mat2[l][j]; 				
-						}
+				{
+					for (j = 0; j < SIZE; j++)
+					{		
+						prod[l][j] = msg->mat1[l][j];
+						prod[l][j+SIZE] = msg->mat2[l][j]; 				
 					}
-				
+				}
 				
 			    ////// Verification  /////////////////////
 				//do the multiplication locally to check with the returned values later (can be moved down when the matricies are generated)
 				#define verification
 				#ifdef verification	
 				
-				startTimer(&totalTime); // START TIMER
+				printf("%s\n", (helloDSP_VerifyCalculations() ? "Succes!" : "Failure!"));
 				
-				for (l = 0;l < MAT_SIZE; l++)
-				{
-					for (j = 0; j < MAT_SIZE; j++)
-					{
-						prod_ver[l][j]=0;
-						for(k=0; k<MAT_SIZE;k++)
-							prod_ver[l][j] = prod_ver[l][j]+mat1[l][k] * mat2[k][j];
-					}
-				}
-				
-				stopTimer(&totalTime);
-				printf("\n Serial calculation time is: \n");
-				printTimer(&totalTime);
-			    
-			    printf("Verification: \n");
-				success = 1;
-				for (k = 0; (k < MAT_SIZE) && success; k++)
-				{
-					for (j = 0; j < MAT_SIZE; j++)
-					{
-						if (prod_ver[k][j] != prod[k][j])
-						{  
-						   printf("\n ERROR! \n\n");
-						   success = 0;
-						   break;
-						}
-						else if ((j==MAT_SIZE-1) && (k==MAT_SIZE-1))  
-						   printf("\n SUCCESS! \n\n");
-					}
-				}
 				#endif
 				
 								
 				//////////////// printing /////////////////////
 				#ifdef DEBUG
 				printf("\nMessage back from DSP: msg->mat1 \n");
-				for (k = 0; k < SIZE; k++)
-					{
-						printf("\n");
-						for (j = 0; j < SIZE; j++)
-						{
-							printf("\t%d ", msg->mat1[k][j]);
-						}
-					}
-					printf("\n");
+				matrix_print(msg->mat1, SIZE);
 					
 				printf("Message back from DSP: msg->mat2 \n");
-				for (k = 0; k < SIZE; k++)
-					{
-						printf("\n");
-						for (j = 0; j < SIZE; j++)
-						{
-							printf("\t%d ", msg->mat2[k][j]);
-						}
-					}
-					printf("\n");
+				matrix_print(msg->mat2, SIZE);
 				
 				printf("Calculated product: \n");
-				for (i = 0;i < MAT_SIZE; i++)
-				{
-					printf("\n");
-					for (j = 0; j < MAT_SIZE; j++)
-					{
-						printf("%d ", prod[i][j]);
-					}
-				}
-				printf("\n");
+				matrix_print(prod, MAT_SIZE);
 				
 				printf("Correct product: \n");
-				for (i = 0;i < MAT_SIZE; i++)
-				{
-					printf("\n");
-					for (j = 0; j < MAT_SIZE; j++)
-					{
-						printf("%d ", prod_ver[i][j]);
-					}
-				}
-				printf("\n");
+				matrix_print(prod_ver, MAT_SIZE);
 				#endif
 				
 				// adding matricies locally! for debug purposes!
