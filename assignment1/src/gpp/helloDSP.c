@@ -28,7 +28,8 @@
 #include "timer.h"
 #include <stdint.h>
 
-#define DEBUG
+//#define DEBUG
+
 #if defined (__cplusplus)
 extern "C"
 {
@@ -59,10 +60,8 @@ Timer dsp_only;
 #define NUMMSGINPOOL2   2
 #define NUMMSGINPOOL3   4
 
-#define MAT_SIZE 10
+#define MAT_SIZE 128
 #define SIZE (MAT_SIZE/2)
-
-//#define DEBUG
 
     /* Control message data structure. */
     /* Must contain a reserved space for the header */
@@ -346,11 +345,11 @@ Timer dsp_only;
             if ((numIterations != 0) && (i == (numIterations + 1)))
             {
 				stopTimer(&totalTime);
-				printf("\n Parallel calculation time includind communication overhead is: \n");
+				printf("\nParallel calculation time includind communication overhead is: \n");
 				printTimer(&totalTime);
 				
 				stopTimer(&dsp_only);
-				printf("\n Parallel calculation time includind communication overhead is: \n");
+				printf("\nDSP Time: \n");
 				printTimer(&dsp_only);
 				
 				//stich the stuff together
@@ -398,7 +397,7 @@ Timer dsp_only;
 					msgId = MSGQ_getMsgId(msg);
 					MSGQ_setMsgId(msg, msgId);
 				
-					startTimer(&totalTime); // START TIMER
+					if (i==1) startTimer(&totalTime); // START TIMER
 					
 					memcpy(msg->mat1, (&mat1[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int));
 					memcpy(msg->mat2, (&mat2[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int));
@@ -570,8 +569,8 @@ Timer dsp_only;
 			{
 				#ifdef DEBUG
 				mat1[i][j] = i*MAT_SIZE+j;
-				mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
-				//mat2[i][j] = (i == j) ; //identity matrix
+				//mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
+				mat2[i][j] = (i == j) ; //identity matrix
 				#else
 				mat1[i][j] = i+j*2;
 				mat2[i][j] = i+j*3;
@@ -675,7 +674,7 @@ Timer dsp_only;
 		}
 		
 		stopTimer(&totalTime);
-		printf("\n Serial calculation time is: \n");
+		printf("\nSerial calculation time is: \n");
 		printTimer(&totalTime);
 		
 		printf("Verification: \n");

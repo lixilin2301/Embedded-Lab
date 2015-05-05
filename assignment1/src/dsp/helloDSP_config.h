@@ -48,7 +48,7 @@ extern "C" {
 /* Argument size passed to the control message queue */
 #define ARG_SIZE 256
 
-#define MAT_SIZE 10
+#define MAT_SIZE 128
 #define SIZE (MAT_SIZE/2)
 
 /* Control message data structure. */
