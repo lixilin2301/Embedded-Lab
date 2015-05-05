@@ -37,6 +37,8 @@ extern "C"
 
 ////////////
 Timer totalTime;
+
+Timer dsp_only;
 ////////////
 
     /* Number of arguments specified to the DSP application. */
@@ -57,10 +59,10 @@ Timer totalTime;
 #define NUMMSGINPOOL2   2
 #define NUMMSGINPOOL3   4
 
-#define MAT_SIZE 8
+#define MAT_SIZE 128
 #define SIZE (MAT_SIZE/2)
 
-#define DEBUG
+//#define DEBUG
 
     /* Control message data structure. */
     /* Must contain a reserved space for the header */
@@ -74,7 +76,7 @@ Timer totalTime;
    
     } ControlMsg;
 
-	int mat1[MAT_SIZE][MAT_SIZE], mat2[MAT_SIZE][MAT_SIZE], prod[MAT_SIZE][MAT_SIZE];
+	int mat1[MAT_SIZE][MAT_SIZE], mat2[MAT_SIZE][MAT_SIZE], prod[MAT_SIZE][MAT_SIZE], prod_ver[MAT_SIZE][MAT_SIZE];
      	
     /* Messaging buffer used by the application.
      * Note: This buffer must be aligned according to the alignment expected
@@ -160,7 +162,9 @@ Timer totalTime;
 
 		/////////////////////////////////////////////////////
 		initTimer(&totalTime, "Total Time");
+		initTimer(&dsp_only, "DSP Time");
 		/////////////////////////////////////////////////////
+		
         SYSTEM_0Print("Entered helloDSP_Create ()\n");
 
         /* Create and initialize the proc object. */
@@ -326,9 +330,67 @@ Timer totalTime;
             ///////// Final means end of story ///////
             if ((numIterations != 0) && (i == (numIterations + 1)))
             {
+				
 				stopTimer(&totalTime);
+				printf("\n Parallel calculation time includind communication overhead is: \n");
 				printTimer(&totalTime);
 				
+				stopTimer(&dsp_only);
+				printf("\n Parallel calculation time includind communication overhead is: \n");
+				printTimer(&dsp_only);
+				
+				//stich the stuff together
+				
+				for (l = 0;l < SIZE; l++)   // <-- this is half of the product caluclations
+					{
+						for (j = 0; j < SIZE; j++)
+						{		
+							prod[l][j] = msg->mat1[l][j];
+							prod[l][j+SIZE] = msg->mat2[l][j]; 				
+						}
+					}
+				
+				
+			    ////// Verification  /////////////////////
+				//do the multiplication locally to check with the returned values later (can be moved down when the matricies are generated)
+				#define verification
+				#ifdef verification	
+				
+				startTimer(&totalTime); // START TIMER
+				
+				for (l = 0;l < MAT_SIZE; l++)
+				{
+					for (j = 0; j < MAT_SIZE; j++)
+					{
+						prod_ver[l][j]=0;
+						for(k=0; k<MAT_SIZE;k++)
+							prod_ver[l][j] = prod_ver[l][j]+mat1[l][k] * mat2[k][j];
+					}
+				}
+				
+				stopTimer(&totalTime);
+				printf("\n Serial calculation time is: \n");
+				printTimer(&totalTime);
+			    
+			    printf("Verification: \n");
+				success = 1;
+				for (k = 0; (k < MAT_SIZE) && success; k++)
+				{
+					for (j = 0; j < MAT_SIZE; j++)
+					{
+						if (prod_ver[k][j] != prod[k][j])
+						{  
+						   printf("\n ERROR! \n\n");
+						   success = 0;
+						   break;
+						}
+						else if ((j==MAT_SIZE-1) && (k==MAT_SIZE-1))  
+						   printf("\n SUCCESS! \n\n");
+					}
+				}
+				#endif
+				
+								
 				//////////////// printing /////////////////////
 				#ifdef DEBUG
 				printf("\nMessage back from DSP: msg->mat1 \n");
@@ -352,25 +414,8 @@ Timer totalTime;
 						}
 					}
 					printf("\n");
-				#endif
-
-				////// Verification  /////////////////////
 				
-				
-				//do the multiplication locally to check with the returned values later (can be moved down when the matricies are generated)
-				#define DEBUG_mult
-				#ifdef DEBUG_mult
-				for (l = 0;l < MAT_SIZE; l++)
-				{
-					for (j = 0; j < MAT_SIZE; j++)
-					{
-						prod[l][j]=0;
-						for(k=0; k<MAT_SIZE;k++)
-							prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];
-					}
-				}
-				
-				printf("Correct product: \n");
+				printf("Calculated product: \n");
 				for (i = 0;i < MAT_SIZE; i++)
 				{
 					printf("\n");
@@ -380,22 +425,17 @@ Timer totalTime;
 					}
 				}
 				printf("\n");
-								
-				success = 1;
-				for (k = 0; (k < SIZE) && success; k++)
+				
+				printf("Correct product: \n");
+				for (i = 0;i < MAT_SIZE; i++)
 				{
-					for (j = 0; j < SIZE; j++)
+					printf("\n");
+					for (j = 0; j < MAT_SIZE; j++)
 					{
-						if (msg->mat1[k][j] != prod[k][j])
-						{  
-						   printf("Error \n");
-						   success = 0;
-						   break;
-						}
-						else if ((j==SIZE-1) && (k==SIZE-1))  
-						   printf("\n Correct! \n\n");
+						printf("%d ", prod_ver[i][j]);
 					}
 				}
+				printf("\n");
 				#endif
 				
 				// adding matricies locally! for debug purposes!
@@ -496,6 +536,27 @@ Timer totalTime;
 							MSGQ_free((MsgqMsg) msg);
 							SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
 						}
+						
+						startTimer(&dsp_only); // START TIMER for DSP
+						
+						/*
+						 * We can start calculating the half here!
+						 */
+						 
+						 
+						//Do the multiplication here!
+						for (l = SIZE;l < MAT_SIZE; l++)   // <-- this is half of the product caluclations
+							{
+								for (j = 0; j < MAT_SIZE; j++)
+								{		
+									prod[l][j]=0;
+									for(k=0;k<MAT_SIZE;k++)
+										prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];				
+								}
+							}
+							
+							
+
 					}			 
                     
                 }
@@ -653,8 +714,8 @@ Timer totalTime;
 			for (j = 0; j < MAT_SIZE; j++)
 			{
 				#ifdef DEBUG
-				//mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
-				mat2[i][j] = (i == j) ;
+				mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
+				//mat2[i][j] = (i == j) ; //identity matrix
 				#else
 				mat2[i][j] = i+j*3;
 				#endif

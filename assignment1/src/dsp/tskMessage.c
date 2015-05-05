@@ -28,12 +28,13 @@
 #include <helloDSP_config.h>
 #include <tskMessage.h>
 #include <string.h>
+//#include "../gpp/timer.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
+//Timer totalTime;
 
 
 /* FILEID is used by SET_FAILURE_REASON macro. */
@@ -224,6 +225,9 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 					if ((i == 3) && TRUE)//recieved all data
 					{
 						//Do the multiplication here!
+						
+						//startTimer(&totalTime); // START TIMER
+						
 						for (l = 0;l < SIZE; l++)   // <-- this is half of the product caluclations
 							{
 								for (j = 0; j < MAT_SIZE; j++)
@@ -235,7 +239,12 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 								}
 							}
 
-
+						//stopTimer(&totalTime);
+						
+						 //sprintf(msg->arg1+strlen(msg->arg1), "DSP caluclation is:  = %g msec\n", totalTime.elapsedTime);
+						
+				
+						
 						for (k = 0;k < SIZE; k++)
 							{
 								for (j = 0; j < SIZE; j++)
