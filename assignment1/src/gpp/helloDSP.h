@@ -170,6 +170,9 @@ extern "C"
     NORMAL_API Void helloDSP_Main_DA8XX(IN Char8* dspExecutable, IN Char8* strNumIterations, IN Char8* strProcessorId, IN Char8* strDspAddr, IN Char8* strShmAddr, IN Char8* strArgsAddr);
 #endif
 
+	NORMAL_API void print_matrix(int *mat, int size);
+	NORMAL_API int helloDSP_VerifyCalculations(void);
+
 #if defined (__cplusplus)
 }
 #endif /* defined (__cplusplus) */

@@ -75,6 +75,8 @@ Timer dsp_only;
         int mat2[SIZE][SIZE];
    
     } ControlMsg;
+    
+	NORMAL_API DSP_STATUS helloDSP_Recieve(ControlMsg *msg);
 
 	int mat1[MAT_SIZE][MAT_SIZE], mat2[MAT_SIZE][MAT_SIZE], prod[MAT_SIZE][MAT_SIZE], prod_ver[MAT_SIZE][MAT_SIZE];
      	
@@ -142,7 +144,6 @@ Timer dsp_only;
      */
     STATIC NORMAL_API DSP_STATUS helloDSP_VerifyData(IN MSGQ_Msg msg, IN Uint16 sequenceNumber);
 #endif
-
 
     /** ============================================================================
      *  @func   helloDSP_Create
@@ -276,80 +277,6 @@ Timer dsp_only;
         return status;
     }
 
-
-	NORMAL_API DSP_STATUS helloDSP_Recieve(ControlMsg *msg)
-	{
-		DSP_STATUS status = DSP_SOK;
-		/* Receive the message. */
-		status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
-		if (DSP_FAILED(status))
-		{
-			SYSTEM_1Print("MSGQ_get () failed. Status = [0x%x]\n", status);
-		}
-#if defined (VERIFY_DATA)
-		/* Verify correctness of data received. */
-		if (DSP_SUCCEEDED(status))
-		{
-			status = helloDSP_VerifyData(msg, sequenceNumber);
-			if (DSP_FAILED(status))
-			{
-				MSGQ_free((MsgqMsg) msg);
-			}
-		}
-#endif
-		return status;
-	}
-
-	NORMAL_API void print_matrix(int *mat, int size)
-	{
-		int k, j;
-		for (k = 0; k < size; k++)
-		{
-			printf("\n");
-			for (j = 0; j < size; j++)
-			{
-				printf("\t%d ", mat[k * size + j]);
-			}
-		}
-		printf("\n");
-	}
-	
-	NORMAL_API int helloDSP_VerifyCalculations(void)
-	{
-		int l, j, k, success;
-		
-		startTimer(&totalTime); // START TIMER
-				
-		for (l = 0;l < MAT_SIZE; l++)
-		{
-			for (j = 0; j < MAT_SIZE; j++)
-			{
-				prod_ver[l][j]=0;
-				for(k=0; k<MAT_SIZE;k++)
-					prod_ver[l][j] = prod_ver[l][j]+mat1[l][k] * mat2[k][j];
-			}
-		}
-		
-		stopTimer(&totalTime);
-		printf("\n Serial calculation time is: \n");
-		printTimer(&totalTime);
-		
-		printf("Verification: \n");
-		success = 1;
-		for (k = 0; (k < MAT_SIZE) && success; k++)
-		{
-			for (j = 0; j < MAT_SIZE; j++)
-			{
-				if (prod_ver[k][j] != prod[k][j])
-				{
-				   success = 0;
-				   break;
-				}
-			}
-		}
-		return success;
-	}
-
     /** ============================================================================
      *  @func   helloDSP_Execute
      *
@@ -375,7 +302,23 @@ Timer dsp_only;
 
         for (i = 1 ; ((numIterations == 0) || (i <= (numIterations + 1))) && (DSP_SUCCEEDED (status)); i++)
         {
-			status = helloDSP_Recieve(msg);
+			/* Receive the message. */
+			status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
+			if (DSP_FAILED(status))
+			{
+				SYSTEM_1Print("MSGQ_get () failed. Status = [0x%x]\n", status);
+			}
+	#if defined (VERIFY_DATA)
+			/* Verify correctness of data received. */
+			if (DSP_SUCCEEDED(status))
+			{
+				status = helloDSP_VerifyData(msg, sequenceNumber);
+				if (DSP_FAILED(status))
+				{
+					MSGQ_free((MsgqMsg) msg);
+				}
+			}
+	#endif
 
             if (msg->command == 0x01)
                 SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
@@ -811,6 +754,78 @@ Timer dsp_only;
     }
 #endif /* if defined (VERIFY_DATA) */
 
+	NORMAL_API void print_matrix(int *mat, int size)
+	{
+		int k, j;
+		for (k = 0; k < size; k++)
+		{
+			printf("\n");
+			for (j = 0; j < size; j++)
+			{
+				printf("\t%d ", mat[k * size + j]);
+			}
+		}
+		printf("\n");
+	}
+	
+	NORMAL_API int helloDSP_VerifyCalculations(void)
+	{
+		int l, j, k, success;
+		
+		startTimer(&totalTime); // START TIMER
+				
+		for (l = 0;l < MAT_SIZE; l++)
+		{
+			for (j = 0; j < MAT_SIZE; j++)
+			{
+				prod_ver[l][j]=0;
+				for(k=0; k<MAT_SIZE;k++)
+					prod_ver[l][j] = prod_ver[l][j]+mat1[l][k] * mat2[k][j];
+			}
+		}
+		
+		stopTimer(&totalTime);
+		printf("\n Serial calculation time is: \n");
+		printTimer(&totalTime);
+		
+		printf("Verification: \n");
+		success = 1;
+		for (k = 0; (k < MAT_SIZE) && success; k++)
+		{
+			for (j = 0; j < MAT_SIZE; j++)
+			{
+				if (prod_ver[k][j] != prod[k][j])
+				{
+				   success = 0;
+				   break;
+				}
+			}
+		}
+		return success;
+	}
+
+	NORMAL_API DSP_STATUS helloDSP_Recieve(ControlMsg *msg)
+	{
+		DSP_STATUS status = DSP_SOK;
+		/* Receive the message. */
+		status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
+		if (DSP_FAILED(status))
+		{
+			SYSTEM_1Print("MSGQ_get () failed. Status = [0x%x]\n", status);
+		}
+#if defined (VERIFY_DATA)
+		/* Verify correctness of data received. */
+		if (DSP_SUCCEEDED(status))
+		{
+			status = helloDSP_VerifyData(msg, sequenceNumber);
+			if (DSP_FAILED(status))
+			{
+				MSGQ_free((MsgqMsg) msg);
+			}
+		}
+#endif
+		return status;
+	}
 
 #if defined (__cplusplus)
 }
