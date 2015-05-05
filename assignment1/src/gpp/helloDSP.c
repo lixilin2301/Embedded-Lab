@@ -56,10 +56,12 @@ Timer totalTime;
 #define NUMMSGINPOOL1   2
 #define NUMMSGINPOOL2   2
 #define NUMMSGINPOOL3   4
-#define MAT_SIZE 128
+
+#define MAT_SIZE 8
 #define SIZE (MAT_SIZE/2)
 
-//#define DEBUG
+#define DEBUG
+
     /* Control message data structure. */
     /* Must contain a reserved space for the header */
     typedef struct ControlMsg
@@ -329,6 +331,18 @@ Timer totalTime;
 				
 				//////////////// printing /////////////////////
 				#ifdef DEBUG
+				printf("\nMessage back from DSP: msg->mat1 \n");
+				for (k = 0; k < SIZE; k++)
+					{
+						printf("\n");
+						for (j = 0; j < SIZE; j++)
+						{
+							printf("\t%d ", msg->mat1[k][j]);
+						}
+					}
+					printf("\n");
+					
+				printf("Message back from DSP: msg->mat2 \n");
 				for (k = 0; k < SIZE; k++)
 					{
 						printf("\n");
@@ -344,33 +358,48 @@ Timer totalTime;
 				
 				
 				//do the multiplication locally to check with the returned values later (can be moved down when the matricies are generated)
-				//#define DEBUG_mult
+				#define DEBUG_mult
 				#ifdef DEBUG_mult
-				for (l = 0;l < SIZE; l++)
+				for (l = 0;l < MAT_SIZE; l++)
 				{
-					for (j = 0; j < SIZE; j++)
+					for (j = 0; j < MAT_SIZE; j++)
 					{
 						prod[l][j]=0;
-						for(k=0;k<SIZE;k++)
+						for(k=0; k<MAT_SIZE;k++)
 							prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];
 					}
 				}
-				for (k = 0;k < SIZE; k++)
+				
+				printf("Correct product: \n");
+				for (i = 0;i < MAT_SIZE; i++)
+				{
+					printf("\n");
+					for (j = 0; j < MAT_SIZE; j++)
 					{
-						for (j = 0; j < SIZE; j++)
-						{
-							if (msg->mat1[k][j] != prod[k][j]) 
-							{  break;
-							   printf("Error \n");
-							}
-							else if ((j==SIZE-1) && (k==SIZE-1))  
-							   printf("\n Correct! \n\n");
-						}
+						printf("%d ", prod[i][j]);
 					}
+				}
+				printf("\n");
+								
+				success = 1;
+				for (k = 0; (k < SIZE) && success; k++)
+				{
+					for (j = 0; j < SIZE; j++)
+					{
+						if (msg->mat1[k][j] != prod[k][j])
+						{  
+						   printf("Error \n");
+						   success = 0;
+						   break;
+						}
+						else if ((j==SIZE-1) && (k==SIZE-1))  
+						   printf("\n Correct! \n\n");
+					}
+				}
 				#endif
 				
 				// adding matricies locally! for debug purposes!
-				#define mat_add
+				//#define mat_add
 				#ifdef mat_add
 				for (l = 0;l < MAT_SIZE; l++)
 				{
@@ -395,7 +424,6 @@ Timer totalTime;
 						   printf("\n Correct! \n\n");
 					}
 				}
-				
 				#endif
 				
 				
@@ -432,10 +460,6 @@ Timer totalTime;
 						memcpy(msg->mat1, (&mat1[0][0] + SIZE*SIZE), SIZE*SIZE*sizeof(int));
 						memcpy(msg->mat2, (&mat2[0][0] + SIZE*SIZE), SIZE*SIZE*sizeof(int));
 
-#ifdef DEBUG		
-						SYSTEM_1Print("debug: %d \n", *(&mat1[SIZE][SIZE]));
-						SYSTEM_1Print("debug: %d \n",  mat1[SIZE][SIZE]);
-#endif
 						status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
 						if (DSP_FAILED(status))
 						{
@@ -451,10 +475,6 @@ Timer totalTime;
 						memcpy(msg->mat1, (&mat1[0][0] + 2*SIZE*SIZE), SIZE*SIZE*sizeof(int));
 						memcpy(msg->mat2, (&mat2[0][0] + 2*SIZE*SIZE), SIZE*SIZE*sizeof(int));
 
-#ifdef DEBUG		
-						SYSTEM_1Print("debug: %d \n", *(&mat1[SIZE][SIZE]));
-						SYSTEM_1Print("debug: %d \n",  mat1[SIZE][SIZE]);
-#endif
 						status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
 						if (DSP_FAILED(status))
 						{
@@ -470,10 +490,6 @@ Timer totalTime;
 						memcpy(msg->mat1, (&mat1[0][0] + 3*SIZE*SIZE), SIZE*SIZE*sizeof(int));
 						memcpy(msg->mat2, (&mat2[0][0] + 3*SIZE*SIZE), SIZE*SIZE*sizeof(int));
 
-#ifdef DEBUG		
-						SYSTEM_1Print("debug: %d \n", *(&mat1[SIZE][SIZE]));
-						SYSTEM_1Print("debug: %d \n",  mat1[SIZE][SIZE]);
-#endif
 						status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
 						if (DSP_FAILED(status))
 						{
@@ -620,9 +636,7 @@ Timer totalTime;
         
         ///////////////////////////////////////////////////////////////
         //GENERATING MATRICES
-		
 		int i, j;
-	
 		for (i = 0; i < MAT_SIZE; i++)
 		{
 			for (j = 0; j < MAT_SIZE; j++)
@@ -634,21 +648,20 @@ Timer totalTime;
 				#endif
 			}
 		}
-		
-		for(i = 0; i < MAT_SIZE; i++)
+		for( i = 0; i < MAT_SIZE; i++ )
 		{
 			for (j = 0; j < MAT_SIZE; j++)
 			{
 				#ifdef DEBUG
-				mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
+				//mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
+				mat2[i][j] = (i == j) ;
 				#else
 				mat2[i][j] = i+j*3;
 				#endif
 			}
 		}
 	
-	 
-	 
+
 	  SYSTEM_0Print ("========== Initial matricies ==========\n");
 		//printing last ten items for visual verification
 		#ifdef DEBUG
@@ -657,7 +670,7 @@ Timer totalTime;
 				printf("\n");
 				for (j = 0; j < MAT_SIZE; j++)
 				{
-					printf("\t%d ", mat1[i][j]);
+					printf("%d ", mat1[i][j]);
 				}
 			}
 		
@@ -666,7 +679,7 @@ Timer totalTime;
 				printf("\n");
 				for (j = 0; j < MAT_SIZE; j++)
 				{
-					printf("\t%d ", mat2[i][j]);
+					printf(" %d ", mat2[i][j]);
 				}
 			}
 			printf("\n");

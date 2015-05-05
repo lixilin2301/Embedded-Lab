@@ -39,8 +39,6 @@ extern "C" {
 /* FILEID is used by SET_FAILURE_REASON macro. */
 #define FILEID  FID_APP_C
 
-//#define SIZE 20
-
 /* Place holder for the MSGQ name created on DSP */
 Uint8 dspMsgQName[DSP_MAX_STRLEN];
 
@@ -213,43 +211,41 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 		////////////////////////////////////////////////////////////////////////////////////////////
 		// Do stuff here on DSP!
 		/////////// MATRIX MULTIPLICAION! ///////////////////////
-		
-		/*
-		if (i == 0)
-				{
-					//Recieving first quarter
-					///////////////////////////////////////////////////////
-					memcpy(mat1, msg->mat1, SIZE*SIZE*sizeof(int));
-					memcpy(mat2, msg->mat2, SIZE*SIZE*sizeof(int));
-
-					msg->command = 0x02; //What is dit?
-					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n  -- First quarter recieved", i);
-					//maybe send a null back? because now we are sendting all the data back again.
-				}
-		
-		if (i == 1)
-				{
-					memcpy(&mat1[SIZE][SIZE], msg->mat1, SIZE*SIZE*sizeof(int));
-					memcpy(&mat2[SIZE][SIZE], msg->mat2, SIZE*SIZE*sizeof(int));
-					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n  -- Second quarter recieved %d", i , msg->mat1[0][1]);
-				}
-	*/	
-	
-					memcpy(&mat1[0][0] + i*SIZE*SIZE , msg->mat1, SIZE*SIZE*sizeof(int));
-					memcpy(&mat2[0][0] + i*SIZE*SIZE , msg->mat2, SIZE*SIZE*sizeof(int));
-					
-				//	memcpy(&mat1[(i/2)*SIZE][(i%2)*SIZE], msg->mat1, SIZE*SIZE*sizeof(int));
-					//memcpy(&mat2[(i/2)*SIZE][(i%2)*SIZE], msg->mat2, SIZE*SIZE*sizeof(int));
-					
-					msg->command = 0x02;
-					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n", i);
-					
-					
-					//LAST ITERATION
-					if ((i == numTransfers-1) && TRUE)
+			
+					if (i < 4) //recieving 4 quarters from GPP and filling in the local structure
 					{
+							memcpy(&mat1[0][0] + i*SIZE*SIZE , msg->mat1, SIZE*SIZE*sizeof(int));
+							memcpy(&mat2[0][0] + i*SIZE*SIZE , msg->mat2, SIZE*SIZE*sizeof(int));
+							msg->command = 0x02;
+							SYS_sprintf(msg->arg1, "Iteration %d is complete. \n", i);
+					}		
+							
+					
+					if ((i == 3) && TRUE)//recieved all data
+					{
+						//Do the multiplication here!
+						for (l = 0;l < SIZE; l++)   // <-- this is half of the product caluclations
+							{
+								for (j = 0; j < MAT_SIZE; j++)
+								{		
+									prod[l][j]=0;
+									for(k=0;k<MAT_SIZE;k++)
+										prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];				
+									
+								}
+							}
+
+
+						for (k = 0;k < SIZE; k++)
+							{
+								for (j = 0; j < SIZE; j++)
+								{
+									msg->mat1[k][j] =  prod[k][j];
+									msg->mat2[k][j] =  prod[k][j+SIZE];
+								}
+							}
 						
-						#define mat_add //Adding two matricies for debugging purposes
+						//#define mat_add //Adding two matricies for debugging purposes
 						#ifdef mat_add
 						for (l = 0;l < MAT_SIZE; l++)
 							{
@@ -267,40 +263,17 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 								}
 							}
 						#endif
-								
-					}
-					
-		/*	   
-					for (l = 0;l < SIZE; l++)
-					{
-						for (j = 0; j < SIZE; j++)
-						{
-							prod[l][j]=0;
-							for(k=0;k<SIZE;k++)
-								prod[l][j] = prod[l][j]+msg->mat1[l][k] * msg->mat2[k][j];
-						}
-					}
-							
-					//startTimer(&totalTime);
-					//matMult(msg->mat1, msg->mat2,prod);
-					//stopTimer(&totalTime);
-					
-					//copy product into msg.mat1
-					for (k = 0;k < SIZE; k++)
-					{
-						for (j = 0; j < SIZE; j++)
-						{
-							msg->mat1[k][j] = prod[k][j];
-						}
 					}
 					
 					
+					//LAST ITERATION
+					
+					/*
+					 * 
+					if ((i == numTransfers-1) && TRUE)
+					{				
+					}
 					*/
-				
-					///////////////////////////////////////////////////////////////////////////////////////////
-				
-		
-               
 
                 /* Increment the sequenceNumber for next received message */
                 info->sequenceNumber++;
