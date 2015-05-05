@@ -1,2 +1,8 @@
 \section{NEON}
-Discuss the advantages of using the NEON core here.
+To improve the performance of media and signal processing, \emph{NEON} SIMD technology is implemented in \emph{Cortex-A8} core of \emph{OMAP 3530} GPP. \emph{NEON} SIMD technology, which is also known as Advanced SIMD extension, takes the advantage of parallel operation to acheieve the speed up.
+\subsection{SIMD}
+To understand NEON technology, the idea of SIMD is introduced at first. 
+SIMD (Single Instruction Multiple Data) describes a way to perform the same operation on multiple data with same type and size in a single instruction. The idea of parallel operation comes from the fact that most of multimedia data are 16-bit or 8-bit wide, while the gernal purpose registers are 32-bit wide. To effectively utilize the space of registers, simultaneous computation is developed.  
+\subsection{NEON} 
+\emph{NEON} technology, as the Advanced SIMD extension in \emph{Cortex-A8}, performs SIMD operations in group. NEON instructions operate on vectors stored in 64-bit or 128-bit registers, then vectors of elements with same type can perform the same operation on multiple items at the same time.
+
