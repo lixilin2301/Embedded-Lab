@@ -42,7 +42,11 @@ section.
 
 \subsubsection{Message Format}
 We used the existing reference communication implementation and it's message
-structure, but we extended it with two matrices. The structure is given in 
+structure, but we extended it with our own matrices. The source matrices are
+16 bit, but the result should be at least 32 bits. To accomadate for both 
+situations in the same control message structure, we opted to use a 
+\emph{union} structure so we can either send two 16bit matrices or one 
+32bit matrix at a time. The structure is given in 
 figure~\ref{code:control_msg}. One thing we had to do was determine the maximum
 matrix size we could assign, such that it would fit in one message. This
 message would be stored inside a section of \emph{APP\_BUFFER\_SIZE} large, thus
@@ -52,21 +56,32 @@ our message structure has to fit in there.
 %end TODO!
 Because the application has to support matrices up to 128*128 big, we have to
 send up to $4*128*128 = 65.536$ bytes to the DSP. This means we need to send
-at least four messages in this case. We thus decided to send a quarter of each 
-matrix in each message.
+at least four messages in this case. 
 
 \begin{figure}[h]
 \begin{lstlisting}[language=C]
 #define ARG_SIZE 256
 
+struct mat2x16 {
+	int16_t mat1[SIZE][SIZE];
+	int16_t mat2[SIZE][SIZE];
+};
+
+struct mat32 {
+	int32_t mat1[SIZE][SIZE];
+};
+
+typedef union {
+	struct mat2x16 m16;
+	struct mat32 m32;
+} mat_t;
+
 typedef struct ControlMsg
 {
-	MSGQ_MsgHeader header;	// 20 bytes
-	Uint16 command;				// 2 bytes
-	Char8 arg1[ARG_SIZE];	// 256 bytes
-	int mat1[SIZE][SIZE];	// 4 * SIZE * SIZE bytes
-	int mat2[SIZE][SIZE];	// 4 * SIZE * SIZE bytes
-
+    MSGQ_MsgHeader header;	// 20 bytes
+    Uint16 command;				// 2 bytes
+    Char arg1[ARG_SIZE];	// 256 bytes
+    mat_t mat;				// 4 * SIZE * SIZE bytes
 } ControlMsg;
 \end{lstlisting}
 \caption{The message structure we used}
