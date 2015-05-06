@@ -1,7 +1,7 @@
 /** ============================================================================
  *  @file   helloDSP_config.h
  *
- *  @path   
+ *  @path  
  *
  *  @desc   Header file for MSGQ and POOL configurations for helloDSP.
  *
@@ -51,12 +51,14 @@ extern "C" {
 #define MAT_SIZE 128
 #define SIZE (MAT_SIZE/2)
 
-
+/**
+ * Use a union to be able to send either 2 16bit matrices
+ * or 1 32bit matrix in the same mssage.
+ */
 struct mat2x16 {
 	int16_t mat1[SIZE][SIZE];
 	int16_t mat2[SIZE][SIZE];
 };
-
 
 struct mat32 {
 	int32_t mat1[SIZE][SIZE];
@@ -69,7 +71,7 @@ typedef union {
 
 /* Control message data structure. */
 /* Must contain a reserved space for the header */
-typedef struct ControlMsg 
+typedef struct ControlMsg
 {
     MSGQ_MsgHeader header;
     Uint16 command;

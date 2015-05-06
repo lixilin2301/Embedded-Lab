@@ -1,7 +1,7 @@
 /** ============================================================================
  *  @file   tskMessage.c
  *
- *  @path   
+ *  @path
  *
  *  @desc   This is simple TSK based application that uses MSGQ. It receives
  *          and transmits messages from/to the GPP and runs the DSP
@@ -28,14 +28,10 @@
 #include <helloDSP_config.h>
 #include <tskMessage.h>
 #include <string.h>
-//#include "../gpp/timer.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-//Timer totalTime;
-
 
 /* FILEID is used by SET_FAILURE_REASON macro. */
 #define FILEID  FID_APP_C
@@ -46,7 +42,7 @@ Uint8 dspMsgQName[DSP_MAX_STRLEN];
 /* Number of iterations message transfers to be done by the application. */
 extern Uint16 numTransfers;
 
-
+/* Local matrices to calculate in */
 int32_t prod[MAT_SIZE][MAT_SIZE];
 int16_t mat1[MAT_SIZE][MAT_SIZE];
 int16_t mat2[MAT_SIZE][MAT_SIZE];
@@ -64,12 +60,11 @@ int16_t mat2[MAT_SIZE][MAT_SIZE];
  */
 Int TSKMESSAGE_create(TSKMESSAGE_TransferInfo** infoPtr)
 {
-	
+
     Int status = SYS_OK;
     MSGQ_Attrs msgqAttrs = MSGQ_ATTRS;
     TSKMESSAGE_TransferInfo* info = NULL;
     MSGQ_LocateAttrs syncLocateAttrs;
-
 
     /* Allocate TSKMESSAGE_TransferInfo structure that will be initialized
      * and passed to other phases of the application */
@@ -152,7 +147,6 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
     ControlMsg* msg;
     Uint32 i, j, k, l;
     int t1,t2;
-  
 
     /* Allocate and send the message */
     status = MSGQ_alloc(SAMPLE_POOL_ID, (MSGQ_Msg*) &msg, APP_BUFFER_SIZE);
@@ -209,65 +203,64 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
             }
             else
             {
-		/* Include your control flag or processing code here */
-		////////////////////////////////////////////////////////////////////////////////////////////
-		// Do stuff here on DSP!
-		/////////// MATRIX MULTIPLICAION! ///////////////////////
-			
-					if (i < 4) //recieving 4 quarters from GPP and filling in the local structure
+				/* Include your control flag or processing code here */
+				////////////////////////////////////////////////////////////////////////////////////////////
+				// Do stuff here on DSP!
+				/////////// MATRIX MULTIPLICAION! ///////////////////////
+				if (i < 4) //recieving 4 quarters from GPP and filling in the local structure
+				{
+					memcpy(&mat1[0][0] + i*SIZE*SIZE , msg->mat.m16.mat1, SIZE*SIZE*sizeof(int16_t));
+					memcpy(&mat2[0][0] + i*SIZE*SIZE , msg->mat.m16.mat2, SIZE*SIZE*sizeof(int16_t));
+					msg->command = 0x02;
+					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n", i);
+				}
+
+				if ((i == 3) && TRUE)//recieved all data
+				{
+					//Do the multiplication here
+					for (l = 0;l < SIZE; l++)   // <-- this is half of the product caluclations
 					{
-							memcpy(&mat1[0][0] + i*SIZE*SIZE , msg->mat.m16.mat1, SIZE*SIZE*sizeof(int16_t));
-							memcpy(&mat2[0][0] + i*SIZE*SIZE , msg->mat.m16.mat2, SIZE*SIZE*sizeof(int16_t));
-							msg->command = 0x02;
-							SYS_sprintf(msg->arg1, "Iteration %d is complete. \n", i);
-					}		
-							
-					
-					if ((i == 3) && TRUE)//recieved all data
-					{
-						//Do the multiplication here						
-						for (l = 0;l < SIZE; l++)   // <-- this is half of the product caluclations
+						for (j = 0; j < MAT_SIZE; j++)
 						{
-							for (j = 0; j < MAT_SIZE; j++)
-							{		
-								prod[l][j]=0;
-								t1 = t2 = 0;
-								for(k=0;k<MAT_SIZE;k+=2)
-								  {
-									t1 += mat1[l][k]   * mat2[k][j];
-									//if (k+1 < MAT_SIZE)	
-									t2 += mat1[l][k+1] * mat2[k+1][j];		
-								  }
-									prod[l][j] = t1 + t2;
-							}
-							
-							for (j = 0; j < SIZE; j++)
+							prod[l][j]=0;
+							t1 = t2 = 0;
+							for(k=0;k<MAT_SIZE;k+=2)
 							{
-								msg->mat.m32.mat1[l][j] =  prod[l][j];
+								// Unrolled loop twice to fill both multiply units
+								t1 += mat1[l][k] * mat2[k][j];
+								if (k+1 < MAT_SIZE) {
+									t2 += mat1[l][k+1] * mat2[k+1][j];
+								}
 							}
+							// Split add phase from the multiplication
+							prod[l][j] = t1 + t2;
 						}
-						msg->command = 0x02;
-						SYS_sprintf(msg->arg1, "Iteration %d is complete. \n First quarter sending now... \n %d", i, numTransfers);
-					}
-					
-					//SYS_sprintf(msg->arg1, "Iteration %d is complete. \n", i);
-					
-					//LAST ITERATION
-					
-					if (i == 4)
-					{	
-						for (l = 0;l < SIZE; l++)   // <-- this is half of the product caluclations
-						{		
-							for (j = 0; j < SIZE; j++)
-							{
-								msg->mat.m32.mat1[l][j] =  prod[l][j+SIZE];
-							}
+
+						// Prepare to send back first half of results
+						for (j = 0; j < SIZE; j++)
+						{
+							msg->mat.m32.mat1[l][j] = prod[l][j];
 						}
-						
-						msg->command = 0x02;
-						SYS_sprintf(msg->arg1, "Iteration %d is complete. \n Second quarter sending now...", i);
 					}
-					
+					msg->command = 0x02;
+					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n First quarter sending now... \n %d", i, numTransfers);
+				}
+
+				//LAST ITERATION
+				if (i == 4)
+				{
+					// Send back second half of results
+					for (l = 0;l < SIZE; l++)
+					{
+						for (j = 0; j < SIZE; j++)
+						{
+							msg->mat.m32.mat1[l][j] =  prod[l][j+SIZE];
+						}
+					}
+
+					msg->command = 0x02;
+					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n Second quarter sending now...", i);
+				}
 
                 /* Increment the sequenceNumber for next received message */
                 info->sequenceNumber++;
