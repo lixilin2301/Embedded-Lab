@@ -51,6 +51,22 @@ extern "C" {
 #define MAT_SIZE 128
 #define SIZE (MAT_SIZE/2)
 
+
+struct mat2x16 {
+	int16_t mat1[SIZE][SIZE];
+	int16_t mat2[SIZE][SIZE];
+};
+
+
+struct mat32 {
+	int32_t mat1[SIZE][SIZE];
+};
+
+typedef union {
+	struct mat2x16 m16;
+	struct mat32 m32;
+} mat_t;
+
 /* Control message data structure. */
 /* Must contain a reserved space for the header */
 typedef struct ControlMsg 
@@ -58,8 +74,7 @@ typedef struct ControlMsg
     MSGQ_MsgHeader header;
     Uint16 command;
     Char arg1[ARG_SIZE];
-    int mat1[SIZE][SIZE];
-    int mat2[SIZE][SIZE];
+    mat_t mat;
 } ControlMsg;
 
 /* Messaging buffer used by the application.

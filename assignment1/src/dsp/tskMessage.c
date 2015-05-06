@@ -47,9 +47,9 @@ Uint8 dspMsgQName[DSP_MAX_STRLEN];
 extern Uint16 numTransfers;
 
 
-int prod[MAT_SIZE][MAT_SIZE];
-int mat1[MAT_SIZE][MAT_SIZE];
-int mat2[MAT_SIZE][MAT_SIZE];
+int32_t prod[MAT_SIZE][MAT_SIZE];
+int16_t mat1[MAT_SIZE][MAT_SIZE];
+int16_t mat2[MAT_SIZE][MAT_SIZE];
 
 
 /** ============================================================================
@@ -216,8 +216,8 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 			
 					if (i < 4) //recieving 4 quarters from GPP and filling in the local structure
 					{
-							memcpy(&mat1[0][0] + i*SIZE*SIZE , msg->mat1, SIZE*SIZE*sizeof(int));
-							memcpy(&mat2[0][0] + i*SIZE*SIZE , msg->mat2, SIZE*SIZE*sizeof(int));
+							memcpy(&mat1[0][0] + i*SIZE*SIZE , msg->mat.m16.mat1, SIZE*SIZE*sizeof(int16_t));
+							memcpy(&mat2[0][0] + i*SIZE*SIZE , msg->mat.m16.mat2, SIZE*SIZE*sizeof(int16_t));
 							msg->command = 0x02;
 							SYS_sprintf(msg->arg1, "Iteration %d is complete. \n", i);
 					}		
@@ -243,19 +243,31 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 							
 							for (j = 0; j < SIZE; j++)
 							{
-								msg->mat1[l][j] =  prod[l][j];
-								msg->mat2[l][j] =  prod[l][j+SIZE];
+								msg->mat.m32.mat1[l][j] =  prod[l][j];
 							}
 						}
+						msg->command = 0x02;
+						SYS_sprintf(msg->arg1, "Iteration %d is complete. \n First quarter sending now... \n %d", i, numTransfers);
 					}
 					
+					//SYS_sprintf(msg->arg1, "Iteration %d is complete. \n", i);
 					
 					//LAST ITERATION
-					/*
-					if ((i == numTransfers-1) && TRUE)
-					{				
+					
+					if (i == 4)
+					{	
+						for (l = 0;l < SIZE; l++)   // <-- this is half of the product caluclations
+						{		
+							for (j = 0; j < SIZE; j++)
+							{
+								msg->mat.m32.mat1[l][j] =  prod[l][j+SIZE];
+							}
+						}
+						
+						msg->command = 0x02;
+						SYS_sprintf(msg->arg1, "Iteration %d is complete. \n Second quarter sending now...", i);
 					}
-					*/
+					
 
                 /* Increment the sequenceNumber for next received message */
                 info->sequenceNumber++;

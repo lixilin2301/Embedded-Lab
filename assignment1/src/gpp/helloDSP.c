@@ -85,13 +85,13 @@ typedef union {
         MSGQ_MsgHeader header;
         Uint16 command;
         Char8 arg1[ARG_SIZE];
-        int mat1[SIZE][SIZE];
-        int mat2[SIZE][SIZE];
+        mat_t mat;
     } ControlMsg;
     
 	NORMAL_API DSP_STATUS helloDSP_Recieve(ControlMsg *msg);
 
-	int mat1[MAT_SIZE][MAT_SIZE], mat2[MAT_SIZE][MAT_SIZE], prod[MAT_SIZE][MAT_SIZE], prod_ver[MAT_SIZE][MAT_SIZE];
+	int16_t mat1[MAT_SIZE][MAT_SIZE], mat2[MAT_SIZE][MAT_SIZE];
+	int32_t prod[MAT_SIZE][MAT_SIZE], prod_ver[MAT_SIZE][MAT_SIZE];
      	
     /* Messaging buffer used by the application.
      * Note: This buffer must be aligned according to the alignment expected
@@ -331,7 +331,9 @@ typedef union {
         for (i = 1 ; ((numIterations == 0) || (i <= (numIterations + 1))) && (DSP_SUCCEEDED (status)); i++)
         {
 			/* Receive the message. */
+			printf("Waiting for message %d\n", i);
 			status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
+			printf("Got it\n");
 			if (DSP_FAILED(status))
 			{
 				SYSTEM_1Print("MSGQ_get () failed. Status = [0x%x]\n", status);
@@ -356,7 +358,7 @@ typedef union {
             /* If the message received is the final one, free it. */
             
             ///////// Final means end of story ///////
-            if ((numIterations != 0) && (i == (numIterations + 1)))
+            if ((numIterations != 0) && (i == (numIterations)))
             {
 				stopTimer(&totalTime);
 				printf("\nParallel calculation time includind communication overhead is: \n");
@@ -372,8 +374,36 @@ typedef union {
 				{
 					for (j = 0; j < SIZE; j++)
 					{		
-						prod[l][j] = msg->mat1[l][j];
-						prod[l][j+SIZE] = msg->mat2[l][j]; 				
+						prod[l][j] = msg->mat.m32.mat1[l][j];
+						//prod[l][j+SIZE] = msg->mat2[l][j]; 				
+					}
+				}
+				printf("\nRecieved first part \n");
+				
+				#ifdef DEBUG
+				printf("\nMessage #1 back from DSP: msg->mat.m32.mat1 \n");
+				print_matrix(msg->mat.m32.mat1, SIZE, k, j);
+				#endif
+				
+				status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg); //just need to send some stuff
+				
+				
+				if (DSP_FAILED(status))
+				{
+					MSGQ_free((MsgqMsg) msg);
+					SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
+				}
+					
+			}
+            else if ((numIterations != 0) && (i == (numIterations + 1))) //last
+            {
+				printf("\nStiching last part \n");
+				for (l = 0;l < SIZE; l++)   // <-- this is half of the product caluclations
+				{
+					for (j = 0; j < SIZE; j++)
+					{		
+						//prod[l][j] = msg->mat.m32.mat1[l][j];
+						prod[l][j+SIZE] = msg->mat.m32.mat1[l][j]; 				
 					}
 				}
 				
@@ -388,11 +418,11 @@ typedef union {
 								
 				//////////////// printing /////////////////////
 				#ifdef DEBUG
-				printf("\nMessage back from DSP: msg->mat1 \n");
-				print_matrix(msg->mat1, SIZE, k, j);
+				printf("\nMessage #2 back from DSP: msg->mat.m32.mat1 \n");
+				print_matrix(msg->mat.m32.mat1, SIZE, k, j);
 					
 				printf("Message back from DSP: msg->mat2 \n");
-				print_matrix(msg->mat2, SIZE, k, j);
+				//print_matrix(msg->mat2, SIZE, k, j);
 				
 				printf("Calculated product: \n");
 				print_matrix(prod, MAT_SIZE, k, j);
@@ -412,11 +442,15 @@ typedef union {
 					MSGQ_setMsgId(msg, msgId);
 				
 					if (i==1) startTimer(&totalTime); // START TIMER
-					
-					memcpy(msg->mat1, (&mat1[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int));
-					memcpy(msg->mat2, (&mat2[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int));
+				
+					  memcpy(msg->mat.m16.mat1, (&mat1[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
+					  memcpy(msg->mat.m16.mat2, (&mat2[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
+				    
+					printf("Sent message #: %d\n", i);
 					
 					status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
+					
+					
 					if (DSP_FAILED(status))
 					{
 						MSGQ_free((MsgqMsg) msg);
