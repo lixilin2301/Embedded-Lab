@@ -230,7 +230,7 @@ $(OBJDIR_D)/%.obj : %.s62
 Release: $(BINDIR_R)/$(BIN)
 
 $(BINDIR_R)/$(BIN) : $(OBJS_R)
-	@echo Compiling Release... $(CFLAGS_R)
+	@echo Compiling Release...
 	@$(BASE_COMPILER)/bin/$(CC) $(ALL_LDFLAGS) $(LDINCLUDES_R) -o$@ $(OBJS_R) $(LIBS_R) -m$(MAPFILE_R) $(CMDS)
 
 $(OBJDIR_R)/%.obj : %.c

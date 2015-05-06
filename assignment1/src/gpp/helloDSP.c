@@ -28,19 +28,25 @@
 #include "timer.h"
 #include <stdint.h>
 
-//#define DEBUG
-
 #if defined (__cplusplus)
 extern "C"
 {
 #endif /* defined (__cplusplus) */
 
+/*
+ * Uncomment DEBUG if you want debug information
+ */
+ 
+//#define DEBUG
 
-////////////
+/*
+ * Initialize timers
+ */
+ 
 Timer totalTime;
-
 Timer dsp_only;
-////////////
+Timer serialTime;
+
 
     /* Number of arguments specified to the DSP application. */
 #define NUM_ARGS 1
@@ -63,16 +69,24 @@ Timer dsp_only;
 #define MAT_SIZE 128
 #define SIZE (MAT_SIZE/2)
 
+/*
+ * Data structure for sending quarters of the original matricies
+ * 16-bit each
+ */
 struct mat2x16 {
 	int16_t mat1[SIZE][SIZE];
 	int16_t mat2[SIZE][SIZE];
 };
-
-
+/*
+ * Data structure for recieving back quarters of the product matrix from DSP
+ * 32-bit each
+ */
 struct mat32 {
 	int32_t mat1[SIZE][SIZE];
 };
-
+/*
+ * Union data structure used by ControlMsg
+ */
 typedef union {
 	struct mat2x16 m16;
 	struct mat32 m32;
@@ -148,8 +162,11 @@ typedef union {
     /* Extern declaration to the default DSP/BIOS LINK configuration structure. */
     extern LINKCFG_Object LINKCFG_config;
 
+	/*
+	 * Define a macro to print the matricies
+	 */
+	 
 	#define max(a, b) (a > b ? a : b)
-	
 	#define print_matrix(mat, size, k, j)				\
 		for (k = max(0, (size - 10)); k < size; k++)	\
 		{												\
@@ -188,13 +205,15 @@ typedef union {
         MSGQ_LocateAttrs syncLocateAttrs;
         Char8* args[NUM_ARGS];
 
-		/////////////////////////////////////////////////////
-		initTimer(&totalTime, "Total Time");
-		initTimer(&dsp_only, "DSP Time");
-		/////////////////////////////////////////////////////
-		
+		/*
+		 * Initialize the timers
+		 */
+		initTimer(&totalTime, "Total execution time");
+		initTimer(&dsp_only,  "Total execution time (w/o comm oh.)");
+		initTimer(&serialTime,  "Serial execution time");
+	
         SYSTEM_0Print("Entered helloDSP_Create ()\n");
-
+        
         /* Create and initialize the proc object. */
         status = PROC_setup(NULL);
 
@@ -300,7 +319,7 @@ typedef union {
         }
         
 		SYSTEM_0Print("  DSP opened a message queue named \"DSPMSGQ\" \n");
-        SYSTEM_0Print("Leaving helloDSP_Create ()\n\n");
+        SYSTEM_0Print("Leaving helloDSP_Create ()\n");
         return status;
     }
 
@@ -327,13 +346,13 @@ typedef union {
         SYSTEM_GetStartTime();
 #endif
 
-
         for (i = 1 ; ((numIterations == 0) || (i <= (numIterations + 1))) && (DSP_SUCCEEDED (status)); i++)
         {
 			/* Receive the message. */
-			printf("Waiting for message %d\n", i);
+#ifdef DEBUG
+printf("Waiting for message %d\n", i);
+#endif
 			status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
-			printf("Got it\n");
 			if (DSP_FAILED(status))
 			{
 				SYSTEM_1Print("MSGQ_get () failed. Status = [0x%x]\n", status);
@@ -350,44 +369,53 @@ typedef union {
 			}
 	#endif
 
-            if (msg->command == 0x01)
-                SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
-            else if (msg->command == 0x02)
-                SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
-
+#ifdef DEBUG
+if (msg->command == 0x01)
+	SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
+else if (msg->command == 0x02)
+	SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
+#endif
+			
             /* If the message received is the final one, free it. */
             
-            ///////// Final means end of story ///////
+            /*
+             * Message one before last
+             * here we recieve 1/2 of 1/2 of the product from the DSP
+             */
             if ((numIterations != 0) && (i == (numIterations)))
             {
-				stopTimer(&totalTime);
-				printf("\nParallel calculation time includind communication overhead is: \n");
-				printTimer(&totalTime);
+				/*
+				 * Stop all timers, since DSP is already done it's cauclations
+				 */
 				
+				
+				printf("\nTiming information:\n\n");
+				stopTimer(&totalTime);
 				stopTimer(&dsp_only);
-				printf("\nDSP Time: \n");
+				//printf("Parallel calculation time including communication overhead is: \n");
+				printTimer(&totalTime);
+				//printf("DSP Time only: \n");
 				printTimer(&dsp_only);
 				
-				//stich the stuff together
 				
-				for (l = 0;l < SIZE; l++)   // <-- this is half of the product caluclations
+				/*
+				 * Fill in the product matrix here (on GPP) with the results from DSP
+				 */
+				
+				for (l = 0;l < SIZE; l++)   
 				{
 					for (j = 0; j < SIZE; j++)
 					{		
-						prod[l][j] = msg->mat.m32.mat1[l][j];
-						//prod[l][j+SIZE] = msg->mat2[l][j]; 				
+						prod[l][j] = msg->mat.m32.mat1[l][j];		
 					}
 				}
-				printf("\nRecieved first part \n");
-				
+				/* Debug */
 				#ifdef DEBUG
 				printf("\nMessage #1 back from DSP: msg->mat.m32.mat1 \n");
 				print_matrix(msg->mat.m32.mat1, SIZE, k, j);
 				#endif
 				
-				status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg); //just need to send some stuff
-				
-				
+				status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg); //just need to send some stuff	
 				if (DSP_FAILED(status))
 				{
 					MSGQ_free((MsgqMsg) msg);
@@ -395,35 +423,33 @@ typedef union {
 				}
 					
 			}
-            else if ((numIterations != 0) && (i == (numIterations + 1))) //last
+			/*
+             * Final message from the DSP
+             * here we recieve the second 1/2 of 1/2 of the product from the DSP
+             */
+            else if ((numIterations != 0) && (i == (numIterations + 1)))
             {
-				printf("\nStiching last part \n");
-				for (l = 0;l < SIZE; l++)   // <-- this is half of the product caluclations
+				for (l = 0;l < SIZE; l++)
 				{
 					for (j = 0; j < SIZE; j++)
-					{		
-						//prod[l][j] = msg->mat.m32.mat1[l][j];
-						prod[l][j+SIZE] = msg->mat.m32.mat1[l][j]; 				
+					{
+						prod[l][j+SIZE] = msg->mat.m32.mat1[l][j];		
 					}
 				}
 				
-			    ////// Verification  /////////////////////
-				//do the multiplication locally to check with the returned values later (can be moved down when the matricies are generated)
+				/*
+				 * Verification
+				 */
 				#define verification
 				#ifdef verification	
-				
-				printf("%s\n", (helloDSP_VerifyCalculations() ? "Succes!" : "Failure!"));
-				
+				printf("%s\n\n", (helloDSP_VerifyCalculations() ? "SUCCESS!" : "Failure!"));
 				#endif
 								
-				//////////////// printing /////////////////////
+				/* Debug */
 				#ifdef DEBUG
 				printf("\nMessage #2 back from DSP: msg->mat.m32.mat1 \n");
 				print_matrix(msg->mat.m32.mat1, SIZE, k, j);
-					
-				printf("Message back from DSP: msg->mat2 \n");
-				//print_matrix(msg->mat2, SIZE, k, j);
-				
+	
 				printf("Calculated product: \n");
 				print_matrix(prod, MAT_SIZE, k, j);
 				
@@ -433,7 +459,7 @@ typedef union {
 				
                 MSGQ_free((MsgqMsg) msg);
             }
-            else
+            else   //the first four iterations
             {
                 /* Send the same message received in earlier MSGQ_get () call. */
                 if (DSP_SUCCEEDED(status))
@@ -441,15 +467,13 @@ typedef union {
 					msgId = MSGQ_getMsgId(msg);
 					MSGQ_setMsgId(msg, msgId);
 				
-					if (i==1) startTimer(&totalTime); // START TIMER
-				
-					  memcpy(msg->mat.m16.mat1, (&mat1[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
-					  memcpy(msg->mat.m16.mat2, (&mat2[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
-				    
-					printf("Sent message #: %d\n", i);
-					
+					if (i==1) startTimer(&totalTime); // START the overall timer
+
+					/* Sending the four quarters, one in each iteration */
+					memcpy(msg->mat.m16.mat1, (&mat1[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
+					memcpy(msg->mat.m16.mat2, (&mat2[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
+
 					status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
-					
 					
 					if (DSP_FAILED(status))
 					{
@@ -461,17 +485,17 @@ typedef union {
 					{		
 						startTimer(&dsp_only); // START TIMER for DSP
 						
-						//Do the multiplication here!
-						for (l = SIZE;l < MAT_SIZE; l++)   // <-- this is half of the product caluclations
+						//Do the multiplication on the GPP side!
+						for (l = SIZE;l < MAT_SIZE; l++)
 						{
 							for (j = 0; j < MAT_SIZE; j++)
-							{		
+							{
 								prod[l][j]=0;
 								for(k=0;k<MAT_SIZE;k++)
-									prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];				
+									prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];
 							}
 						}
-					}                    
+					}
                 }
 
                 sequenceNumber++;
@@ -608,8 +632,9 @@ typedef union {
         Uint32 numIterations = 0;
         Uint8 processorId = 0;
         
-        ///////////////////////////////////////////////////////////////
-        //GENERATING MATRICES
+        /*
+         * Generating initial matricies
+         */
 		int i, j;
 		for (i = 0; i < MAT_SIZE; i++)
 		{
@@ -626,15 +651,13 @@ typedef union {
 			}
 		}
 
-	  SYSTEM_0Print ("========== Initial matricies ==========\n");
+		/* Debug */
 		#ifdef DEBUG
-		
+		SYSTEM_0Print ("========== Initial matricies ==========\n");
 		print_matrix(mat1, MAT_SIZE, i, j);
 		print_matrix(mat2, MAT_SIZE, i, j);
-		
 		#endif
-		//////////////////////////////////////////////////
-
+		
         SYSTEM_0Print ("========== Matrix Multiplication ==========\n");
 
         if ((dspExecutable != NULL) && (strNumIterations != NULL))
@@ -705,12 +728,24 @@ typedef union {
     }
 #endif /* if defined (VERIFY_DATA) */
 	
+	 /** ============================================================================
+	 *  @func   helloDSP_VerifyCalculations
+	 *
+	 *  @desc   This function verifies if the calculated product is equal
+	 * 			to the actual product
+	 *  @ret    success
+	 * 				The products match!
+	 * 			!success
+	 * 				Failure. Products do not match
+	 * 
+	 *  ============================================================================
+	 */
 	NORMAL_API int helloDSP_VerifyCalculations(void)
 	{
 		int l, j, k, success;
 		
-		startTimer(&totalTime); // START TIMER
-				
+		// --Start Timer
+		startTimer(&serialTime);
 		for (l = 0;l < MAT_SIZE; l++)
 		{
 			for (j = 0; j < MAT_SIZE; j++)
@@ -720,10 +755,10 @@ typedef union {
 					prod_ver[l][j] = prod_ver[l][j]+mat1[l][k] * mat2[k][j];
 			}
 		}
-		
-		stopTimer(&totalTime);
-		printf("\nSerial calculation time is: \n");
-		printTimer(&totalTime);
+		// -- Stop Timer
+		stopTimer(&serialTime);
+		//printf("Serial calculation time is: \n");
+		printTimer(&serialTime);
 		
 		printf("Verification: \n");
 		success = 1;
@@ -734,8 +769,7 @@ typedef union {
 				if (prod_ver[k][j] != prod[k][j])
 				{
 				   success = 0;
-				   printf("Invalid values at %d %d\n", k, j);
-				   //break;
+				   break;
 				}
 			}
 		}
