@@ -28,6 +28,8 @@
 #include "timer.h"
 #include <stdint.h>
 
+#include <arm_neon.h>
+
 #if defined (__cplusplus)
 extern "C"
 {
@@ -37,7 +39,7 @@ extern "C"
  * Uncomment DEBUG if you want debug information
  */
  
-//#define DEBUG
+#define DEBUG
 
 /*
  * Initialize timers
@@ -66,7 +68,7 @@ Timer serialTime;
 #define NUMMSGINPOOL2   2
 #define NUMMSGINPOOL3   4
 
-#define MAT_SIZE 128
+#define MAT_SIZE 8
 #define SIZE (MAT_SIZE/2)
 
 /*
@@ -104,7 +106,7 @@ typedef union {
     
 	NORMAL_API DSP_STATUS helloDSP_Recieve(ControlMsg *msg);
 
-	int16_t mat1[MAT_SIZE][MAT_SIZE], mat2[MAT_SIZE][MAT_SIZE];
+	int16_t *pmat1, *pmat2,*pres;
 	int32_t prod[MAT_SIZE][MAT_SIZE], prod_ver[MAT_SIZE][MAT_SIZE];
      	
     /* Messaging buffer used by the application.
@@ -167,17 +169,27 @@ typedef union {
 	 */
 	 
 	#define max(a, b) (a > b ? a : b)
-	#define print_matrix(mat, size, k, j)				\
+	#define print_matrix(mat, size, k, j)			\
 		for (k = max(0, (size - 10)); k < size; k++)	\
 		{												\
 			printf("\n");								\
 			for (j = max(0, (size - 10)); j < size; j++)\
 			{											\
-				printf("\t%d ", mat[k][j]);				\
+				printf("\t%d ", mat[k][j]);			\
 			}											\
 		}												\
 		printf("\n");
 		
+	#define print_flat_matrix(mat, size, k, j)			\
+		for (k = max(0, (size - 10)); k < size; k++)	\
+		{												\
+			printf("\n");								\
+			for (j = max(0, (size - 10)); j < size; j++)\
+			{											\
+				printf("\t%d ", mat[k * size + j]);		\
+			}											\
+		}												\
+		printf("\n");
 
 #if defined (VERIFY_DATA)
     /** ============================================================================
@@ -331,6 +343,24 @@ typedef union {
      *  @modif  None
      *  ============================================================================
      */
+     
+     
+     inline void MAC4 (int16x8_t *additive_value, int16x8_t *data1, int16x8_t *data2,int16x8_t *mac_output)
+		{
+			/* Set each sixteen values of the vector to 3.
+			*
+			* Remark: a 'q' suffix to intrinsics indicates
+			* the instruction run for 128 bits registers.
+			*/
+			//uint32x4_t three = vmovq_n_u32 (3);
+
+			/* Add 3 to the value given in argument. */
+			//*data = vaddq_u32 (*data, three);
+			*mac_output = vmlaq_s16 (*additive_value,*data1, *data2);
+		}
+
+     
+     
     NORMAL_API DSP_STATUS helloDSP_Execute(IN Uint32 numIterations, Uint8 processorId)
     {
         DSP_STATUS status = DSP_SOK;
@@ -338,7 +368,17 @@ typedef union {
         Uint16 msgId = 0;
         Uint32 i, j, k, l;
         ControlMsg *msg;
-        
+       
+       ////////////////////////
+		unsigned int index_input = 0;
+        unsigned int loop=0;
+        unsigned int loop2=0;
+		int16x8_t data1;
+		int16x8_t mac_output[MAT_SIZE/8];
+		int16x8_t MAC_addvalue[MAT_SIZE/8];
+		int16x8_t constant_value;
+		unsigned int transfer_index = 0 ;
+        /////////////////////////////////
 
         SYSTEM_0Print("Entered helloDSP_Execute ()\n");
 
@@ -350,7 +390,7 @@ typedef union {
         {
 			/* Receive the message. */
 #ifdef DEBUG
-printf("Waiting for message %d\n", i);
+printf("Waiting for message %u\n", i);
 #endif
 			status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
 			if (DSP_FAILED(status))
@@ -412,7 +452,7 @@ else if (msg->command == 0x02)
 				/* Debug */
 				#ifdef DEBUG
 				printf("\nMessage #1 back from DSP: msg->mat.m32.mat1 \n");
-				print_matrix(msg->mat.m32.mat1, SIZE, k, j);
+				print_flat_matrix(pres, MAT_SIZE, k, j);
 				#endif
 				
 				status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg); //just need to send some stuff	
@@ -470,8 +510,8 @@ else if (msg->command == 0x02)
 					if (i==1) startTimer(&totalTime); // START the overall timer
 
 					/* Sending the four quarters, one in each iteration */
-					memcpy(msg->mat.m16.mat1, (&mat1[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
-					memcpy(msg->mat.m16.mat2, (&mat2[0][0] + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
+					memcpy(msg->mat.m16.mat1, (pmat1 + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
+					memcpy(msg->mat.m16.mat2, (pmat2 + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
 
 					status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
 					
@@ -485,7 +525,48 @@ else if (msg->command == 0x02)
 					{		
 						startTimer(&dsp_only); // START TIMER for DSP
 						
+						////////////////////////////////////////////////////////////////////
+						
+	
+			for(l = 0 ; l < MAT_SIZE/8; l++)
+			{ 
+				MAC_addvalue[l] = vmovq_n_s16(0);
+			}
+
+	  /* here multiplication will be done*/
+	
+			for( l = 0 ; l < MAT_SIZE*MAT_SIZE; l++)
+			{
+				constant_value = vmovq_n_s16 (pmat2[l]);
+				for(j = 0 ; j < MAT_SIZE/8 ; j++)
+				{
+					data1 = vld1q_s16 (&pmat1[index_input]);
+					MAC4 (&MAC_addvalue[j], &constant_value, &data1,&mac_output[j]);
+					//*mac_output = vmlaq_s16 (*additive_value,*data1, *data2);
+					MAC_addvalue[j] = mac_output[j];
+					index_input +=8; //////////////////////////////////////////////////////////////////////////////////////////////////
+				 }
+				if ((l + 1)  % MAT_SIZE == 0 )
+				{
+					index_input = 0; 
+					
+					for( loop = 0 ; loop < MAT_SIZE/8 ; loop++ )
+					{
+						vst1q_s16(&pres[transfer_index ],MAC_addvalue[loop]);
+						transfer_index +=8;
+					}
+
+					for(loop2 = 0 ; loop2 < MAT_SIZE/8; loop2++)
+					{ 
+						MAC_addvalue[loop2] = vmovq_n_s16(0);
+					}	
+				}	
+  		}
+  		
+  		print_flat_matrix(pres, MAT_SIZE, k, j);
+  		
 						//Do the multiplication on the GPP side!
+						/*
 						for (l = SIZE;l < MAT_SIZE; l++)
 						{
 							for (j = 0; j < MAT_SIZE; j++)
@@ -495,6 +576,8 @@ else if (msg->command == 0x02)
 									prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];
 							}
 						}
+						*/
+						///////////////////////////////////////////////////////////////////////
 					}
                 }
 
@@ -628,34 +711,37 @@ else if (msg->command == 0x02)
      
     NORMAL_API Void helloDSP_Main(IN Char8* dspExecutable, IN Char8* strNumIterations, IN Char8* strProcessorId)
     {
+		int i, j;
         DSP_STATUS status = DSP_SOK;
         Uint32 numIterations = 0;
         Uint8 processorId = 0;
+        pmat1 = malloc(MAT_SIZE * MAT_SIZE * sizeof(int16_t));
+        pmat2 = malloc(MAT_SIZE * MAT_SIZE * sizeof(int16_t));
+        pres = malloc(MAT_SIZE * MAT_SIZE * sizeof(int16_t));
+        if (pmat1 == NULL || pmat2 == NULL || pres == NULL) {
+			printf("Out of memory\n");
+		}
         
         /*
          * Generating initial matricies
          */
-		int i, j;
-		for (i = 0; i < MAT_SIZE; i++)
+		for (i = 0; i < MAT_SIZE * MAT_SIZE; i++)
 		{
-			for (j = 0; j < MAT_SIZE; j++)
-			{
-				#ifdef DEBUG
-				mat1[i][j] = i*MAT_SIZE+j;
-				//mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
-				mat2[i][j] = (i == j) ; //identity matrix
-				#else
-				mat1[i][j] = i+j*2;
-				mat2[i][j] = i+j*3;
-				#endif
-			}
+			#ifdef DEBUG
+			pmat1[i] = i;
+			//mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
+			pmat2[i] = (i % MAT_SIZE == i / MAT_SIZE) ; //identity matrix
+			#else
+			pmat1[i] = i+1;
+			pmat2[i] = i+1;
+			#endif
 		}
 
 		/* Debug */
 		#ifdef DEBUG
 		SYSTEM_0Print ("========== Initial matricies ==========\n");
-		print_matrix(mat1, MAT_SIZE, i, j);
-		print_matrix(mat2, MAT_SIZE, i, j);
+		print_flat_matrix(pmat1, MAT_SIZE, i, j);
+		print_flat_matrix(pmat2, MAT_SIZE, i, j);
 		#endif
 		
         SYSTEM_0Print ("========== Matrix Multiplication ==========\n");
@@ -752,7 +838,7 @@ else if (msg->command == 0x02)
 			{
 				prod_ver[l][j]=0;
 				for(k=0; k<MAT_SIZE;k++)
-					prod_ver[l][j] = prod_ver[l][j]+mat1[l][k] * mat2[k][j];
+					prod_ver[l][j] = prod_ver[l][j]+pmat1[l * MAT_SIZE + k] * pmat2[k * MAT_SIZE + j];
 			}
 		}
 		// -- Stop Timer

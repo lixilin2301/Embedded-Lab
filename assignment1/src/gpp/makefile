@@ -46,7 +46,7 @@ SRCS := helloDSP.c system_os.c main.c timer.c
 OBJS :=
 DEBUG :=
 LDFLAGS := -lpthread
-CFLAGS := -DPROFILE
+CFLAGS := -DPROFILE -mfloat-abi=softfp -mfpu=neon
 LIBS :=
 BIN := helloDSPgpp
 
