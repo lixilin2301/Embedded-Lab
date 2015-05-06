@@ -1,7 +1,7 @@
 /** ============================================================================
  *  @file   tskMessage.h
  *
- *  @path   
+ *  @path
  *
  *  @desc   This is simple TSK based application that uses MSGQ. It receives
  *          and transmits messages from/to the GPP and runs the DSP
@@ -64,7 +64,7 @@ typedef struct TSKMESSAGE_TransferInfo_tag {
  *
  *  @desc   Multiply two matricies
  *
- *  @arg    
+ *  @arg
  *
  *  @ret    int prod[SIZE][SIZE]
  *

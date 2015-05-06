@@ -1,7 +1,7 @@
 /** ============================================================================
  *  @file   tskMessage.c
  *
- *  @path   
+ *  @path
  *
  *  @desc   This is simple TSK based application that uses MSGQ. It receives
  *          and transmits messages from/to the GPP and runs the DSP
@@ -60,7 +60,7 @@ int16_t mat2[MAT_SIZE][MAT_SIZE];
  */
 Int TSKMESSAGE_create(TSKMESSAGE_TransferInfo** infoPtr)
 {
-	
+
     Int status = SYS_OK;
     MSGQ_Attrs msgqAttrs = MSGQ_ATTRS;
     TSKMESSAGE_TransferInfo* info = NULL;
@@ -147,7 +147,6 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
     ControlMsg* msg;
     Uint32 i, j, k, l;
     int t1,t2;
-  
 
     /* Allocate and send the message */
     status = MSGQ_alloc(SAMPLE_POOL_ID, (MSGQ_Msg*) &msg, APP_BUFFER_SIZE);
@@ -258,7 +257,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 							msg->mat.m32.mat1[l][j] =  prod[l][j+SIZE];
 						}
 					}
-					
+
 					msg->command = 0x02;
 					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n Second quarter sending now...", i);
 				}
