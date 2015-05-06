@@ -68,7 +68,7 @@ Timer serialTime;
 #define NUMMSGINPOOL2   2
 #define NUMMSGINPOOL3   4
 
-#define MAT_SIZE 8
+#define MAT_SIZE 128
 #define SIZE (MAT_SIZE/2)
 
 /*
@@ -535,7 +535,7 @@ else if (msg->command == 0x02)
 
 	  /* here multiplication will be done*/
 	
-			for( l = 0 ; l < MAT_SIZE*MAT_SIZE; l++)
+			for( l = MAT_SIZE*MAT_SIZE/2 ; l < MAT_SIZE*MAT_SIZE; l++)
 			{
 				constant_value = vmovq_n_s16 (pmat2[l]);
 				for(j = 0 ; j < MAT_SIZE/8 ; j++)
