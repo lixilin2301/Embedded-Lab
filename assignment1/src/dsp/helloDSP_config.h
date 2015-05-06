@@ -1,9 +1,9 @@
 /** ============================================================================
- *  @file   matMult_config.h
+ *  @file   helloDSP_config.h
  *
- *  @path   
+ *  @path  
  *
- *  @desc   Header file for MSGQ and POOL configurations for matMult.
+ *  @desc   Header file for MSGQ and POOL configurations for helloDSP.
  *
  *  @ver    1.10
  *  ============================================================================
@@ -23,7 +23,7 @@ extern "C" {
 #endif /* defined (__cplusplus) */
 
 /*  ----------------------------------- DSP/BIOS Headers            */
-#include "matMultcfg.h"
+#include "helloDSPcfg.h"
 #include <msgq.h>
 #include <pool.h>
 
@@ -35,6 +35,9 @@ extern "C" {
 #include <sma_pool.h>
 #endif /* if defined (MSGQ_ZCPY_LINK) */
 
+
+#include <stdint.h>
+
 /* Name of the MSGQ on the GPP and on the DSP. */
 #define GPP_MSGQNAME        "GPPMSGQ1"
 #define DSP_MSGQNAME        "DSPMSGQ"
@@ -43,15 +46,37 @@ extern "C" {
 #define SAMPLE_POOL_ID      0
 
 /* Argument size passed to the control message queue */
-#define ARG_SIZE 64*128
+#define ARG_SIZE 256
+
+#define MAT_SIZE 128
+#define SIZE (MAT_SIZE/2)
+
+/**
+ * Use a union to be able to send either 2 16bit matrices
+ * or 1 32bit matrix in the same mssage.
+ */
+struct mat2x16 {
+	int16_t mat1[SIZE][SIZE];
+	int16_t mat2[SIZE][SIZE];
+};
+
+struct mat32 {
+	int32_t mat1[SIZE][SIZE];
+};
+
+typedef union {
+	struct mat2x16 m16;
+	struct mat32 m32;
+} mat_t;
 
 /* Control message data structure. */
 /* Must contain a reserved space for the header */
-typedef struct ControlMsg 
+typedef struct ControlMsg
 {
     MSGQ_MsgHeader header;
     Uint16 command;
-    int arg1[ARG_SIZE];
+    Char arg1[ARG_SIZE];
+    mat_t mat;
 } ControlMsg;
 
 /* Messaging buffer used by the application.

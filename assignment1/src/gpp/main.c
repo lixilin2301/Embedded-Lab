@@ -9,7 +9,8 @@
 
 /*  ----------------------------------- Application Header            */
 #include <system_os.h>
-#include "matMult.h"
+#include <helloDSP.h>
+
 
 
 #if defined (__cplusplus)
@@ -33,13 +34,15 @@ extern "C"
         Char8* strProcessorId = NULL;
         Uint8 processorId = 0;
 
+		
+		
         /*	long long _Fract value = atof("2.3");
         	printf("%k\n",value);	*/
 
         if ((argc != 4) && (argc!=3))
         {
             SYSTEM_1Print("Usage : %s <absolute path of DSP executable> <number of transfers> <DSP Processor Id>\n"
-                          "For infinite transfers, use value of 0 for <number of transfers>\n"
+                          "For infinite transfers, use value of 0 for <number of transfers>d\n"
                           "For DSP Processor Id,"
                           "\n\t use value of 0  if sample needs to be run on DSP 0 "
                           "\n\t use value of 1  if sample needs to be run on DSP 1"

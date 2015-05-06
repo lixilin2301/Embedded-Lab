@@ -1,7 +1,7 @@
 /** ============================================================================
  *  @file   tskMessage.c
  *
- *  @path   
+ *  @path
  *
  *  @desc   This is simple TSK based application that uses MSGQ. It receives
  *          and transmits messages from/to the GPP and runs the DSP
@@ -12,13 +12,12 @@
 
 
 /*  ----------------------------------- DSP/BIOS Headers            */
-#include "matMultcfg.h"
+#include "helloDSPcfg.h"
 #include <gbl.h>
 #include <sys.h>
 #include <sem.h>
 #include <msgq.h>
 #include <pool.h>
- #include <stdlib.h>
 
 /*  ----------------------------------- DSP/BIOS LINK Headers       */
 #include <dsplink.h>
@@ -26,16 +25,13 @@
 #include <failure.h>
 
 /*  ----------------------------------- Sample Headers              */
-#include "matMult_config.h"
+#include <helloDSP_config.h>
 #include <tskMessage.h>
-
-#include "matMult.h"
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define PACK_LEN    (info->numTransfers * info->numTransfers * sizeof(int) / 2)
 
 /* FILEID is used by SET_FAILURE_REASON macro. */
 #define FILEID  FID_APP_C
@@ -45,6 +41,11 @@ Uint8 dspMsgQName[DSP_MAX_STRLEN];
 
 /* Number of iterations message transfers to be done by the application. */
 extern Uint16 numTransfers;
+
+/* Local matrices to calculate in */
+int32_t prod[MAT_SIZE][MAT_SIZE];
+int16_t mat1[MAT_SIZE][MAT_SIZE];
+int16_t mat2[MAT_SIZE][MAT_SIZE];
 
 
 /** ============================================================================
@@ -59,6 +60,7 @@ extern Uint16 numTransfers;
  */
 Int TSKMESSAGE_create(TSKMESSAGE_TransferInfo** infoPtr)
 {
+
     Int status = SYS_OK;
     MSGQ_Attrs msgqAttrs = MSGQ_ATTRS;
     TSKMESSAGE_TransferInfo* info = NULL;
@@ -143,8 +145,8 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 {
     Int status = SYS_OK;
     ControlMsg* msg;
-    int *mat1, *mat2, *prod;
-    Uint32 i;
+    Uint32 i, j, k, l;
+    int t1,t2;
 
     /* Allocate and send the message */
     status = MSGQ_alloc(SAMPLE_POOL_ID, (MSGQ_Msg*) &msg, APP_BUFFER_SIZE);
@@ -154,7 +156,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
         MSGQ_setMsgId((MSGQ_Msg) msg, info->sequenceNumber);
         MSGQ_setSrcQueue((MSGQ_Msg) msg, info->localMsgq);
         msg->command = 0x01;
-        msg->arg1[0]=(int)'A';
+        SYS_sprintf(msg->arg1, "DSP is awake!");
 
         status = MSGQ_put(info->locatedMsgq, (MSGQ_Msg) msg);
         if (status != SYS_OK)
@@ -171,10 +173,11 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 
     /* Execute the loop for the configured number of transfers  */
     /* A value of 0 in numTransfers implies infinite iterations */
-    for (i = 0; ( ((i < 4)) && (status == SYS_OK)); i++)
+    for (i = 0; (((info->numTransfers == 0) || (i < info->numTransfers)) && (status == SYS_OK)); i++)
     {
         /* Receive a message from the GPP */
         status = MSGQ_get(info->localMsgq,(MSGQ_Msg*) &msg, SYS_FOREVER);
+        //status = MSGQ_get(info->localMsgq,(MSGQ_Msg*) &msg, SYS_FOREVER);
         if (status == SYS_OK)
         {
             /* Check if the message is an asynchronous error message */
@@ -200,41 +203,64 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
             }
             else
             {
-		        /* Include your control flag or processing code here */
+				/* Include your control flag or processing code here */
+				////////////////////////////////////////////////////////////////////////////////////////////
+				// Do stuff here on DSP!
+				/////////// MATRIX MULTIPLICAION! ///////////////////////
+				if (i < 4) //recieving 4 quarters from GPP and filling in the local structure
+				{
+					memcpy(&mat1[0][0] + i*SIZE*SIZE , msg->mat.m16.mat1, SIZE*SIZE*sizeof(int16_t));
+					memcpy(&mat2[0][0] + i*SIZE*SIZE , msg->mat.m16.mat2, SIZE*SIZE*sizeof(int16_t));
+					msg->command = 0x02;
+					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n", i);
+				}
 
-
-                switch(i) {
-                    case 0:
-                        mat1 = malloc(info->numTransfers * info->numTransfers * sizeof(int));
-                        prod = malloc(info->numTransfers * info->numTransfers * sizeof(int));
-                        if (mat1 == NULL || prod == NULL)
-                        {
-							LOG_printf(&trace, "Malloc error");
+				if ((i == 3) && TRUE)//recieved all data
+				{
+					//Do the multiplication here
+					for (l = 0;l < SIZE; l++)   // <-- this is half of the product caluclations
+					{
+						for (j = 0; j < MAT_SIZE; j++)
+						{
+							prod[l][j]=0;
+							t1 = t2 = 0;
+							for(k=0;k<MAT_SIZE;k+=2)
+							{
+								// Unrolled loop twice to fill both multiply units
+								t1 += mat1[l][k] * mat2[k][j];
+								if (k+1 < MAT_SIZE) {
+									t2 += mat1[l][k+1] * mat2[k+1][j];
+								}
+							}
+							// Split add phase from the multiplication
+							prod[l][j] = t1 + t2;
 						}
-                        memcpy(mat1, msg->arg1, PACK_LEN);
-                        break;
-                    case 1:
-                        memcpy(mat1 + PACK_LEN, msg->arg1, PACK_LEN);
-                        break;
-                    case 2:
-                        mat2 = malloc(info->numTransfers * info->numTransfers * sizeof(int));
-                        if (mat2 == NULL)
-                        {
-							LOG_printf(&trace, "Malloc error");
-						}
-                        memcpy(mat2, msg->arg1, PACK_LEN);
-                        break;
-                    case 3:
-                        memcpy(mat2 + PACK_LEN, msg->arg1, PACK_LEN);
-                        matMult(mat1, mat2, prod, info->numTransfers);
-                        //matMult(mat1, mat2, prod, 32);
 
-                        break;
-                }
-                
-				msg->arg1[0] = (info->numTransfers);
-                msg->command = 0x02;
-                //SYS_sprintf(msg->arg1, "Iteration %d is complete.", i);
+						// Prepare to send back first half of results
+						for (j = 0; j < SIZE; j++)
+						{
+							msg->mat.m32.mat1[l][j] = prod[l][j];
+						}
+					}
+					msg->command = 0x02;
+					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n First quarter sending now... \n %d", i, numTransfers);
+				}
+
+				//LAST ITERATION
+				if (i == 4)
+				{
+					// Send back second half of results
+					for (l = 0;l < SIZE; l++)
+					{
+						for (j = 0; j < SIZE; j++)
+						{
+							msg->mat.m32.mat1[l][j] =  prod[l][j+SIZE];
+						}
+					}
+
+					msg->command = 0x02;
+					SYS_sprintf(msg->arg1, "Iteration %d is complete. \n Second quarter sending now...", i);
+				}
 
                 /* Increment the sequenceNumber for next received message */
                 info->sequenceNumber++;
