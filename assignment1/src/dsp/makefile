@@ -117,7 +117,7 @@ MAPFILE_D := $(OBJDIR_D)/$(MAPFILE)
 #   ----------------------------------------------------------------------------
 #   Compiler and Linker options for Release
 #   ----------------------------------------------------------------------------
-CFLAGS_R := -o3 $(ALL_CFLAGS)
+CFLAGS_R := -O3 -mf5 --single_inline --sat_reassoc=on $(ALL_CFLAGS)
 OBJDIR_R := Release
 BINDIR_R := $(OBJDIR_R)
 OBJS_R := $(CSRCS:%.c=$(OBJDIR_R)/%.obj) $(ASRCS:%.s62=$(OBJDIR_R)/%.obj)
@@ -230,7 +230,7 @@ $(OBJDIR_D)/%.obj : %.s62
 Release: $(BINDIR_R)/$(BIN)
 
 $(BINDIR_R)/$(BIN) : $(OBJS_R)
-	@echo Compiling Release...
+	@echo Compiling Release... $(CFLAGS_R)
 	@$(BASE_COMPILER)/bin/$(CC) $(ALL_LDFLAGS) $(LDINCLUDES_R) -o$@ $(OBJS_R) $(LIBS_R) -m$(MAPFILE_R) $(CMDS)
 
 $(OBJDIR_R)/%.obj : %.c

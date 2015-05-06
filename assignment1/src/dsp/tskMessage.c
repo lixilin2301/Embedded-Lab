@@ -151,6 +151,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
     Int status = SYS_OK;
     ControlMsg* msg;
     Uint32 i, j, k, l;
+    int t1,t2;
   
 
     /* Allocate and send the message */
@@ -224,61 +225,33 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
 					
 					if ((i == 3) && TRUE)//recieved all data
 					{
-						//Do the multiplication here!
-						
-						//startTimer(&totalTime); // START TIMER
-						
+						//Do the multiplication here						
 						for (l = 0;l < SIZE; l++)   // <-- this is half of the product caluclations
-							{
-								for (j = 0; j < MAT_SIZE; j++)
-								{		
-									prod[l][j]=0;
-									for(k=0;k<MAT_SIZE;k++)
-										prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];				
-									
-								}
+						{
+							for (j = 0; j < MAT_SIZE; j++)
+							{		
+								prod[l][j]=0;
+								t1 = t2 = 0;
+								for(k=0;k<MAT_SIZE;k+=2)
+								  {
+									t1 += mat1[l][k]   * mat2[k][j];
+									//if (k+1 < MAT_SIZE)	
+									t2 += mat1[l][k+1] * mat2[k+1][j];		
+								  }
+									prod[l][j] = t1 + t2;
 							}
-
-						//stopTimer(&totalTime);
-						
-						 //sprintf(msg->arg1+strlen(msg->arg1), "DSP caluclation is:  = %g msec\n", totalTime.elapsedTime);
-						
-				
-						
-						for (k = 0;k < SIZE; k++)
+							
+							for (j = 0; j < SIZE; j++)
 							{
-								for (j = 0; j < SIZE; j++)
-								{
-									msg->mat1[k][j] =  prod[k][j];
-									msg->mat2[k][j] =  prod[k][j+SIZE];
-								}
+								msg->mat1[l][j] =  prod[l][j];
+								msg->mat2[l][j] =  prod[l][j+SIZE];
 							}
-						
-						//#define mat_add //Adding two matricies for debugging purposes
-						#ifdef mat_add
-						for (l = 0;l < MAT_SIZE; l++)
-							{
-								for (j = 0; j < MAT_SIZE; j++)
-								{						
-										prod[l][j] = mat1[l][j] + mat2[l][j];
-								}
-							}
-				    	//	memcpy(msg->mat1, prod , SIZE*SIZE*sizeof(int));
-						for (k = 0;k < SIZE; k++)
-							{
-								for (j = 0; j < SIZE; j++)
-								{
-									msg->mat1[k][j] =  prod[k][j]; //sending last quarter
-								}
-							}
-						#endif
+						}
 					}
 					
 					
 					//LAST ITERATION
-					
 					/*
-					 * 
 					if ((i == numTransfers-1) && TRUE)
 					{				
 					}
