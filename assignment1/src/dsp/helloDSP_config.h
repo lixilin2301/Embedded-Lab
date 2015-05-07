@@ -1,7 +1,7 @@
 /** ============================================================================
  *  @file   helloDSP_config.h
  *
- *  @path  
+ *  @path
  *
  *  @desc   Header file for MSGQ and POOL configurations for helloDSP.
  *
@@ -56,17 +56,17 @@ extern "C" {
  * or 1 32bit matrix in the same mssage.
  */
 struct mat2x16 {
-	int16_t mat1[SIZE][SIZE];
-	int16_t mat2[SIZE][SIZE];
+    int16_t mat1[SIZE][SIZE];
+    int16_t mat2[SIZE][SIZE];
 };
 
 struct mat32 {
-	int32_t mat1[SIZE][SIZE];
+    int32_t mat1[SIZE][SIZE];
 };
 
 typedef union {
-	struct mat2x16 m16;
-	struct mat32 m32;
+    struct mat2x16 m16;
+    struct mat32 m32;
 } mat_t;
 
 /* Control message data structure. */

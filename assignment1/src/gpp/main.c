@@ -34,10 +34,10 @@ extern "C"
         Char8* strProcessorId = NULL;
         Uint8 processorId = 0;
 
-		
-		
-        /*	long long _Fract value = atof("2.3");
-        	printf("%k\n",value);	*/
+
+
+        /* long long _Fract value = atof("2.3");
+            printf("%k\n",value); */
 
         if ((argc != 4) && (argc!=3))
         {

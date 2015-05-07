@@ -41,7 +41,7 @@ extern "C"
  */
 #define VERIFY
 //#define DEBUG
- 
+
 Timer totalTime;
 Timer dsp_only;
 Timer serialTime;
@@ -73,22 +73,22 @@ Timer serialTime;
  * 16-bit each
  */
 struct mat2x16 {
-	int16_t mat1[SIZE][SIZE];
-	int16_t mat2[SIZE][SIZE];
+    int16_t mat1[SIZE][SIZE];
+    int16_t mat2[SIZE][SIZE];
 };
 /*
  * Data structure for recieving back quarters of the product matrix from DSP
  * 32-bit each
  */
 struct mat32 {
-	int32_t mat1[SIZE][SIZE];
+    int32_t mat1[SIZE][SIZE];
 };
 /*
  * Union data structure used by ControlMsg
  */
 typedef union {
-	struct mat2x16 m16;
-	struct mat32 m32;
+    struct mat2x16 m16;
+    struct mat32 m32;
 } mat_t;
 
     /* Control message data structure. */
@@ -100,15 +100,15 @@ typedef union {
         Char8 arg1[ARG_SIZE];
         mat_t mat;
     } ControlMsg;
-    
-	NORMAL_API DSP_STATUS helloDSP_Recieve(ControlMsg *msg);
 
-	/**
-	 * Source matrices are heap- allocated while destination matrices
-	 * are statically stack allocated
-	 */
-	int16_t *pmat1, *pmat2, *pres;
-	int32_t prod[MAT_SIZE][MAT_SIZE], prod_ver[MAT_SIZE][MAT_SIZE];
+    NORMAL_API DSP_STATUS helloDSP_Recieve(ControlMsg *msg);
+
+    /**
+     * Source matrices are heap- allocated while destination matrices
+     * are statically stack allocated
+     */
+    int16_t *pmat1, *pmat2, *pres;
+    int32_t prod[MAT_SIZE][MAT_SIZE], prod_ver[MAT_SIZE][MAT_SIZE];
 
     /* Messaging buffer used by the application.
      * Note: This buffer must be aligned according to the alignment expected
@@ -165,23 +165,23 @@ typedef union {
     /* Extern declaration to the default DSP/BIOS LINK configuration structure. */
     extern LINKCFG_Object LINKCFG_config;
 
-	/*
-	 * Some macro's for different ways of printing the matrices
-	 */
-	#define max(a, b) (a > b ? a : b)
-	#define _gen_print_matrix(mat, size, k, j, expr, from)	\
-		for (k = from; k < size; k++)					\
-		{												\
-			printf("\n");								\
-			for (j = from; j < size; j++)				\
-			{											\
-				printf("\t%d ", expr);					\
-			}											\
-		}												\
-		printf("\n");									
-	#define print_matrix(mat, size, k, j)		_gen_print_matrix(mat, size, k, j, mat[k][j], max(0, (size - 10)))
-	#define print_flat_matrix(mat, size, k, j)	_gen_print_matrix(mat, size, k, j, mat[k * size + j], max(0, (size - 10)))
-	#define print_full_matrix(mat, size, k, j)	_gen_print_matrix(mat, size, k, j, mat[k][j], 0)
+    /*
+     * Some macro's for different ways of printing the matrices
+     */
+    #define max(a, b) (a > b ? a : b)
+    #define _gen_print_matrix(mat, size, k, j, expr, from)    \
+        for (k = from; k < size; k++)                    \
+        {                                                \
+            printf("\n");                                \
+            for (j = from; j < size; j++)                \
+            {                                            \
+                printf("\t%d ", expr);                    \
+            }                                            \
+        }                                                \
+        printf("\n");
+    #define print_matrix(mat, size, k, j)        _gen_print_matrix(mat, size, k, j, mat[k][j], max(0, (size - 10)))
+    #define print_flat_matrix(mat, size, k, j)    _gen_print_matrix(mat, size, k, j, mat[k * size + j], max(0, (size - 10)))
+    #define print_full_matrix(mat, size, k, j)    _gen_print_matrix(mat, size, k, j, mat[k][j], 0)
 
 #if defined (VERIFY_DATA)
     /** ============================================================================
@@ -209,15 +209,15 @@ typedef union {
         MSGQ_LocateAttrs syncLocateAttrs;
         Char8* args[NUM_ARGS];
 
-		/*
-		 * Initialize the timers
-		 */
-		initTimer(&totalTime, "Total execution time");
-		initTimer(&dsp_only,  "Total execution time (w/o comm oh.)");
-		initTimer(&serialTime,  "Serial execution time");
-	
+        /*
+         * Initialize the timers
+         */
+        initTimer(&totalTime, "Total execution time");
+        initTimer(&dsp_only,  "Total execution time (w/o comm oh.)");
+        initTimer(&serialTime,  "Serial execution time");
+
         SYSTEM_0Print("Entered helloDSP_Create ()\n");
-        
+
         /* Create and initialize the proc object. */
         status = PROC_setup(NULL);
 
@@ -277,9 +277,9 @@ typedef union {
                 SYSTEM_1Print("PROC_load () failed. Status = [0x%x]\n", status);
             }
         }
-	
-		 SYSTEM_0Print("  Executable loaded onto DSP! \n");
-		 
+
+         SYSTEM_0Print("  Executable loaded onto DSP! \n");
+
         /* Start execution on DSP. */
         if (DSP_SUCCEEDED(status))
         {
@@ -321,8 +321,8 @@ typedef union {
                 }
             }
         }
-        
-		SYSTEM_0Print("  DSP opened a message queue named \"DSPMSGQ\" \n");
+
+        SYSTEM_0Print("  DSP opened a message queue named \"DSPMSGQ\" \n");
         SYSTEM_0Print("Leaving helloDSP_Create ()\n");
         return status;
     }
@@ -335,12 +335,12 @@ typedef union {
      *  @modif  None
      *  ============================================================================
      */
-     
-     
-	inline void MAC4 (int16x8_t *additive_value, int16x8_t *data1, int16x8_t *data2,int16x8_t *mac_output)
-	{
-		*mac_output = vmlaq_s16 (*additive_value,*data1, *data2);
-	}
+
+
+    inline void MAC4 (int16x8_t *additive_value, int16x8_t *data1, int16x8_t *data2,int16x8_t *mac_output)
+    {
+        *mac_output = vmlaq_s16 (*additive_value,*data1, *data2);
+    }
 
     NORMAL_API DSP_STATUS helloDSP_Execute(IN Uint32 numIterations, Uint8 processorId)
     {
@@ -349,7 +349,7 @@ typedef union {
         Uint16 msgId = 0;
         Uint32 i, j, l;
 #ifdef DEBUG
-		Uint32 k;
+        Uint32 k;
 #endif
 
         ControlMsg *msg;
@@ -362,32 +362,32 @@ typedef union {
 
         for (i = 1 ; ((numIterations == 0) || (i <= (numIterations + 1))) && (DSP_SUCCEEDED (status)); i++)
         {
-			/* Receive the message. */
+            /* Receive the message. */
 #ifdef DEBUG
-			printf("Waiting for message %u\n", i);
+            printf("Waiting for message %u\n", i);
 #endif
-			status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
-			if (DSP_FAILED(status))
-			{
-				SYSTEM_1Print("MSGQ_get () failed. Status = [0x%x]\n", status);
-			}
+            status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
+            if (DSP_FAILED(status))
+            {
+                SYSTEM_1Print("MSGQ_get () failed. Status = [0x%x]\n", status);
+            }
 #if defined (VERIFY_DATA)
-			/* Verify correctness of data received. */
-			if (DSP_SUCCEEDED(status))
-			{
-				status = helloDSP_VerifyData(msg, sequenceNumber);
-				if (DSP_FAILED(status))
-				{
-					MSGQ_free((MsgqMsg) msg);
-				}
-			}
+            /* Verify correctness of data received. */
+            if (DSP_SUCCEEDED(status))
+            {
+                status = helloDSP_VerifyData(msg, sequenceNumber);
+                if (DSP_FAILED(status))
+                {
+                    MSGQ_free((MsgqMsg) msg);
+                }
+            }
 #endif
 
 #ifdef DEBUG
-			if (msg->command == 0x01)
-				SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
-			else if (msg->command == 0x02)
-				SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
+            if (msg->command == 0x01)
+                SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
+            else if (msg->command == 0x02)
+                SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
 #endif
             /*
              * Message one before last
@@ -395,68 +395,68 @@ typedef union {
              */
             if ((numIterations != 0) && (i == (numIterations)))
             {
-				/*
-				 * Stop all timers, since DSP is already done it's cauclations
-				 */
-				printf("\nTiming information:\n\n");
-				stopTimer(&totalTime);
-				stopTimer(&dsp_only);
-				//printf("Parallel calculation time including communication overhead is: \n");
-				printTimer(&totalTime);
-				//printf("DSP Time only: \n");
-				printTimer(&dsp_only);
-				
-				/*
-				 * Fill in the product matrix here (on GPP) with the results from DSP
-				 */
-				for (l = 0;l < SIZE; l++)   
-				{
-					for (j = 0; j < SIZE; j++)
-					{		
-						prod[l][j] = msg->mat.m32.mat1[l][j];		
-					}
-				}
+                /*
+                 * Stop all timers, since DSP is already done it's cauclations
+                 */
+                printf("\nTiming information:\n\n");
+                stopTimer(&totalTime);
+                stopTimer(&dsp_only);
+                //printf("Parallel calculation time including communication overhead is: \n");
+                printTimer(&totalTime);
+                //printf("DSP Time only: \n");
+                printTimer(&dsp_only);
+
+                /*
+                 * Fill in the product matrix here (on GPP) with the results from DSP
+                 */
+                for (l = 0;l < SIZE; l++)
+                {
+                    for (j = 0; j < SIZE; j++)
+                    {
+                        prod[l][j] = msg->mat.m32.mat1[l][j];
+                    }
+                }
 #ifdef DEBUG
-				printf("\nMessage #1 back from DSP: msg->mat.m32.mat1 \n");
-				print_matrix(msg->mat.m32.mat1, SIZE, k, j);
-				//print_full_matrix(prod, MAT_SIZE, k, j);
+                printf("\nMessage #1 back from DSP: msg->mat.m32.mat1 \n");
+                print_matrix(msg->mat.m32.mat1, SIZE, k, j);
+                //print_full_matrix(prod, MAT_SIZE, k, j);
 #endif
-				status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg); //just need to send some stuff	
-				if (DSP_FAILED(status))
-				{
-					MSGQ_free((MsgqMsg) msg);
-					SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
-				}
-			}
-			/*
+                status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg); //just need to send some stuff
+                if (DSP_FAILED(status))
+                {
+                    MSGQ_free((MsgqMsg) msg);
+                    SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
+                }
+            }
+            /*
              * Final message from the DSP
              * here we recieve the second 1/2 of 1/2 of the product from the DSP
              */
             else if ((numIterations != 0) && (i == (numIterations + 1)))
             {
-				for (l = 0;l < SIZE; l++)
-				{
-					for (j = 0; j < SIZE; j++)
-					{
-						prod[l][j+SIZE] = msg->mat.m32.mat1[l][j];		
-					}
-				}
-				
+                for (l = 0;l < SIZE; l++)
+                {
+                    for (j = 0; j < SIZE; j++)
+                    {
+                        prod[l][j+SIZE] = msg->mat.m32.mat1[l][j];
+                    }
+                }
+
 #ifdef DEBUG
-				printf("\nMessage #2 back from DSP: msg->mat.m32.mat1 \n");
-				print_matrix(msg->mat.m32.mat1, SIZE, k, j);
+                printf("\nMessage #2 back from DSP: msg->mat.m32.mat1 \n");
+                print_matrix(msg->mat.m32.mat1, SIZE, k, j);
 #endif
 
 #ifdef VERIFY
-				printf("%s\n\n", (helloDSP_VerifyCalculations() ? "SUCCESS!" : "Failure!"));
+                printf("%s\n\n", (helloDSP_VerifyCalculations() ? "SUCCESS!" : "Failure!"));
 #endif
 
 #ifdef DEBUG
-				printf("Calculated product: \n");
-				print_matrix(prod, MAT_SIZE, k, j);
-				
-				printf("Correct product: \n");
-				print_matrix(prod_ver, MAT_SIZE, k, j);
+                printf("Calculated product: \n");
+                print_matrix(prod, MAT_SIZE, k, j);
+
+                printf("Correct product: \n");
+                print_matrix(prod_ver, MAT_SIZE, k, j);
 #endif
                 MSGQ_free((MsgqMsg) msg);
             }
@@ -464,28 +464,28 @@ typedef union {
             {
                 /* Send the same message received in earlier MSGQ_get () call. */
                 if (DSP_SUCCEEDED(status))
-                {					
-					msgId = MSGQ_getMsgId(msg);
-					MSGQ_setMsgId(msg, msgId);
-				
-					if (i==1) startTimer(&totalTime); // START the overall timer
+                {
+                    msgId = MSGQ_getMsgId(msg);
+                    MSGQ_setMsgId(msg, msgId);
 
-					/* Sending the four quarters, one in each iteration */
-					memcpy(msg->mat.m16.mat1, (pmat1 + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
-					memcpy(msg->mat.m16.mat2, (pmat2 + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
+                    if (i==1) startTimer(&totalTime); // START the overall timer
 
-					status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
-					
-					if (DSP_FAILED(status))
-					{
-						MSGQ_free((MsgqMsg) msg);
-						SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
-					}
-					
-					if (i == 4) //Sent fourth quarter
-					{
-						performMultiplications();
-					}
+                    /* Sending the four quarters, one in each iteration */
+                    memcpy(msg->mat.m16.mat1, (pmat1 + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
+                    memcpy(msg->mat.m16.mat2, (pmat2 + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
+
+                    status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg);
+
+                    if (DSP_FAILED(status))
+                    {
+                        MSGQ_free((MsgqMsg) msg);
+                        SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
+                    }
+
+                    if (i == 4) //Sent fourth quarter
+                    {
+                        performMultiplications();
+                    }
                 }
 
                 sequenceNumber++;
@@ -615,10 +615,10 @@ typedef union {
      *  @modif  None
      *  ============================================================================
      */
-     
+
     NORMAL_API Void helloDSP_Main(IN Char8* dspExecutable, IN Char8* strNumIterations, IN Char8* strProcessorId)
     {
-		int i;
+        int i;
         DSP_STATUS status = DSP_SOK;
         Uint32 numIterations = 0;
         Uint8 processorId = 0;
@@ -626,28 +626,28 @@ typedef union {
         pmat2 = malloc(MAT_SIZE * MAT_SIZE * sizeof(int16_t));
         pres = malloc(MAT_SIZE * MAT_SIZE * sizeof(int16_t));
         if (pmat1 == NULL || pmat2 == NULL || pres == NULL) {
-			printf("Out of memory\n");
-		}
-        
+            printf("Out of memory\n");
+        }
+
         /*
          * Generating initial matricies
          */
-		for (i = 0; i < MAT_SIZE * MAT_SIZE; i++)
-		{
+        for (i = 0; i < MAT_SIZE * MAT_SIZE; i++)
+        {
 #ifdef DEBUG
-		    pmat1[i] = i;//i;
-			//mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
-			pmat2[i] = (i % MAT_SIZE == i / MAT_SIZE) ; //identity matrix
+            pmat1[i] = i;//i;
+            //mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
+            pmat2[i] = (i % MAT_SIZE == i / MAT_SIZE) ; //identity matrix
 #else
-			pmat1[i] = i*13+1;
-			pmat2[i] = i*7+1;
+            pmat1[i] = i*13+1;
+            pmat2[i] = i*7+1;
 #endif
-		}
+        }
 
 #ifdef DEBUG
-		SYSTEM_0Print ("========== Initial matricies ==========\n");
-		print_flat_matrix(pmat1, MAT_SIZE, i, j);
-		print_flat_matrix(pmat2, MAT_SIZE, i, j);
+        SYSTEM_0Print ("========== Initial matricies ==========\n");
+        print_flat_matrix(pmat1, MAT_SIZE, i, j);
+        print_flat_matrix(pmat2, MAT_SIZE, i, j);
 #endif
 
         SYSTEM_0Print ("========== Matrix Multiplication ==========\n");
@@ -719,147 +719,147 @@ typedef union {
         return status;
     }
 #endif /* if defined (VERIFY_DATA) */
-	
-	 /** ============================================================================
-	 *  @func   helloDSP_VerifyCalculations
-	 *
-	 *  @desc   This function verifies if the calculated product is equal
-	 * 			to the actual product
-	 *  @ret    success
-	 * 				The products match!
-	 * 			!success
-	 * 				Failure. Products do not match
-	 * 
-	 *  ============================================================================
-	 */
-	NORMAL_API int helloDSP_VerifyCalculations(void)
-	{
-		int l, j, k, success;
-		
-		// --Start Timer
-		startTimer(&serialTime);
-		for (l = 0;l < MAT_SIZE; l++)
-		{
-			for (j = 0; j < MAT_SIZE; j++)
-			{
-				prod_ver[l][j]=0;
-				for(k=0; k<MAT_SIZE;k++)
-				{
-					prod_ver[l][j] = prod_ver[l][j]+pmat1[l * MAT_SIZE + k] * pmat2[k * MAT_SIZE + j];
-				}
-			}
-		}
-		// -- Stop Timer
-		stopTimer(&serialTime);
-		//printf("Serial calculation time is: \n");
-		printTimer(&serialTime);
-		
-		printf("Verification: \n");
-		success = 1;
-		for (k = 0; (k < MAT_SIZE) && success; k++)
-		{
-			for (j = 0; j < MAT_SIZE; j++)
-			{
-			  if ((int16_t)prod_ver[k][j] != (int16_t)prod[k][j])
-				{
-				   success = 0;
-				   break;
-				}
-			}
-		}
-		return success;
-	}
 
-	NORMAL_API DSP_STATUS helloDSP_Recieve(ControlMsg *msg)
-	{
-		DSP_STATUS status = DSP_SOK;
-		/* Receive the message. */
-		status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
-		if (DSP_FAILED(status))
-		{
-			SYSTEM_1Print("MSGQ_get () failed. Status = [0x%x]\n", status);
-		}
+     /** ============================================================================
+     *  @func   helloDSP_VerifyCalculations
+     *
+     *  @desc   This function verifies if the calculated product is equal
+     *             to the actual product
+     *  @ret    success
+     *                 The products match!
+     *             !success
+     *                 Failure. Products do not match
+     *
+     *  ============================================================================
+     */
+    NORMAL_API int helloDSP_VerifyCalculations(void)
+    {
+        int l, j, k, success;
+
+        // --Start Timer
+        startTimer(&serialTime);
+        for (l = 0;l < MAT_SIZE; l++)
+        {
+            for (j = 0; j < MAT_SIZE; j++)
+            {
+                prod_ver[l][j]=0;
+                for(k=0; k<MAT_SIZE;k++)
+                {
+                    prod_ver[l][j] = prod_ver[l][j]+pmat1[l * MAT_SIZE + k] * pmat2[k * MAT_SIZE + j];
+                }
+            }
+        }
+        // -- Stop Timer
+        stopTimer(&serialTime);
+        //printf("Serial calculation time is: \n");
+        printTimer(&serialTime);
+
+        printf("Verification: \n");
+        success = 1;
+        for (k = 0; (k < MAT_SIZE) && success; k++)
+        {
+            for (j = 0; j < MAT_SIZE; j++)
+            {
+              if ((int16_t)prod_ver[k][j] != (int16_t)prod[k][j])
+                {
+                   success = 0;
+                   break;
+                }
+            }
+        }
+        return success;
+    }
+
+    NORMAL_API DSP_STATUS helloDSP_Recieve(ControlMsg *msg)
+    {
+        DSP_STATUS status = DSP_SOK;
+        /* Receive the message. */
+        status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
+        if (DSP_FAILED(status))
+        {
+            SYSTEM_1Print("MSGQ_get () failed. Status = [0x%x]\n", status);
+        }
 #if defined (VERIFY_DATA)
-		/* Verify correctness of data received. */
-		if (DSP_SUCCEEDED(status))
-		{
-			status = helloDSP_VerifyData(msg, sequenceNumber);
-			if (DSP_FAILED(status))
-			{
-				MSGQ_free((MsgqMsg) msg);
-			}
-		}
+        /* Verify correctness of data received. */
+        if (DSP_SUCCEEDED(status))
+        {
+            status = helloDSP_VerifyData(msg, sequenceNumber);
+            if (DSP_FAILED(status))
+            {
+                MSGQ_free((MsgqMsg) msg);
+            }
+        }
 #endif
-		return status;
-	}
-	
-	NORMAL_API void performMultiplications(void)
-	{
-		int l, k;
-		int16x8_t data1;
-		int16x8_t mac_output[MAT_SIZE/8];
-		int16x8_t MAC_addvalue[MAT_SIZE/8];
-		unsigned int index_input = 0;
-		int16x8_t constant_value;
-		unsigned int transfer_index = 0 ;
-		
-		startTimer(&dsp_only); // START TIMER for DSP
+        return status;
+    }
 
-		for(l = 0 ; l < MAT_SIZE/8; l++)
-		{ 
-			MAC_addvalue[l] = vmovq_n_s16(0);
-		}
+    NORMAL_API void performMultiplications(void)
+    {
+        int l, k;
+        int16x8_t data1;
+        int16x8_t mac_output[MAT_SIZE/8];
+        int16x8_t MAC_addvalue[MAT_SIZE/8];
+        unsigned int index_input = 0;
+        int16x8_t constant_value;
+        unsigned int transfer_index = 0 ;
 
-		/* here the multiplications will be done */
-		for(l = MAT_SIZE*MAT_SIZE/2; l < MAT_SIZE*MAT_SIZE; l++)
-		{
-			constant_value = vmovq_n_s16 (pmat1[l]);
-			for(k = 0 ; k < MAT_SIZE/8 ; k++)
-			{
-				data1 = vld1q_s16 (&pmat2[index_input]);
-				MAC4 (&MAC_addvalue[k], &constant_value, &data1,&mac_output[k]);
-				MAC_addvalue[k] = mac_output[k];
-				index_input +=8;
-			}
-			if ((l + 1) % MAT_SIZE == 0 )
-			{
-				index_input = 0; 
-				
-				for(k = 0 ; k < MAT_SIZE/8 ; k++)
-				{
-					vst1q_s16(&pres[transfer_index],MAC_addvalue[k]);
-					transfer_index +=8;
-				}
+        startTimer(&dsp_only); // START TIMER for DSP
 
-				for(k = 0 ; k < MAT_SIZE/8; k++)
-				{ 
-					MAC_addvalue[k] = vmovq_n_s16(0);
-				}
-			}
-		}
+        for(l = 0 ; l < MAT_SIZE/8; l++)
+        {
+            MAC_addvalue[l] = vmovq_n_s16(0);
+        }
 
-		for (l = SIZE;l < MAT_SIZE; l++)
-		{
-		  for (k = 0; k < MAT_SIZE; k++)
-		  {
-			prod[l][k] = (int32_t)pres[(l-SIZE)*MAT_SIZE+k];
-		  }
-		}
-		
-		//Without NEON!//
-		//Do the multiplication on the GPP side!
-		/*
-		for (l = SIZE;l < MAT_SIZE; l++)
-		{
-			for (j = 0; j < MAT_SIZE; j++)
-			{
-				prod[l][j]=0;
-				for(k=0;k<MAT_SIZE;k++)
-					prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];
-			}
-		}
-		*/
-	}
+        /* here the multiplications will be done */
+        for(l = MAT_SIZE*MAT_SIZE/2; l < MAT_SIZE*MAT_SIZE; l++)
+        {
+            constant_value = vmovq_n_s16 (pmat1[l]);
+            for(k = 0 ; k < MAT_SIZE/8 ; k++)
+            {
+                data1 = vld1q_s16 (&pmat2[index_input]);
+                MAC4 (&MAC_addvalue[k], &constant_value, &data1,&mac_output[k]);
+                MAC_addvalue[k] = mac_output[k];
+                index_input +=8;
+            }
+            if ((l + 1) % MAT_SIZE == 0 )
+            {
+                index_input = 0;
+
+                for(k = 0 ; k < MAT_SIZE/8 ; k++)
+                {
+                    vst1q_s16(&pres[transfer_index],MAC_addvalue[k]);
+                    transfer_index +=8;
+                }
+
+                for(k = 0 ; k < MAT_SIZE/8; k++)
+                {
+                    MAC_addvalue[k] = vmovq_n_s16(0);
+                }
+            }
+        }
+
+        for (l = SIZE;l < MAT_SIZE; l++)
+        {
+          for (k = 0; k < MAT_SIZE; k++)
+          {
+            prod[l][k] = (int32_t)pres[(l-SIZE)*MAT_SIZE+k];
+          }
+        }
+
+        //Without NEON!//
+        //Do the multiplication on the GPP side!
+        /*
+        for (l = SIZE;l < MAT_SIZE; l++)
+        {
+            for (j = 0; j < MAT_SIZE; j++)
+            {
+                prod[l][j]=0;
+                for(k=0;k<MAT_SIZE;k++)
+                    prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];
+            }
+        }
+        */
+    }
 
 #if defined (__cplusplus)
 }
