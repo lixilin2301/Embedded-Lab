@@ -169,16 +169,16 @@ typedef union {
 	 */
 	 
 	#define max(a, b) (a > b ? a : b)
-	#define print_matrix(mat, size, k, j)			\
+	#define print_matrix(mat, size, k, j)			    \
 		for (k = max(0, (size - 10)); k < size; k++)	\
 		{												\
 			printf("\n");								\
 			for (j = max(0, (size - 10)); j < size; j++)\
 			{											\
-				printf("\t%d ", mat[k][j]);			\
+				printf("\t%d ", mat[k][j]);			    \
 			}											\
 		}												\
-		printf("\n");
+		printf("\n");									
 		
 	#define print_flat_matrix(mat, size, k, j)			\
 		for (k = max(0, (size - 10)); k < size; k++)	\
@@ -189,7 +189,18 @@ typedef union {
 				printf("\t%d ", mat[k * size + j]);		\
 			}											\
 		}												\
-		printf("\n");
+		printf("\n");									
+		
+	#define print_full_matrix(mat, size, k, j)			    \
+		for (k = 0; k < size; k++)	\
+		{												\
+			printf("\n");								\
+			for (j = 0; j < size; j++)\
+			{											\
+				printf("\t%d ", mat[k][j]);			    \
+			}											\
+		}												\
+		printf("\n");		
 
 #if defined (VERIFY_DATA)
     /** ============================================================================
@@ -452,7 +463,8 @@ else if (msg->command == 0x02)
 				/* Debug */
 				#ifdef DEBUG
 				printf("\nMessage #1 back from DSP: msg->mat.m32.mat1 \n");
-				print_flat_matrix(pres, MAT_SIZE, k, j);
+				print_matrix(msg->mat.m32.mat1, SIZE, k, j);
+				//print_full_matrix(prod, MAT_SIZE, k, j);
 				#endif
 				
 				status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg); //just need to send some stuff	
@@ -477,6 +489,11 @@ else if (msg->command == 0x02)
 					}
 				}
 				
+				#ifdef DEBUG
+				printf("\nMessage #2 back from DSP: msg->mat.m32.mat1 \n");
+				print_matrix(msg->mat.m32.mat1, SIZE, k, j);
+				#endif
+				
 				/*
 				 * Verification
 				 */
@@ -487,9 +504,6 @@ else if (msg->command == 0x02)
 								
 				/* Debug */
 				#ifdef DEBUG
-				printf("\nMessage #2 back from DSP: msg->mat.m32.mat1 \n");
-				print_matrix(msg->mat.m32.mat1, SIZE, k, j);
-	
 				printf("Calculated product: \n");
 				print_matrix(prod, MAT_SIZE, k, j);
 				
@@ -570,22 +584,21 @@ else if (msg->command == 0x02)
 			    prod[l][j] = (int32_t)pres[(l-SIZE)*MAT_SIZE+j];
 			  }
 			}
-
-  		print_flat_matrix(pres, MAT_SIZE, k, j);
-
-						//Do the multiplication on the GPP side!
-						/*
-						for (l = SIZE;l < MAT_SIZE; l++)
-						{
-							for (j = 0; j < MAT_SIZE; j++)
-							{
-								prod[l][j]=0;
-								for(k=0;k<MAT_SIZE;k++)
-									prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];
-							}
-						}
-						*/
-						///////////////////////////////////////////////////////////////////////
+			
+			//Without NEON!//
+			//Do the multiplication on the GPP side!
+			/*
+			for (l = SIZE;l < MAT_SIZE; l++)
+			{
+				for (j = 0; j < MAT_SIZE; j++)
+				{
+					prod[l][j]=0;
+					for(k=0;k<MAT_SIZE;k++)
+						prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];
+				}
+			}
+			*/
+			///////////////////////////////////////////////////////////////////////
 					}
                 }
 
@@ -736,9 +749,9 @@ else if (msg->command == 0x02)
 		for (i = 0; i < MAT_SIZE * MAT_SIZE; i++)
 		{
 			#ifdef DEBUG
-		        pmat1[i] = i*13+1;//i;
+		    pmat1[i] = i;//i;
 			//mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
-			pmat2[i] = i*7+1;//(i % MAT_SIZE == i / MAT_SIZE) ; //identity matrix
+			pmat2[i] = (i % MAT_SIZE == i / MAT_SIZE) ; //identity matrix
 			#else
 			pmat1[i] = i*13+1;
 			pmat2[i] = i*7+1;
