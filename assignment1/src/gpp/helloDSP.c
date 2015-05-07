@@ -165,42 +165,23 @@ typedef union {
     extern LINKCFG_Object LINKCFG_config;
 
 	/*
-	 * Define a macro to print the matricies
+	 * Some macro's for different ways of printing the matrices
 	 */
 	 
 	#define max(a, b) (a > b ? a : b)
-	#define print_matrix(mat, size, k, j)			    \
-		for (k = max(0, (size - 10)); k < size; k++)	\
+	#define _gen_print_matrix(mat, size, k, j, expr, from)	\
+		for (k = from; k < size; k++)					\
 		{												\
 			printf("\n");								\
-			for (j = max(0, (size - 10)); j < size; j++)\
+			for (j = from; j < size; j++)				\
 			{											\
-				printf("\t%d ", mat[k][j]);			    \
+				printf("\t%d ", expr);					\
 			}											\
 		}												\
 		printf("\n");									
-		
-	#define print_flat_matrix(mat, size, k, j)			\
-		for (k = max(0, (size - 10)); k < size; k++)	\
-		{												\
-			printf("\n");								\
-			for (j = max(0, (size - 10)); j < size; j++)\
-			{											\
-				printf("\t%d ", mat[k * size + j]);		\
-			}											\
-		}												\
-		printf("\n");									
-		
-	#define print_full_matrix(mat, size, k, j)			    \
-		for (k = 0; k < size; k++)	\
-		{												\
-			printf("\n");								\
-			for (j = 0; j < size; j++)\
-			{											\
-				printf("\t%d ", mat[k][j]);			    \
-			}											\
-		}												\
-		printf("\n");		
+	#define print_matrix(mat, size, k, j)		_gen_print_matrix(mat, size, k, j, mat[k][j], max(0, (size - 10)))
+	#define print_flat_matrix(mat, size, k, j)	_gen_print_matrix(mat, size, k, j, mat[k * size + j], max(0, (size - 10)))
+	#define print_full_matrix(mat, size, k, j)	_gen_print_matrix(mat, size, k, j, mat[k][j], 0)
 
 #if defined (VERIFY_DATA)
     /** ============================================================================
