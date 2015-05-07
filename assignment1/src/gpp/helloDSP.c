@@ -39,7 +39,7 @@ extern "C"
  * Uncomment DEBUG if you want debug information
  */
  
-#define DEBUG
+//#define DEBUG
 
 /*
  * Initialize timers
@@ -537,10 +537,10 @@ else if (msg->command == 0x02)
 	
 			for( l = MAT_SIZE*MAT_SIZE/2 ; l < MAT_SIZE*MAT_SIZE; l++)
 			{
-				constant_value = vmovq_n_s16 (pmat2[l]);
+				constant_value = vmovq_n_s16 (pmat1[l]);
 				for(j = 0 ; j < MAT_SIZE/8 ; j++)
 				{
-					data1 = vld1q_s16 (&pmat1[index_input]);
+					data1 = vld1q_s16 (&pmat2[index_input]);
 					MAC4 (&MAC_addvalue[j], &constant_value, &data1,&mac_output[j]);
 					//*mac_output = vmlaq_s16 (*additive_value,*data1, *data2);
 					MAC_addvalue[j] = mac_output[j];
@@ -552,7 +552,7 @@ else if (msg->command == 0x02)
 					
 					for( loop = 0 ; loop < MAT_SIZE/8 ; loop++ )
 					{
-						vst1q_s16(&pres[transfer_index ],MAC_addvalue[loop]);
+						vst1q_s16(&pres[transfer_index],MAC_addvalue[loop]);
 						transfer_index +=8;
 					}
 
@@ -561,10 +561,18 @@ else if (msg->command == 0x02)
 						MAC_addvalue[loop2] = vmovq_n_s16(0);
 					}	
 				}	
-  		}
+			}
   		
+			for (l = SIZE;l < MAT_SIZE; l++)
+			{
+			  for (j = 0; j < MAT_SIZE; j++)
+			  {
+			    prod[l][j] = (int32_t)pres[(l-SIZE)*MAT_SIZE+j];
+			  }
+			}
+
   		print_flat_matrix(pres, MAT_SIZE, k, j);
-  		
+
 						//Do the multiplication on the GPP side!
 						/*
 						for (l = SIZE;l < MAT_SIZE; l++)
@@ -728,12 +736,12 @@ else if (msg->command == 0x02)
 		for (i = 0; i < MAT_SIZE * MAT_SIZE; i++)
 		{
 			#ifdef DEBUG
-			pmat1[i] = i;
+		        pmat1[i] = i*13+1;//i;
 			//mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
-			pmat2[i] = (i % MAT_SIZE == i / MAT_SIZE) ; //identity matrix
+			pmat2[i] = i*7+1;//(i % MAT_SIZE == i / MAT_SIZE) ; //identity matrix
 			#else
-			pmat1[i] = i+1;
-			pmat2[i] = i+1;
+			pmat1[i] = i*13+1;
+			pmat2[i] = i*7+1;
 			#endif
 		}
 
@@ -852,7 +860,7 @@ else if (msg->command == 0x02)
 		{
 			for (j = 0; j < MAT_SIZE; j++)
 			{
-				if (prod_ver[k][j] != prod[k][j])
+			  if ((int16_t)prod_ver[k][j] != (int16_t)prod[k][j])
 				{
 				   success = 0;
 				   break;
