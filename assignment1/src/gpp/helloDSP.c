@@ -40,7 +40,7 @@ extern "C"
  * verification
  */
 #define VERIFY
-#define DEBUG
+//#define DEBUG
 
 Timer totalTime;
 Timer dsp_only;
@@ -416,9 +416,9 @@ typedef union {
                 /*
                  * Fill in the product matrix here (on GPP) with the results from DSP
                  */
-                for (l = 0;l < SIZE; l++)
+                for (l = 0;l < size/2; l++)
                 {
-                    for (j = 0; j < SIZE; j++)
+                    for (j = 0; j < size/2; j++)
                     {
                         prod[l][j] = msg->mat.m32.mat1[l][j];
                     }
@@ -441,11 +441,11 @@ typedef union {
              */
             else if ((NUM_ITERATIONS != 0) && (i == (NUM_ITERATIONS + 1)))
             {
-                for (l = 0;l < SIZE; l++)
+                for (l = 0;l < size/2; l++)
                 {
-                    for (j = 0; j < SIZE; j++)
+                    for (j = 0; j < size/2; j++)
                     {
-                        prod[l][j+SIZE] = msg->mat.m32.mat1[l][j];
+                        prod[l][j+size/2] = msg->mat.m32.mat1[l][j];
                     }
                 }
 
@@ -838,10 +838,10 @@ typedef union {
         }
 
         /* here the multiplications will be done */
-        for(l = size*size/2; l < size*size; l++)
+        for(l = MAT_SIZE*size/2; l < MAT_SIZE*size; l++)
         {
             constant_value = vmovq_n_s16 (pmat1[l]);
-            for(k = 0 ; k < size/8 ; k++)
+            for(k = 0 ; k < MAT_SIZE/8 ; k++)
             {
                 data1 = vld1q_s16 (&pmat2[index_input]);
                 MAC4 (&MAC_addvalue[k], &constant_value, &data1,&mac_output[k]);
@@ -869,7 +869,7 @@ typedef union {
         {
           for (k = 0; k < size; k++)
           {
-            prod[l][k] = (int32_t)pres[(l-size/2)*size+k];
+            prod[l][k] = (int32_t)pres[(l-size/2)*MAT_SIZE+k];
           }
         }
 

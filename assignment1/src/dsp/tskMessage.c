@@ -255,7 +255,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
                     {
                         for (j = 0; j < SIZE; j++)
                         {
-                            msg->mat.m32.mat1[l][j] =  prod[l][j+SIZE];
+                            msg->mat.m32.mat1[l][j] =  prod[l][j+msg->size/2];
                         }
                     }
 
