@@ -209,7 +209,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
                     memcpy(&mat1[0][0] + i*SIZE*SIZE , msg->mat.m16.mat1, SIZE*SIZE*sizeof(int16_t));
                     memcpy(&mat2[0][0] + i*SIZE*SIZE , msg->mat.m16.mat2, SIZE*SIZE*sizeof(int16_t));
                     msg->command = 0x02;
-                    SYS_sprintf(msg->arg1, "Iteration %d is complete. \n", i);
+                    SYS_sprintf(msg->arg1, "Step %d is complete. \n", i, info->numTransfers);
                 }
 
                 if ((i == 3) && TRUE)//recieved all data
@@ -240,7 +240,7 @@ Int TSKMESSAGE_execute(TSKMESSAGE_TransferInfo* info)
                         }
                     }
                     msg->command = 0x02;
-                    SYS_sprintf(msg->arg1, "Iteration %d is complete. \n First quarter sending now... \n %d", i, numTransfers);
+                    SYS_sprintf(msg->arg1, "Iteration %d is complete. \n First quarter sending now... \n %d", i, NUM_ITERATIONS);
                 }
 
                 //LAST ITERATION

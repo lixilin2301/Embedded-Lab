@@ -40,7 +40,7 @@ extern "C"
  * verification
  */
 #define VERIFY
-//#define DEBUG
+#define DEBUG
 
 Timer totalTime;
 Timer dsp_only;
@@ -269,7 +269,7 @@ typedef union {
         /* Load the executable on the DSP. */
         if (DSP_SUCCEEDED(status))
         {
-            args [0] = '5';
+            args [0] = "5";
             {
                 status = PROC_load(processorId, dspExecutable, numArgs, args);
             }
@@ -619,6 +619,9 @@ typedef union {
     NORMAL_API Void helloDSP_Main(IN Char8* dspExecutable, IN Char8* strProcessorId)
     {
         int i;
+#ifdef DEBUG
+        int j;
+#endif
         DSP_STATUS status = DSP_SOK;
         Uint8 processorId = 0;
         pmat1 = malloc(MAT_SIZE * MAT_SIZE * sizeof(int16_t));
