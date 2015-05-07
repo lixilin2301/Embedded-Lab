@@ -36,14 +36,11 @@ extern "C"
 #endif /* defined (__cplusplus) */
 
 /*
- * Uncomment DEBUG if you want debug information
+ * Uncomment DEBUG if you want debug information, VERIFY does the
+ * verification
  */
- 
+#define VERIFY
 //#define DEBUG
-
-/*
- * Initialize timers
- */
  
 Timer totalTime;
 Timer dsp_only;
@@ -106,9 +103,13 @@ typedef union {
     
 	NORMAL_API DSP_STATUS helloDSP_Recieve(ControlMsg *msg);
 
-	int16_t *pmat1, *pmat2,*pres;
+	/**
+	 * Source matrices are heap- allocated while destination matrices
+	 * are statically stack allocated
+	 */
+	int16_t *pmat1, *pmat2, *pres;
 	int32_t prod[MAT_SIZE][MAT_SIZE], prod_ver[MAT_SIZE][MAT_SIZE];
-     	
+
     /* Messaging buffer used by the application.
      * Note: This buffer must be aligned according to the alignment expected
      * by the device/platform. */
@@ -167,7 +168,6 @@ typedef union {
 	/*
 	 * Some macro's for different ways of printing the matrices
 	 */
-	 
 	#define max(a, b) (a > b ? a : b)
 	#define _gen_print_matrix(mat, size, k, j, expr, from)	\
 		for (k = from; k < size; k++)					\
@@ -337,22 +337,11 @@ typedef union {
      */
      
      
-     inline void MAC4 (int16x8_t *additive_value, int16x8_t *data1, int16x8_t *data2,int16x8_t *mac_output)
-		{
-			/* Set each sixteen values of the vector to 3.
-			*
-			* Remark: a 'q' suffix to intrinsics indicates
-			* the instruction run for 128 bits registers.
-			*/
-			//uint32x4_t three = vmovq_n_u32 (3);
+	inline void MAC4 (int16x8_t *additive_value, int16x8_t *data1, int16x8_t *data2,int16x8_t *mac_output)
+	{
+		*mac_output = vmlaq_s16 (*additive_value,*data1, *data2);
+	}
 
-			/* Add 3 to the value given in argument. */
-			//*data = vaddq_u32 (*data, three);
-			*mac_output = vmlaq_s16 (*additive_value,*data1, *data2);
-		}
-
-     
-     
     NORMAL_API DSP_STATUS helloDSP_Execute(IN Uint32 numIterations, Uint8 processorId)
     {
         DSP_STATUS status = DSP_SOK;
@@ -360,17 +349,6 @@ typedef union {
         Uint16 msgId = 0;
         Uint32 i, j, k, l;
         ControlMsg *msg;
-       
-       ////////////////////////
-		unsigned int index_input = 0;
-        unsigned int loop=0;
-        unsigned int loop2=0;
-		int16x8_t data1;
-		int16x8_t mac_output[MAT_SIZE/8];
-		int16x8_t MAC_addvalue[MAT_SIZE/8];
-		int16x8_t constant_value;
-		unsigned int transfer_index = 0 ;
-        /////////////////////////////////
 
         SYSTEM_0Print("Entered helloDSP_Execute ()\n");
 
@@ -382,14 +360,14 @@ typedef union {
         {
 			/* Receive the message. */
 #ifdef DEBUG
-printf("Waiting for message %u\n", i);
+			printf("Waiting for message %u\n", i);
 #endif
 			status = MSGQ_get(SampleGppMsgq, WAIT_FOREVER, (MsgqMsg *) &msg);
 			if (DSP_FAILED(status))
 			{
 				SYSTEM_1Print("MSGQ_get () failed. Status = [0x%x]\n", status);
 			}
-	#if defined (VERIFY_DATA)
+#if defined (VERIFY_DATA)
 			/* Verify correctness of data received. */
 			if (DSP_SUCCEEDED(status))
 			{
@@ -399,17 +377,14 @@ printf("Waiting for message %u\n", i);
 					MSGQ_free((MsgqMsg) msg);
 				}
 			}
-	#endif
+#endif
 
 #ifdef DEBUG
-if (msg->command == 0x01)
-	SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
-else if (msg->command == 0x02)
-	SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
+			if (msg->command == 0x01)
+				SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
+			else if (msg->command == 0x02)
+				SYSTEM_1Print("Message received: %s\n", (Uint32) msg->arg1);
 #endif
-			
-            /* If the message received is the final one, free it. */
-            
             /*
              * Message one before last
              * here we recieve 1/2 of 1/2 of the product from the DSP
@@ -419,8 +394,6 @@ else if (msg->command == 0x02)
 				/*
 				 * Stop all timers, since DSP is already done it's cauclations
 				 */
-				
-				
 				printf("\nTiming information:\n\n");
 				stopTimer(&totalTime);
 				stopTimer(&dsp_only);
@@ -429,11 +402,9 @@ else if (msg->command == 0x02)
 				//printf("DSP Time only: \n");
 				printTimer(&dsp_only);
 				
-				
 				/*
 				 * Fill in the product matrix here (on GPP) with the results from DSP
 				 */
-				
 				for (l = 0;l < SIZE; l++)   
 				{
 					for (j = 0; j < SIZE; j++)
@@ -441,20 +412,17 @@ else if (msg->command == 0x02)
 						prod[l][j] = msg->mat.m32.mat1[l][j];		
 					}
 				}
-				/* Debug */
-				#ifdef DEBUG
+#ifdef DEBUG
 				printf("\nMessage #1 back from DSP: msg->mat.m32.mat1 \n");
 				print_matrix(msg->mat.m32.mat1, SIZE, k, j);
 				//print_full_matrix(prod, MAT_SIZE, k, j);
-				#endif
-				
+#endif
 				status = MSGQ_put(SampleDspMsgq, (MsgqMsg) msg); //just need to send some stuff	
 				if (DSP_FAILED(status))
 				{
 					MSGQ_free((MsgqMsg) msg);
 					SYSTEM_1Print("MSGQ_put () failed. Status = [0x%x]\n", status);
 				}
-					
 			}
 			/*
              * Final message from the DSP
@@ -470,28 +438,22 @@ else if (msg->command == 0x02)
 					}
 				}
 				
-				#ifdef DEBUG
+#ifdef DEBUG
 				printf("\nMessage #2 back from DSP: msg->mat.m32.mat1 \n");
 				print_matrix(msg->mat.m32.mat1, SIZE, k, j);
-				#endif
-				
-				/*
-				 * Verification
-				 */
-				#define verification
-				#ifdef verification	
+#endif
+
+#ifdef VERIFY
 				printf("%s\n\n", (helloDSP_VerifyCalculations() ? "SUCCESS!" : "Failure!"));
-				#endif
-								
-				/* Debug */
-				#ifdef DEBUG
+#endif
+
+#ifdef DEBUG
 				printf("Calculated product: \n");
 				print_matrix(prod, MAT_SIZE, k, j);
 				
 				printf("Correct product: \n");
 				print_matrix(prod_ver, MAT_SIZE, k, j);
-				#endif
-				
+#endif
                 MSGQ_free((MsgqMsg) msg);
             }
             else   //the first four iterations
@@ -517,69 +479,8 @@ else if (msg->command == 0x02)
 					}
 					
 					if (i == 4) //Sent fourth quarter
-					{		
-						startTimer(&dsp_only); // START TIMER for DSP
-						
-						////////////////////////////////////////////////////////////////////
-						
-	
-			for(l = 0 ; l < MAT_SIZE/8; l++)
-			{ 
-				MAC_addvalue[l] = vmovq_n_s16(0);
-			}
-
-	  /* here multiplication will be done*/
-	
-			for( l = MAT_SIZE*MAT_SIZE/2 ; l < MAT_SIZE*MAT_SIZE; l++)
-			{
-				constant_value = vmovq_n_s16 (pmat1[l]);
-				for(j = 0 ; j < MAT_SIZE/8 ; j++)
-				{
-					data1 = vld1q_s16 (&pmat2[index_input]);
-					MAC4 (&MAC_addvalue[j], &constant_value, &data1,&mac_output[j]);
-					//*mac_output = vmlaq_s16 (*additive_value,*data1, *data2);
-					MAC_addvalue[j] = mac_output[j];
-					index_input +=8; //////////////////////////////////////////////////////////////////////////////////////////////////
-				 }
-				if ((l + 1)  % MAT_SIZE == 0 )
-				{
-					index_input = 0; 
-					
-					for( loop = 0 ; loop < MAT_SIZE/8 ; loop++ )
 					{
-						vst1q_s16(&pres[transfer_index],MAC_addvalue[loop]);
-						transfer_index +=8;
-					}
-
-					for(loop2 = 0 ; loop2 < MAT_SIZE/8; loop2++)
-					{ 
-						MAC_addvalue[loop2] = vmovq_n_s16(0);
-					}	
-				}	
-			}
-  		
-			for (l = SIZE;l < MAT_SIZE; l++)
-			{
-			  for (j = 0; j < MAT_SIZE; j++)
-			  {
-			    prod[l][j] = (int32_t)pres[(l-SIZE)*MAT_SIZE+j];
-			  }
-			}
-			
-			//Without NEON!//
-			//Do the multiplication on the GPP side!
-			/*
-			for (l = SIZE;l < MAT_SIZE; l++)
-			{
-				for (j = 0; j < MAT_SIZE; j++)
-				{
-					prod[l][j]=0;
-					for(k=0;k<MAT_SIZE;k++)
-						prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];
-				}
-			}
-			*/
-			///////////////////////////////////////////////////////////////////////
+						performMultiplications();
 					}
                 }
 
@@ -729,23 +630,22 @@ else if (msg->command == 0x02)
          */
 		for (i = 0; i < MAT_SIZE * MAT_SIZE; i++)
 		{
-			#ifdef DEBUG
+#ifdef DEBUG
 		    pmat1[i] = i;//i;
 			//mat2[i][j] = i*MAT_SIZE+j + MAT_SIZE*MAT_SIZE;
 			pmat2[i] = (i % MAT_SIZE == i / MAT_SIZE) ; //identity matrix
-			#else
+#else
 			pmat1[i] = i*13+1;
 			pmat2[i] = i*7+1;
-			#endif
+#endif
 		}
 
-		/* Debug */
-		#ifdef DEBUG
+#ifdef DEBUG
 		SYSTEM_0Print ("========== Initial matricies ==========\n");
 		print_flat_matrix(pmat1, MAT_SIZE, i, j);
 		print_flat_matrix(pmat2, MAT_SIZE, i, j);
-		#endif
-		
+#endif
+
         SYSTEM_0Print ("========== Matrix Multiplication ==========\n");
 
         if ((dspExecutable != NULL) && (strNumIterations != NULL))
@@ -840,7 +740,9 @@ else if (msg->command == 0x02)
 			{
 				prod_ver[l][j]=0;
 				for(k=0; k<MAT_SIZE;k++)
+				{
 					prod_ver[l][j] = prod_ver[l][j]+pmat1[l * MAT_SIZE + k] * pmat2[k * MAT_SIZE + j];
+				}
 			}
 		}
 		// -- Stop Timer
@@ -885,6 +787,74 @@ else if (msg->command == 0x02)
 		}
 #endif
 		return status;
+	}
+	
+	NORMAL_API void performMultiplications(void)
+	{
+		int l, k;
+		int16x8_t data1;
+		int16x8_t mac_output[MAT_SIZE/8];
+		int16x8_t MAC_addvalue[MAT_SIZE/8];
+		unsigned int index_input = 0;
+		int16x8_t constant_value;
+		unsigned int transfer_index = 0 ;
+		
+		startTimer(&dsp_only); // START TIMER for DSP
+
+		for(l = 0 ; l < MAT_SIZE/8; l++)
+		{ 
+			MAC_addvalue[l] = vmovq_n_s16(0);
+		}
+
+		/* here the multiplications will be done */
+		for(l = MAT_SIZE*MAT_SIZE/2; l < MAT_SIZE*MAT_SIZE; l++)
+		{
+			constant_value = vmovq_n_s16 (pmat1[l]);
+			for(k = 0 ; k < MAT_SIZE/8 ; k++)
+			{
+				data1 = vld1q_s16 (&pmat2[index_input]);
+				MAC4 (&MAC_addvalue[k], &constant_value, &data1,&mac_output[k]);
+				MAC_addvalue[k] = mac_output[k];
+				index_input +=8;
+			}
+			if ((l + 1) % MAT_SIZE == 0 )
+			{
+				index_input = 0; 
+				
+				for(k = 0 ; k < MAT_SIZE/8 ; k++)
+				{
+					vst1q_s16(&pres[transfer_index],MAC_addvalue[k]);
+					transfer_index +=8;
+				}
+
+				for(k = 0 ; k < MAT_SIZE/8; k++)
+				{ 
+					MAC_addvalue[k] = vmovq_n_s16(0);
+				}
+			}
+		}
+
+		for (l = SIZE;l < MAT_SIZE; l++)
+		{
+		  for (k = 0; k < MAT_SIZE; k++)
+		  {
+			prod[l][k] = (int32_t)pres[(l-SIZE)*MAT_SIZE+k];
+		  }
+		}
+		
+		//Without NEON!//
+		//Do the multiplication on the GPP side!
+		/*
+		for (l = SIZE;l < MAT_SIZE; l++)
+		{
+			for (j = 0; j < MAT_SIZE; j++)
+			{
+				prod[l][j]=0;
+				for(k=0;k<MAT_SIZE;k++)
+					prod[l][j] = prod[l][j]+mat1[l][k] * mat2[k][j];
+			}
+		}
+		*/
 	}
 
 #if defined (__cplusplus)

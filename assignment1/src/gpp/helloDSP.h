@@ -171,6 +171,7 @@ extern "C"
 #endif
 
 	NORMAL_API int helloDSP_VerifyCalculations(void);
+	NORMAL_API void performMultiplications(void);
 
 #if defined (__cplusplus)
 }
