@@ -55,8 +55,6 @@ Void main(Int argc, Char* argv [])
     TSK_Handle tskMessageTask;
 
 #if !defined (DSP_BOOTMODE_NOBOOT)
-    /* Get the number of transfers to be done by the application */
-    numTransfers = atoi(argv [0]);
     /* Initialize DSP/BIOS LINK. */
     DSPLINK_init();
 #endif

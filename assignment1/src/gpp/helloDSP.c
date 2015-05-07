@@ -65,6 +65,7 @@ Timer serialTime;
 #define NUMMSGINPOOL2   2
 #define NUMMSGINPOOL3   4
 
+#define NUM_ITERATIONS  5
 #define MAT_SIZE 128
 #define SIZE (MAT_SIZE/2)
 
@@ -202,7 +203,7 @@ typedef union {
      *  @modif  helloDSP_InpBufs , helloDSP_OutBufs
      *  ============================================================================
      */
-    NORMAL_API DSP_STATUS helloDSP_Create(IN Char8* dspExecutable, IN Char8* strNumIterations, IN Uint8 processorId)
+    NORMAL_API DSP_STATUS helloDSP_Create(IN Char8* dspExecutable, IN Uint8 processorId)
     {
         DSP_STATUS status = DSP_SOK;
         Uint32 numArgs = NUM_ARGS;
@@ -268,7 +269,7 @@ typedef union {
         /* Load the executable on the DSP. */
         if (DSP_SUCCEEDED(status))
         {
-            args [0] = strNumIterations;
+            args [0] = '5';
             {
                 status = PROC_load(processorId, dspExecutable, numArgs, args);
             }
@@ -327,6 +328,13 @@ typedef union {
         return status;
     }
 
+
+
+    inline void MAC4 (int16x8_t *additive_value, int16x8_t *data1, int16x8_t *data2,int16x8_t *mac_output)
+    {
+        *mac_output = vmlaq_s16 (*additive_value,*data1, *data2);
+    }
+
     /** ============================================================================
      *  @func   helloDSP_Execute
      *
@@ -335,14 +343,7 @@ typedef union {
      *  @modif  None
      *  ============================================================================
      */
-
-
-    inline void MAC4 (int16x8_t *additive_value, int16x8_t *data1, int16x8_t *data2,int16x8_t *mac_output)
-    {
-        *mac_output = vmlaq_s16 (*additive_value,*data1, *data2);
-    }
-
-    NORMAL_API DSP_STATUS helloDSP_Execute(IN Uint32 numIterations, Uint8 processorId)
+    NORMAL_API DSP_STATUS helloDSP_Execute(Uint8 processorId)
     {
         DSP_STATUS status = DSP_SOK;
         Uint16 sequenceNumber = 0;
@@ -360,7 +361,7 @@ typedef union {
         SYSTEM_GetStartTime();
 #endif
 
-        for (i = 1 ; ((numIterations == 0) || (i <= (numIterations + 1))) && (DSP_SUCCEEDED (status)); i++)
+        for (i = 1 ; ((NUM_ITERATIONS == 0) || (i <= (NUM_ITERATIONS + 1))) && (DSP_SUCCEEDED (status)); i++)
         {
             /* Receive the message. */
 #ifdef DEBUG
@@ -393,7 +394,7 @@ typedef union {
              * Message one before last
              * here we recieve 1/2 of 1/2 of the product from the DSP
              */
-            if ((numIterations != 0) && (i == (numIterations)))
+            if ((NUM_ITERATIONS != 0) && (i == (NUM_ITERATIONS)))
             {
                 /*
                  * Stop all timers, since DSP is already done it's cauclations
@@ -432,7 +433,7 @@ typedef union {
              * Final message from the DSP
              * here we recieve the second 1/2 of 1/2 of the product from the DSP
              */
-            else if ((numIterations != 0) && (i == (numIterations + 1)))
+            else if ((NUM_ITERATIONS != 0) && (i == (NUM_ITERATIONS + 1)))
             {
                 for (l = 0;l < SIZE; l++)
                 {
@@ -509,7 +510,6 @@ typedef union {
         if (DSP_SUCCEEDED(status))
         {
             SYSTEM_GetEndTime();
-            SYSTEM_GetProfileInfo(numIterations);
         }
 #endif
 
@@ -616,11 +616,10 @@ typedef union {
      *  ============================================================================
      */
 
-    NORMAL_API Void helloDSP_Main(IN Char8* dspExecutable, IN Char8* strNumIterations, IN Char8* strProcessorId)
+    NORMAL_API Void helloDSP_Main(IN Char8* dspExecutable, IN Char8* strProcessorId)
     {
         int i;
         DSP_STATUS status = DSP_SOK;
-        Uint32 numIterations = 0;
         Uint8 processorId = 0;
         pmat1 = malloc(MAT_SIZE * MAT_SIZE * sizeof(int16_t));
         pmat2 = malloc(MAT_SIZE * MAT_SIZE * sizeof(int16_t));
@@ -652,11 +651,9 @@ typedef union {
 
         SYSTEM_0Print ("========== Matrix Multiplication ==========\n");
 
-        if ((dspExecutable != NULL) && (strNumIterations != NULL))
+        if ((dspExecutable != NULL))
         {
-            numIterations = SYSTEM_Atoi(strNumIterations);
-
-            if (numIterations > 0xFFFF)
+            if (NUM_ITERATIONS > 0xFFFF)
             {
                 status = DSP_EINVALIDARG;
                 SYSTEM_1Print("ERROR! Invalid arguments specified for helloDSP application.\n Max iterations = %d\n", 0xFFFF);
@@ -673,12 +670,12 @@ typedef union {
                 /* Specify the dsp executable file name for message creation phase. */
                 if (DSP_SUCCEEDED(status))
                 {
-                    status = helloDSP_Create(dspExecutable, strNumIterations, processorId);
+                    status = helloDSP_Create(dspExecutable, processorId);
 
                     /* Execute the message execute phase. */
                     if (DSP_SUCCEEDED(status))
                     {
-                        status = helloDSP_Execute(numIterations, processorId);
+                        status = helloDSP_Execute(processorId);
                     }
 
                     /* Perform cleanup operation. */

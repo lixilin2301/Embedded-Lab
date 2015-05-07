@@ -39,9 +39,6 @@ extern "C" {
 /* Place holder for the MSGQ name created on DSP */
 Uint8 dspMsgQName[DSP_MAX_STRLEN];
 
-/* Number of iterations message transfers to be done by the application. */
-extern Uint16 numTransfers;
-
 /* Local matrices to calculate in */
 int32_t prod[MAT_SIZE][MAT_SIZE];
 int16_t mat1[MAT_SIZE][MAT_SIZE];
@@ -77,7 +74,7 @@ Int TSKMESSAGE_create(TSKMESSAGE_TransferInfo** infoPtr)
     else
     {
         info = *infoPtr;
-        info->numTransfers = numTransfers;
+        info->numTransfers = NUM_ITERATIONS;
         info->localMsgq = MSGQ_INVALIDMSGQ;
         info->locatedMsgq = MSGQ_INVALIDMSGQ;
     }
