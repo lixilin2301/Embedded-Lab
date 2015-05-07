@@ -32,15 +32,14 @@ extern "C"
         Char8* dspExecutable = NULL;
         Char8* strProcessorId = NULL;
         Uint8 processorId = 0;
-
-
+        int input_size;
 
         /* long long _Fract value = atof("2.3");
             printf("%k\n",value); */
 
-        if ((argc != 3) && (argc!=2))
+        if ((argc != 3) && (argc!=4))
         {
-            SYSTEM_1Print("Usage : %s <absolute path of DSP executable> <DSP Processor Id>\n"
+            SYSTEM_1Print("Usage : %s <absolute path of DSP executable> <Matrix size> <DSP Processor Id>\n"
                           "For DSP Processor Id,"
                           "\n\t use value of 0  if sample needs to be run on DSP 0 "
                           "\n\t use value of 1  if sample needs to be run on DSP 1"
@@ -51,16 +50,26 @@ extern "C"
         else
         {
             dspExecutable = argv[1];
-
-            if (argc == 2)
+			input_size = atoi(argv[2]);
+			
+			if (input_size>128) 
+			{
+				printf("Matrix size must be <=128\n");
+				return 1;
+			}
+			
+			size = input_size;
+			
+            if (argc == 3)
             {
                 strProcessorId = "0";
                 processorId = 0;
             }
             else
             {
-                strProcessorId = argv[2];
-                processorId = atoi(argv[2]);
+                strProcessorId = argv[3];
+                processorId = atoi(argv[3]);
+               
             }
 
             if (processorId < MAX_PROCESSORS)

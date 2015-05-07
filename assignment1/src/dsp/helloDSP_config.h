@@ -76,6 +76,7 @@ typedef struct ControlMsg
 {
     MSGQ_MsgHeader header;
     Uint16 command;
+    Uint8  size;
     Char arg1[ARG_SIZE];
     mat_t mat;
 } ControlMsg;
