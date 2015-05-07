@@ -347,7 +347,11 @@ typedef union {
         DSP_STATUS status = DSP_SOK;
         Uint16 sequenceNumber = 0;
         Uint16 msgId = 0;
-        Uint32 i, j, k, l;
+        Uint32 i, j, l;
+#ifdef DEBUG
+		Uint32 k;
+#endif
+
         ControlMsg *msg;
 
         SYSTEM_0Print("Entered helloDSP_Execute ()\n");
@@ -614,7 +618,7 @@ typedef union {
      
     NORMAL_API Void helloDSP_Main(IN Char8* dspExecutable, IN Char8* strNumIterations, IN Char8* strProcessorId)
     {
-		int i, j;
+		int i;
         DSP_STATUS status = DSP_SOK;
         Uint32 numIterations = 0;
         Uint8 processorId = 0;
