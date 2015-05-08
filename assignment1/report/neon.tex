@@ -70,3 +70,38 @@ while the four lanes each contains a signed 32-bit integer.
 This intrinsic multiplies b by c, and accumulates the result with a in all four lanes.
 The final results are then stored in four lanes as well.
 \end{enumerate}
+In order to fully utilize the Neon resources, we have used following algorithm to compute the matrix multiplication. The following illustration shows one rows of results.
+The input matrices are following:
+
+$$
+\begin{pmatrix}
+ x1&\color{red}{x2}&\color{green}{x3}&\color{blue}{x4}\\
+ x5&x6&x7&x8\\
+ x9&x10&x11&x12\\
+ x13&x14&x15&x16\\
+\end{pmatrix}
+\times
+\begin{pmatrix}
+y1&y2&y3&y4\\
+y5&y6&y7&y8\\
+y9&y10&y11&y12\\
+y13&y14&y15&y16\\
+\end{pmatrix}
+$$
+
+
+The output matrix would be : 
+=
+$$
+\begin{pmatrix}
+x1y1+\color{red}{x2}\color{black}y5+\color{green}{x3}\color{black}y9+\color{blue}{x4}\color{black}y13&x1y2+\color{red}{x2}\color{black}y6+ \color{green}{x3}\color{black}y10+\color{blue}{x4}\color{black}y14&x1y3+\color{red}{x2}\color{black}y7+\color{green}{x3}\color{black}y11+\color{blue}{x4}\color{black}y15&x1y4+\color{red}{x2}\color{black}y8+ \color{green}{x3}\color{black}y12+\color{blue}{x4}\color{black}y16\\
+-&-&-&-\\-&-&-&-\\-&-&-&-\\
+\end{pmatrix}
+$$
+In the output matrix ,  the  elements with the same color are multiplied by the Neon at the same time. In this way, Neon produces the results of 4 multiplications at the same time.  In the above output row, x1y1, x1y2, x1y3 and x1y4 are produces by the neon at the same time.  But these are just the partial results for the first row of output matrix. In order to get the complete results for the first row these partial results should be added to the other partial results  of the same row.  This complete task of multiplication and addition is done by using “Multiplication and addition” functional unit of neon. The conceptual diagram of this multiplication and addition is shown in the following diagram:
+\begin{figure}[h]
+\centering 
+\includegraphics[width= 0.7\textwidth]{MandA}
+\caption{Parallel Multiplication and Addition with Neon  }
+\label{Multiplication and Addition}
+\end{figure}
