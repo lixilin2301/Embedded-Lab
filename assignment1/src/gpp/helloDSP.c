@@ -45,10 +45,10 @@ extern "C"
 Timer totalTime;
 Timer dsp_only;
 Timer serialTime;
+Timer neonTime;
 
 Uint8 size;
 Uint8 size_n;
-  Uint8 odd;
 
 
     /* Number of arguments specified to the DSP application. */
@@ -116,7 +116,7 @@ typedef union {
      * are statically stack allocated
      */
     int16_t *pmat1, *pmat2;
-    int32_t *pres;
+  int32_t *pres,*pres_ver;
     int32_t prod[MAT_SIZE][MAT_SIZE], prod_ver[MAT_SIZE][MAT_SIZE];
 
     /* Messaging buffer used by the application.
@@ -227,6 +227,7 @@ typedef union {
         initTimer(&totalTime, "Total execution time");
         initTimer(&dsp_only,  "Total execution time (w/o comm oh.)");
         initTimer(&serialTime,  "Serial execution time");
+        initTimer(&neonTime,  "Neon execution time");
 
         SYSTEM_0Print("Entered helloDSP_Create ()\n");
 
@@ -778,6 +779,14 @@ typedef union {
     NORMAL_API int helloDSP_VerifyCalculations(void)
     {
         int l, j, k, success;
+        int16x4_t data1;
+        int32x4_t mac_output[MAT_SIZE/4];
+        int32x4_t MAC_addvalue[MAT_SIZE/4];
+        int16x4_t constant_value;
+        unsigned int index_input = 0;
+        unsigned int transfer_index = 0 ;
+
+        pres_ver = malloc(MAT_SIZE * MAT_SIZE * sizeof(int32_t));
 
         // --Start Timer
         startTimer(&serialTime);
@@ -796,14 +805,51 @@ typedef union {
         stopTimer(&serialTime);
         //printf("Serial calculation time is: \n");
         printTimer(&serialTime);
+	
+        startTimer(&neonTime);
+        for(l = 0 ; l < size_n/4; l++)
+        {
+            MAC_addvalue[l] = vmovq_n_s32(0);
+        }
 
+        for(l = 0; l < size_n*size_n; l++)
+        {
+            constant_value = vmov_n_s16 (pmat1[l]);
+            for(k = 0 ; k < size_n/4 ; k++)
+            {
+                data1 = vld1_s16 (&pmat2[index_input]);
+                MAC4 (&MAC_addvalue[k], &constant_value, &data1,&mac_output[k]);
+                MAC_addvalue[k] = mac_output[k];
+                index_input +=4;
+            }
+	    index_input+=MAT_SIZE-size_n;
+            if ((l + 1) % size_n == 0 )
+            {
+                index_input = 0;
+
+                for(k = 0 ; k < size_n/4 ; k++)
+                {
+                    vst1q_s32(&pres_ver[transfer_index],MAC_addvalue[k]);
+                    transfer_index +=4;
+                }
+		transfer_index += MAT_SIZE-size_n;
+                for(k = 0 ; k < size_n/4; k++)
+                {
+                    MAC_addvalue[k] = vmovq_n_s32(0);
+                }
+            }
+        }
+
+        stopTimer(&neonTime);
+        printTimer(&neonTime);
+	
         printf("Verification: \n");
         success = 1;
         for (k = 0; (k < size) && success; k++)
         {
             for (j = 0; j < size; j++)
             {
-              if ((int16_t)prod_ver[k][j] != (int16_t)prod[k][j])
+              if ((prod_ver[k][j] != prod[k][j])&&(prod_ver[k][j] != pres_ver[k*MAT_SIZE+j]))
                 {
                    success = 0;
                    break;
