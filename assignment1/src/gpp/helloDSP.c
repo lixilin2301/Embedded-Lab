@@ -40,7 +40,7 @@ extern "C"
  * verification
  */
 #define VERIFY
-#define DEBUG
+  //#define DEBUG
 
 Timer totalTime;
 Timer dsp_only;
@@ -48,6 +48,7 @@ Timer serialTime;
 
 Uint8 size;
 Uint8 size_n;
+  Uint8 odd;
 
 
     /* Number of arguments specified to the DSP application. */
@@ -94,6 +95,8 @@ typedef union {
     struct mat2x16 m16;
     struct mat32 m32;
 } mat_t;
+
+
 
     /* Control message data structure. */
     /* Must contain a reserved space for the header */
@@ -644,6 +647,8 @@ typedef union {
 
 	size_n = (size%4) ? size+4-size%4 : size;
 
+	///////////////////////////////////////////
+
         /*
          * Generating initial matricies
          */
@@ -668,6 +673,7 @@ typedef union {
 		}
 	    }
 	}
+	size+=size%2;
        
    /*     for (i = 0; i < MAT_SIZE * MAT_SIZE; i++)
         {
@@ -881,8 +887,10 @@ typedef union {
             }
         }
 
+#ifdef DEBUG
         SYSTEM_0Print ("========== NEON Result ==========\n");
         print_new_matrix(pres, size_n, l, k);
+#endif
 
         for (l = size/2;l < size; l++)
         {
