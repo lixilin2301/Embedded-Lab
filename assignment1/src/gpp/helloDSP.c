@@ -40,11 +40,13 @@ extern "C"
  * verification
  */
 #define VERIFY
-#define DEBUG
+//#define DEBUG
 
 Timer totalTime;
 Timer dsp_only;
 Timer serialTime;
+
+Uint8 size;
 
 
     /* Number of arguments specified to the DSP application. */
@@ -98,6 +100,7 @@ typedef union {
     {
         MSGQ_MsgHeader header;
         Uint16 command;
+        Uint8 size;
         Char8 arg1[ARG_SIZE];
         mat_t mat;
     } ControlMsg;
@@ -170,19 +173,22 @@ typedef union {
      * Some macro's for different ways of printing the matrices
      */
     #define max(a, b) (a > b ? a : b)
-    #define _gen_print_matrix(mat, size, k, j, expr, from)    \
-        for (k = from; k < size; k++)                    \
+    #define min(a, b) (a < b ? a : b)
+    #define _gen_print_matrix(mat, size, k, j, expr, to)    \
+        for (k = 0; k < to; k++)                    \
         {                                                \
             printf("\n");                                \
-            for (j = from; j < size; j++)                \
+            for (j = 0; j < to; j++)                \
             {                                            \
                 printf("\t%d ", expr);                    \
             }                                            \
         }                                                \
         printf("\n");
-    #define print_matrix(mat, size, k, j)        _gen_print_matrix(mat, size, k, j, mat[k][j], max(0, (size - 10)))
-    #define print_flat_matrix(mat, size, k, j)    _gen_print_matrix(mat, size, k, j, mat[k * size + j], max(0, (size - 10)))
-    #define print_full_matrix(mat, size, k, j)    _gen_print_matrix(mat, size, k, j, mat[k][j], 0)
+    #define print_matrix(mat, size, k, j)        _gen_print_matrix(mat, size, k, j, mat[k][j], min(10, size))
+    #define print_flat_matrix(mat, size, k, j)    _gen_print_matrix(mat, size, k, j, mat[k * size + j], min(10, size))
+    #define print_full_matrix(mat, size, k, j)    _gen_print_matrix(mat, size, k, j, mat[k][j], size)
+    
+    #define print_new_matrix(mat, size, k, j)    _gen_print_matrix(mat, size, k, j, mat[k*MAT_SIZE+j], size)
 
 #if defined (VERIFY_DATA)
     /** ============================================================================
@@ -410,9 +416,9 @@ typedef union {
                 /*
                  * Fill in the product matrix here (on GPP) with the results from DSP
                  */
-                for (l = 0;l < SIZE; l++)
+                for (l = 0;l < size/2; l++)
                 {
-                    for (j = 0; j < SIZE; j++)
+                    for (j = 0; j < size/2; j++)
                     {
                         prod[l][j] = msg->mat.m32.mat1[l][j];
                     }
@@ -435,11 +441,11 @@ typedef union {
              */
             else if ((NUM_ITERATIONS != 0) && (i == (NUM_ITERATIONS + 1)))
             {
-                for (l = 0;l < SIZE; l++)
+                for (l = 0;l < size/2; l++)
                 {
-                    for (j = 0; j < SIZE; j++)
+                    for (j = 0; j < size/2; j++)
                     {
-                        prod[l][j+SIZE] = msg->mat.m32.mat1[l][j];
+                        prod[l][j+size/2] = msg->mat.m32.mat1[l][j];
                     }
                 }
 
@@ -469,8 +475,12 @@ typedef union {
                     msgId = MSGQ_getMsgId(msg);
                     MSGQ_setMsgId(msg, msgId);
 
-                    if (i==1) startTimer(&totalTime); // START the overall timer
-
+                    if (i==1)
+                    {
+						startTimer(&totalTime); // START the overall timer
+						msg->size = size;
+					}
+					
                     /* Sending the four quarters, one in each iteration */
                     memcpy(msg->mat.m16.mat1, (pmat1 + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
                     memcpy(msg->mat.m16.mat2, (pmat2 + (i-1)*SIZE*SIZE), SIZE*SIZE*sizeof(int16_t));
@@ -619,9 +629,8 @@ typedef union {
     NORMAL_API Void helloDSP_Main(IN Char8* dspExecutable, IN Char8* strProcessorId)
     {
         int i;
-#ifdef DEBUG
         int j;
-#endif
+
         DSP_STATUS status = DSP_SOK;
         Uint8 processorId = 0;
         pmat1 = malloc(MAT_SIZE * MAT_SIZE * sizeof(int16_t));
@@ -634,7 +643,23 @@ typedef union {
         /*
          * Generating initial matricies
          */
-        for (i = 0; i < MAT_SIZE * MAT_SIZE; i++)
+       
+        for (i = 0; i < size; i++) //row
+        {
+			for (j = 0; j < size; j++)  //column
+			{
+#ifdef DEBUG
+            pmat1[i*MAT_SIZE+j] = i*size+j;
+            pmat2[i*MAT_SIZE+j] = (i  == j) ; //identity matrix
+#else
+            pmat1[i*MAT_SIZE+j] = i*13+1;
+            pmat2[i*MAT_SIZE+j] = i*7+1;
+#endif
+				
+			}
+		}
+       
+   /*     for (i = 0; i < MAT_SIZE * MAT_SIZE; i++)
         {
 #ifdef DEBUG
             pmat1[i] = i;//i;
@@ -645,11 +670,13 @@ typedef union {
             pmat2[i] = i*7+1;
 #endif
         }
+        * 
+        * */
 
 #ifdef DEBUG
         SYSTEM_0Print ("========== Initial matricies ==========\n");
-        print_flat_matrix(pmat1, MAT_SIZE, i, j);
-        print_flat_matrix(pmat2, MAT_SIZE, i, j);
+        print_new_matrix(pmat1, size, i, j);
+        print_new_matrix(pmat2, size, i, j);
 #endif
 
         SYSTEM_0Print ("========== Matrix Multiplication ==========\n");
@@ -738,12 +765,12 @@ typedef union {
 
         // --Start Timer
         startTimer(&serialTime);
-        for (l = 0;l < MAT_SIZE; l++)
+        for (l = 0;l < size; l++)
         {
-            for (j = 0; j < MAT_SIZE; j++)
+            for (j = 0; j < size; j++)
             {
                 prod_ver[l][j]=0;
-                for(k=0; k<MAT_SIZE;k++)
+                for(k=0; k<size;k++)
                 {
                     prod_ver[l][j] = prod_ver[l][j]+pmat1[l * MAT_SIZE + k] * pmat2[k * MAT_SIZE + j];
                 }
@@ -756,9 +783,9 @@ typedef union {
 
         printf("Verification: \n");
         success = 1;
-        for (k = 0; (k < MAT_SIZE) && success; k++)
+        for (k = 0; (k < size) && success; k++)
         {
-            for (j = 0; j < MAT_SIZE; j++)
+            for (j = 0; j < size; j++)
             {
               if ((int16_t)prod_ver[k][j] != (int16_t)prod[k][j])
                 {
@@ -805,13 +832,13 @@ typedef union {
 
         startTimer(&dsp_only); // START TIMER for DSP
 
-        for(l = 0 ; l < MAT_SIZE/8; l++)
+        for(l = 0 ; l < size/8; l++)
         {
             MAC_addvalue[l] = vmovq_n_s16(0);
         }
 
         /* here the multiplications will be done */
-        for(l = MAT_SIZE*MAT_SIZE/2; l < MAT_SIZE*MAT_SIZE; l++)
+        for(l = MAT_SIZE*size/2; l < MAT_SIZE*size; l++)
         {
             constant_value = vmovq_n_s16 (pmat1[l]);
             for(k = 0 ; k < MAT_SIZE/8 ; k++)
@@ -821,28 +848,28 @@ typedef union {
                 MAC_addvalue[k] = mac_output[k];
                 index_input +=8;
             }
-            if ((l + 1) % MAT_SIZE == 0 )
+            if ((l + 1) % size == 0 )
             {
                 index_input = 0;
 
-                for(k = 0 ; k < MAT_SIZE/8 ; k++)
+                for(k = 0 ; k < size/8 ; k++)
                 {
                     vst1q_s16(&pres[transfer_index],MAC_addvalue[k]);
                     transfer_index +=8;
                 }
 
-                for(k = 0 ; k < MAT_SIZE/8; k++)
+                for(k = 0 ; k < size/8; k++)
                 {
                     MAC_addvalue[k] = vmovq_n_s16(0);
                 }
             }
         }
 
-        for (l = SIZE;l < MAT_SIZE; l++)
+        for (l = size/2;l < size; l++)
         {
-          for (k = 0; k < MAT_SIZE; k++)
+          for (k = 0; k < size; k++)
           {
-            prod[l][k] = (int32_t)pres[(l-SIZE)*MAT_SIZE+k];
+            prod[l][k] = (int32_t)pres[(l-size/2)*MAT_SIZE+k];
           }
         }
 

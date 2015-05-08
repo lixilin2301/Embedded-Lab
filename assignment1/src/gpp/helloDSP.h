@@ -160,7 +160,8 @@ extern "C"
 
     NORMAL_API int helloDSP_VerifyCalculations(void);
     NORMAL_API void performMultiplications(void);
-
+	extern Uint8 size; //this is the size of the input matrix!
+	
 #if defined (__cplusplus)
 }
 #endif /* defined (__cplusplus) */
