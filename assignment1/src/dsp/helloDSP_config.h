@@ -1,7 +1,7 @@
 /** ============================================================================
  *  @file   helloDSP_config.h
  *
- *  @path  
+ *  @path
  *
  *  @desc   Header file for MSGQ and POOL configurations for helloDSP.
  *
@@ -48,6 +48,7 @@ extern "C" {
 /* Argument size passed to the control message queue */
 #define ARG_SIZE 256
 
+#define NUM_ITERATIONS 5
 #define MAT_SIZE 128
 #define SIZE (MAT_SIZE/2)
 
@@ -56,17 +57,17 @@ extern "C" {
  * or 1 32bit matrix in the same mssage.
  */
 struct mat2x16 {
-	int16_t mat1[SIZE][SIZE];
-	int16_t mat2[SIZE][SIZE];
+    int16_t mat1[SIZE][SIZE];
+    int16_t mat2[SIZE][SIZE];
 };
 
 struct mat32 {
-	int32_t mat1[SIZE][SIZE];
+    int32_t mat1[SIZE][SIZE];
 };
 
 typedef union {
-	struct mat2x16 m16;
-	struct mat32 m32;
+    struct mat2x16 m16;
+    struct mat32 m32;
 } mat_t;
 
 /* Control message data structure. */
@@ -75,6 +76,7 @@ typedef struct ControlMsg
 {
     MSGQ_MsgHeader header;
     Uint16 command;
+    Uint8  size;
     Char arg1[ARG_SIZE];
     mat_t mat;
 } ControlMsg;

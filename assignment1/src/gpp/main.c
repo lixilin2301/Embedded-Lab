@@ -30,19 +30,16 @@ extern "C"
     int main (int argc, char** argv)
     {
         Char8* dspExecutable = NULL;
-        Char8* strNumIterations = NULL;
         Char8* strProcessorId = NULL;
         Uint8 processorId = 0;
+        int input_size;
 
-		
-		
-        /*	long long _Fract value = atof("2.3");
-        	printf("%k\n",value);	*/
+        /* long long _Fract value = atof("2.3");
+            printf("%k\n",value); */
 
-        if ((argc != 4) && (argc!=3))
+        if ((argc != 3) && (argc!=4))
         {
-            SYSTEM_1Print("Usage : %s <absolute path of DSP executable> <number of transfers> <DSP Processor Id>\n"
-                          "For infinite transfers, use value of 0 for <number of transfers>d\n"
+            SYSTEM_1Print("Usage : %s <absolute path of DSP executable> <Matrix size> <DSP Processor Id>\n"
                           "For DSP Processor Id,"
                           "\n\t use value of 0  if sample needs to be run on DSP 0 "
                           "\n\t use value of 1  if sample needs to be run on DSP 1"
@@ -53,8 +50,16 @@ extern "C"
         else
         {
             dspExecutable = argv[1];
-            strNumIterations = argv[2];
-
+			input_size = atoi(argv[2]);
+			
+			if (input_size>128) 
+			{
+				printf("Matrix size must be <=128\n");
+				return 1;
+			}
+			
+			size = input_size;
+			
             if (argc == 3)
             {
                 strProcessorId = "0";
@@ -64,11 +69,12 @@ extern "C"
             {
                 strProcessorId = argv[3];
                 processorId = atoi(argv[3]);
+               
             }
 
             if (processorId < MAX_PROCESSORS)
             {
-                helloDSP_Main(dspExecutable, strNumIterations, strProcessorId);
+                helloDSP_Main(dspExecutable, strProcessorId);
             }
         }
 
