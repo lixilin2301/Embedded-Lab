@@ -3,6 +3,8 @@
 \usepackage{listings}
 \usepackage{graphicx}
 \usepackage{color}
+\usepackage{cite}
+\usepackage{url}
 
 \definecolor{mygray}{rgb}{0.4,0.4,0.4}
 \definecolor{mygreen}{rgb}{0,0.8,0.6}
@@ -45,6 +47,8 @@ Muneeb Yousaf\\ \small{\textit{m.m.yousaf@student.tudelft.nl}}
 \begin{document}
 \maketitle
 
+\nocite{*}
+
 \begin{abstract}
 I am an empty abstract. Please fill me.
 \end{abstract}
@@ -60,5 +64,8 @@ I am an empty abstract. Please fill me.
 \include{conclusion}
 
 \include{discussion}
+
+\bibliography{references}{}
+\bibliographystyle{plain}
 
 \end{document}
