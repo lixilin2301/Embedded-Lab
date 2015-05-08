@@ -40,13 +40,14 @@ extern "C"
  * verification
  */
 #define VERIFY
-//#define DEBUG
+#define DEBUG
 
 Timer totalTime;
 Timer dsp_only;
 Timer serialTime;
 
 Uint8 size;
+Uint8 size_n;
 
 
     /* Number of arguments specified to the DSP application. */
@@ -111,7 +112,8 @@ typedef union {
      * Source matrices are heap- allocated while destination matrices
      * are statically stack allocated
      */
-    int16_t *pmat1, *pmat2, *pres;
+    int16_t *pmat1, *pmat2;
+    int32_t *pres;
     int32_t prod[MAT_SIZE][MAT_SIZE], prod_ver[MAT_SIZE][MAT_SIZE];
 
     /* Messaging buffer used by the application.
@@ -336,9 +338,9 @@ typedef union {
 
 
 
-    inline void MAC4 (int16x8_t *additive_value, int16x8_t *data1, int16x8_t *data2,int16x8_t *mac_output)
+    inline void MAC4 (int32x4_t *additive_value, int16x4_t *data1, int16x4_t *data2,int32x4_t *mac_output)
     {
-        *mac_output = vmlaq_s16 (*additive_value,*data1, *data2);
+        *mac_output = vmlal_s16 (*additive_value,*data1, *data2);
     }
 
     /** ============================================================================
@@ -628,36 +630,44 @@ typedef union {
 
     NORMAL_API Void helloDSP_Main(IN Char8* dspExecutable, IN Char8* strProcessorId)
     {
-        int i;
-        int j;
+      int i,i2=0;
+      int j,j2=0;
 
         DSP_STATUS status = DSP_SOK;
         Uint8 processorId = 0;
         pmat1 = malloc(MAT_SIZE * MAT_SIZE * sizeof(int16_t));
         pmat2 = malloc(MAT_SIZE * MAT_SIZE * sizeof(int16_t));
-        pres = malloc(MAT_SIZE * MAT_SIZE * sizeof(int16_t));
+        pres = malloc(MAT_SIZE * MAT_SIZE * sizeof(int32_t));
         if (pmat1 == NULL || pmat2 == NULL || pres == NULL) {
             printf("Out of memory\n");
         }
+
+	size_n = (size%4) ? size+4-size%4 : size;
 
         /*
          * Generating initial matricies
          */
        
-        for (i = 0; i < size; i++) //row
+        for (i = 0; i < size_n; i++) //row
         {
-			for (j = 0; j < size; j++)  //column
-			{
+	    for (j = 0; j < size_n; j++)  //column
+	    {
+	        if((i>=size)||(j>=size))
+		{
+		    pmat1[i*MAT_SIZE+j]=0;
+		    pmat2[i*MAT_SIZE+j]=0;
+		}else{
 #ifdef DEBUG
-            pmat1[i*MAT_SIZE+j] = i*size+j;
-            pmat2[i*MAT_SIZE+j] = (i  == j) ; //identity matrix
+		    pmat1[i*MAT_SIZE+j] = j2;
+		    pmat2[i*MAT_SIZE+j] = (i  == j) ; //identity matrix
 #else
-            pmat1[i*MAT_SIZE+j] = i*13+1;
-            pmat2[i*MAT_SIZE+j] = i*7+1;
+		    pmat1[i*MAT_SIZE+j] = j2*13+12;
+		    pmat2[i*MAT_SIZE+j] = j2*7+12;
 #endif
-				
-			}
+		    j2++;
 		}
+	    }
+	}
        
    /*     for (i = 0; i < MAT_SIZE * MAT_SIZE; i++)
         {
@@ -675,8 +685,8 @@ typedef union {
 
 #ifdef DEBUG
         SYSTEM_0Print ("========== Initial matricies ==========\n");
-        print_new_matrix(pmat1, size, i, j);
-        print_new_matrix(pmat2, size, i, j);
+        print_new_matrix(pmat1, size_n, i, j);
+        print_new_matrix(pmat2, size_n, i, j);
 #endif
 
         SYSTEM_0Print ("========== Matrix Multiplication ==========\n");
@@ -823,53 +833,62 @@ typedef union {
     NORMAL_API void performMultiplications(void)
     {
         int l, k;
-        int16x8_t data1;
-        int16x8_t mac_output[MAT_SIZE/8];
-        int16x8_t MAC_addvalue[MAT_SIZE/8];
+        int16x4_t data1;
+        int32x4_t mac_output[MAT_SIZE/4];
+        int32x4_t MAC_addvalue[MAT_SIZE/4];
+        int16x4_t constant_value;
         unsigned int index_input = 0;
-        int16x8_t constant_value;
+        unsigned int index_input2 = 0;//size*MAT_SIZE/2;
         unsigned int transfer_index = 0 ;
+	Uint8 size2;
+	
+	index_input2 = size*MAT_SIZE/2;
 
         startTimer(&dsp_only); // START TIMER for DSP
 
-        for(l = 0 ; l < size/8; l++)
+        for(l = 0 ; l < size_n/4; l++)
         {
-            MAC_addvalue[l] = vmovq_n_s16(0);
+            MAC_addvalue[l] = vmovq_n_s32(0);
         }
 
         /* here the multiplications will be done */
-        for(l = MAT_SIZE*size/2; l < MAT_SIZE*size; l++)
+        for(l = 0; l < size_n*(size/2+(size_n-size)); l++)
         {
-            constant_value = vmovq_n_s16 (pmat1[l]);
-            for(k = 0 ; k < MAT_SIZE/8 ; k++)
+            constant_value = vmov_n_s16 (pmat1[index_input2++]);
+            for(k = 0 ; k < size_n/4 ; k++)
             {
-                data1 = vld1q_s16 (&pmat2[index_input]);
+                data1 = vld1_s16 (&pmat2[index_input]);
                 MAC4 (&MAC_addvalue[k], &constant_value, &data1,&mac_output[k]);
                 MAC_addvalue[k] = mac_output[k];
-                index_input +=8;
+                index_input +=4;
             }
-            if ((l + 1) % size == 0 )
+	    index_input+=MAT_SIZE-size_n;
+            if ((l + 1) % size_n == 0 )
             {
                 index_input = 0;
+		index_input2 += MAT_SIZE-size_n;
 
-                for(k = 0 ; k < size/8 ; k++)
+                for(k = 0 ; k < size_n/4 ; k++)
                 {
-                    vst1q_s16(&pres[transfer_index],MAC_addvalue[k]);
-                    transfer_index +=8;
+                    vst1q_s32(&pres[transfer_index],MAC_addvalue[k]);
+                    transfer_index +=4;
                 }
-
-                for(k = 0 ; k < size/8; k++)
+		transfer_index += MAT_SIZE-size_n;
+                for(k = 0 ; k < size_n/4; k++)
                 {
-                    MAC_addvalue[k] = vmovq_n_s16(0);
+                    MAC_addvalue[k] = vmovq_n_s32(0);
                 }
             }
         }
+
+        SYSTEM_0Print ("========== NEON Result ==========\n");
+        print_new_matrix(pres, size_n, l, k);
 
         for (l = size/2;l < size; l++)
         {
           for (k = 0; k < size; k++)
           {
-            prod[l][k] = (int32_t)pres[(l-size/2)*MAT_SIZE+k];
+            prod[l][k] = pres[(l-size/2)*MAT_SIZE+k];
           }
         }
 
