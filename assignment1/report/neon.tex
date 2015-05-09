@@ -70,6 +70,9 @@ while the four lanes each contains a signed 32-bit integer.
 This intrinsic multiplies b by c, and accumulates the result with a in all four lanes.
 The final results are then stored in four lanes as well.
 \end{enumerate}
+
+\subsubsection{Multiplication Algorithm}
+
 In order to fully utilize the Neon resources, we have used following algorithm to compute the matrix multiplication. The following illustration shows one rows of results.
 The input matrices are following:
 
@@ -103,7 +106,7 @@ The output matrix would be :
 	}
 \end{table}
 
-In the output matrix ,  the  elements with the same color are multiplied by the Neon at the same time. In this way, Neon produces the results of 4 multiplications at the same time.  In the above output row, x1y1, x1y2, x1y3 and x1y4 are produces by the neon at the same time.  But these are just the partial results for the first row of output matrix. In order to get the complete results for the first row these partial results should be added to the other partial results  of the same row.  This complete task of multiplication and addition is done by using “Multiplication and addition” functional unit of neon. The conceptual diagram of this multiplication and addition is shown in the following diagram:
+In the output matrix ,  the  elements with the same color are multiplied by the Neon at the same time. In this way, Neon produces the results of 4 multiplications at the same time.  In the above output row, x1y1, x1y2, x1y3 and x1y4 are produces by the neon simultaneously.  But these are just the partial results for the first row of output matrix. In order to get the complete results for the first row these partial results should be added to the other partial results  of the same row.  This complete task of multiplication and addition is done by using "Multiplication and Addition" functional unit of neon. The conceptual diagram of this multiplication and addition is shown in the following diagram:
 \begin{figure}[h]
 \centering 
 \includegraphics[width= 0.7\textwidth]{MandA}
