@@ -1,1 +1,15 @@
 \section{Future Work}
+In our experiments, the calculation is always performed by both DSP and NEON.
+This kind of static allocation benefits only when the input size is greater than a specific value.
+Obtained from the analysis, better performance can be achieved when the 
+calculation is to be allocated on different cores dynamically according to the input data size.
+
+Based on Figure 6, when the received input size is less than 90, the calculation is performed by NEON only,
+while when the input size is greater than 90, then the calculation is handled by both DSP and NEON.
+Moreover, the performance can be further improved if we could configure the number of messages sending to DSP.
+Since we will not reach the maximum capacity of sending message size until certain input data size, 
+less messages are able to send to DSP in order to reduce the communication costs. Alternatively, 
+during our experiments, it is also possible to send more messages with smaller size to minimize communication time.
+
+In conclusion, more improvements are to be achieved when dynamic allocation is to be implemented on core selection and 
+DSP message generation.
