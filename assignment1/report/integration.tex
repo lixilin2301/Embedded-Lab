@@ -4,8 +4,8 @@ Our current design uses a 1:1 load balancing where half of the product is calcul
 
 \subsection{DSP}
 The \emph{OMAP3530} GPP contains a \emph{TMS320} DSP (\emph{DSP})\cite{gpp-refman}. This
-core is optimised for using multiple calculation channels simultaneously: it is
-a \emph{VLIW} (Very Long Instruction Word) processor that can utilise eight
+core is optimized for using multiple calculation channels simultaneously: it is
+a \emph{VLIW} (Very Long Instruction Word) processor that can utilize eight
 functional units at the same time. More specifically, we can use six ALUs and
 two multipliers per instruction. Another interesting feature is that each
 multiplier can perform two 16 x 16-bit multiplications as well\cite{dsp-refman}, giving us
@@ -51,7 +51,7 @@ was determine the maximum matrix size we could assign, such that it would fit
 in one message. This message would be stored inside a section of
 \emph{APP\_BUFFER\_SIZE} large, thus our message structure has to fit in there.
 This buffer was $16768$ bytes on our system.
-Removing the (negiglable) overhead of $279$ bytes our payload limit is $16489$ bytes.
+Removing the (negligible) overhead of $279$ bytes our payload limit is $16489$ bytes.
 
 The source matrices are 16 bit, but the result should be at least 32 bits.
 To accommodate for both
@@ -111,7 +111,7 @@ As soon as the GPP sends the fourth message (\emph{MSG 4}) it immediately begins
 
 In order to examine the results (that are presented later in this report) we put timers in the appropriate places. The first timer is put immediately after the generation of multiplicand and multiplier matrices and before \emph{MSG 1} is being transmitted such that to take into account the communication overhead and measure the entire execution time.
 
-The second timer is placed immediately after \emph{MSG 4} is send. The second timer gives us the upperbound on $max(ARM, DSP)$ execution times while neglecting the communication time as much as possible. Both timers are stopped as soon as the calculations are done and the first packet from the DSP (Result 1) is received. In the analysis we would be focusing more on the first timer.
+The second timer is placed immediately after \emph{MSG 4} is send. The second timer gives us the upper-bound on $max(ARM, DSP)$ execution times while neglecting the communication time as much as possible. Both timers are stopped as soon as the calculations are done and the first packet from the DSP (Result 1) is received. In the analysis we would be focusing more on the first timer.
 
 Also note that there are many different possibilities to place the timers however we figured timer 1 is optimal as it incorporates most of delays, and provides good insight when doing analysis.
 
@@ -123,9 +123,9 @@ takes the advantage of parallel operation to achieve the speed-up.
 \subsubsection{NEON Technology} 
 To understand NEON technology, the idea of SIMD is introduced at first. 
 SIMD (Single Instruction Multiple Data) describes a way to perform the same operation on multiple data with same type and size in a single instruction. 
-The idea of parallel operation comes from the fact that most of multimedia data are 16-bit or 8-bit wide, while the general purpose registers are 32-bit wide. To effectively utilize the space of registers, simultaneous computation is developed.
+The idea of parallel operation comes from the fact that multimedia applications, such as graphics processing, became popular for desktop computers and a necessity for embedded systems such as smartphones. Since the computing power of the processors used in those systems was not enough at one point to fully support such applications, SIMD extensions such as NEON and MMX became part of the instruction set.
 
-NEON technology, as the Advanced SIMD extension in \emph{Cortex-A8}, performs SIMD operations in group. 
+NEON technology, such as the Advanced SIMD extension in \emph{Cortex-A8}, performs SIMD operations in group. 
 NEON instructions operate on vectors stored in 64-bit or 128-bit registers, 
 then vectors of elements with same type can perform the same operation on multiple items at the same time.
 Figure~\ref{fig:neon} shows how multiple items are computed simultaneously. 
@@ -174,23 +174,33 @@ with each of the them containing an unsigned 32-bit integer.
 NEON intrinsics \cite{Intrinsics} provide groups of functions for operation. 
 In our case, functions related to load, multiplication and addition are used. 
 \begin{enumerate}
-\item \textbf{uint32x4\_t  vmovq\_n\_u32(uint32\_t value)}
+\item \textbf{int32x4\_t  vmovq\_n\_s32(int32\_t value)}
 
 This intrinsic loads all lanes of vector to the same input value. 
-The input value is an unsigned 32-bit integer, 
-while the four lanes being loaded each contains an unsigned 32-bit as well.
+The input value is a signed 32-bit integer, 
+while each of the four lanes being loaded contain a signed 32-bit as well. This function is used to initialize or set the partial products to zero.
+
+\item \textbf{int32x4\_t  vmov\_n\_s16(int16\_t value)}
+
+This intrinsic loads all lanes of a vector to the same input value. 
+The input value is a signed 16-bit integer, 
+while each of the four lanes being loaded contain a signed 16-bit as well. With this intrinsic we can load a single data from the first matrix, to be multiplied by a row of the second matrix.
+
+\item \textbf{int16x4\_t   vld1\_s16(\_\_transfersize(4) int16\_t const * ptr)}
+
+This intrinsic loads four values from memory to all lanes, starting from the address referenced by the pointer.
+The data stored in memory is signed 16-bit integer, 
+while each of the four lanes contain a signed 16-bit integer. We load a full row (in groups of 4) of the second matrix with this intrinsic.
+
+\item \textbf{int32x4\_t   vmlal\_s16(int32x4\_t a, int16x4\_t b, int16x4\_t c)}
+
+This intrinsic multiplies b by c, and accumulates the result with a in all four lanes. The final results are then stored in four lanes as well.
 
 
-\item \textbf{int32x4\_t   vld1q\_s32(\_\_transfersize(4) int32\_t const * ptr)}
+\item \textbf{void  vst1q\_s32(\_\_transfersize(4) int32\_t * ptr, int32x4\_t val)}
 
-This intrinsic loads a single value from memory to all lanes.
-The data stored in memory is signed 32-bit integer, 
-while the four lanes each contains a signed 32-bit integer.
+This intrinsic stores a 32-bit vector of 4 lanes into memory starting from the address referenced by the pointer. It is used to store the computations into the results matrix, 4 values at a time.
 
-\item \textbf{int32x4\_t   vmlaq\_s32(int32x4\_t a, int32x4\_t b, int32x4\_t c)}
-
-This intrinsic multiplies b by c, and accumulates the result with a in all four lanes.
-The final results are then stored in four lanes as well.
 \end{enumerate}
 
 \subsubsection{Multiplication Algorithm}

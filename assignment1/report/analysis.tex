@@ -28,7 +28,7 @@ Since serial multiplications takes $n^3$ cycles to complete in the reference imp
 
 Both DSP and NEON can perform four multiplication operations at a time, the time required to complete all multiplications would be $\frac{16*16}{8} = 32$. So the fraction of the reference application that is strictly serial for our platform is: $\frac{32}{4096} = 0.0078125$.
 
-According to Amdahl's law the speed up would be $S(n) = \frac{1}{B + \frac{1 - B}{n}}$, with $n$ being the number of processors. We can regard this as being 8, as we can perform 8 calculations at the same time. Filling this in the equation gives us a theoretical upperbound on our speedup of $S(8) = \frac{1}{{0.0078125 + \frac{1 - 0.0078125}{8}}} = \frac{1}{0.1318} = 7.6$ times.
+According to Amdahl's law the speed up would be $S(n) = \frac{1}{B + \frac{1 - B}{n}}$, with $n$ being the number of processors. We can regard this as being 8, as we can perform 8 calculations at the same time. Filling this in the equation gives us a theoretical upper-bound on our speedup of $S(8) = \frac{1}{{0.0078125 + \frac{1 - 0.0078125}{8}}} = \frac{1}{0.1318} = 7.6$ times.
 
 \subsection{Experimental results}
 

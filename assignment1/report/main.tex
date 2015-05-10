@@ -55,10 +55,10 @@ Muneeb Yousaf\\ \small{\textit{m.m.yousaf@student.tudelft.nl}} \\ \small{4411129
 \nocite{*}
 
 \begin{abstract}
-This report describes the implementation process of a highly parallelisable 
+This report describes the implementation process of a highly parallelizable 
 reference application (matrix multiplication) on to an embedded system, using 
 a digital signal processor (DSP) and parallel computation extensions (SIMD) to 
-achieve a significant speedup over this reference implementation. We describe
+achieve a significant speedup over this reference implementation. The application was implemented in a TI processor that includes an ARM core with NEON support and a DSP, with a 1:1 load balance between the two processing units. At the maximum matrix size (128 by 128), we could achieve a speedup of more than 6. We describe
 the difficulties of working with this system, go into some depth about the 
 obtained speedup and discuss further improvements that could be made.
 
