@@ -17,3 +17,33 @@ Once the code has been completed and the functionality has been verified (See se
 \label{fig:speedup_plot}
 \end{figure}
 
+\subsection{Theoretical Upper Bound on the Speed-Up}
+
+we are using the beagle-board to speed-up our reference application( Multiplications). Our plan is to distribute the  computation load on both the neon and Dsp equally. As DSP has two cores which can perform two operation simultaneously. This means on the DSP we can perform four operations at same time. And similarly by using Neon we can also perform four operations at a time. 
+In order to simplify the calculation for upper bound on the speed-up, we  have made following assumptions: 
+\begin{itemize}
+\item All the operations takes single clock cycle to complete.
+\item The time that is consumed in communication between the processors is zero. 
+\item The time to load data data into the processors is negligible. 
+\end{itemize}
+
+The complexity of Serial multiplications= O(n^3).
+
+In order to make our calculations simple, we have assumed  that n = 16. so our task is to perform the  multiplications of two 16x16 matrices . 
+
+As serial multiplications takes n^3 cycles to complete, so number of cycles required to complete multiplications  for n= 16  would be(16^3) 4096.
+As  we are distributing our work load equally on the both DSP and Neon,  then the effective work load for each one would be nxn/2. In our current scenario each of the processor will get 16x16/2 matrices.
+
+As each can perform 4 multiplication operations at a time,so the time , that would require to complete the  all multiplication would be 16x16/8=  32. 
+
+So the fraction  of reference application that is strictly serial for our platform: 32/4096 = 0.0078125
+
+According to Amdahl's law the speed up would be:
+
+S(n) = 1/ (B +( 1- B)/n) 
+
+No of processor are 8, as we can perform 8 calculations at the same time. 
+
+S(8) = 1/(0.0078125 + ( 1 - 0.0078125)/8) = 1 / 0.1318 = 7.6 times . 
+
+ 
