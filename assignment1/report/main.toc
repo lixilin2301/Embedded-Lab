@@ -6,14 +6,15 @@
 \contentsline {subsubsection}{\numberline {2.2.1}Message Format}{3}
 \contentsline {subsubsection}{\numberline {2.2.2}Communication Details}{4}
 \contentsline {subsection}{\numberline {2.3}NEON}{5}
-\contentsline {subsubsection}{\numberline {2.3.1}SIMD}{5}
-\contentsline {subsubsection}{\numberline {2.3.2}NEON Technology}{5}
-\contentsline {subsubsection}{\numberline {2.3.3}Hardware Features}{5}
-\contentsline {subsubsection}{\numberline {2.3.4}Implementation}{6}
-\contentsline {subsubsection}{\numberline {2.3.5}Vector Data Type}{6}
-\contentsline {subsubsection}{\numberline {2.3.6}NEON Intrinsics}{6}
-\contentsline {subsubsection}{\numberline {2.3.7}Multiplication Algorithm}{7}
+\contentsline {subsubsection}{\numberline {2.3.1}NEON Technology}{5}
+\contentsline {subsubsection}{\numberline {2.3.2}Hardware Features}{5}
+\contentsline {subsubsection}{\numberline {2.3.3}Implementation}{6}
+\contentsline {subsubsection}{\numberline {2.3.4}Vector Data Type}{6}
+\contentsline {subsubsection}{\numberline {2.3.5}NEON Intrinsics}{6}
+\contentsline {subsubsection}{\numberline {2.3.6}Multiplication Algorithm}{7}
 \contentsline {section}{\numberline {3}Analysis}{8}
 \contentsline {subsection}{\numberline {3.1}Theoretical Upper Bound on the Speed-Up}{8}
-\contentsline {section}{\numberline {4}Future Work}{10}
-\contentsline {section}{\numberline {5}Conclusion}{10}
+\contentsline {section}{\numberline {4}Conclusion}{9}
+\contentsline {section}{\numberline {5}Future Work}{9}
+\contentsline {subsection}{\numberline {5.1}Dynamic configuration}{10}
+\contentsline {subsection}{\numberline {5.2}Reducing communication overhead}{10}

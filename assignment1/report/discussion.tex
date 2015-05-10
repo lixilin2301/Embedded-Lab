@@ -1,15 +1,18 @@
 \section{Future Work}
-In our experiments, the calculation is always performed by both DSP and NEON.
-This kind of static allocation benefits only when the input size is greater than a specific value.
-Obtained from the analysis, better performance can be achieved when the 
-calculation is to be allocated on different cores dynamically according to the input data size.
+Several improvements could be done to our implementation.
 
-Based on Figure 6, when the received input size is less than 90, the calculation is performed by NEON only,
-while when the input size is greater than 90, then the calculation is handled by both DSP and NEON.
-Moreover, the performance can be further improved if we could configure the number of messages sending to DSP.
-Since we will not reach the maximum capacity of sending message size until certain input data size, 
-less messages are able to send to DSP in order to reduce the communication costs. Alternatively, 
-during our experiments, it is also possible to send more messages with smaller size to minimize communication time.
+\subsection{Dynamic configuration}
 
-In conclusion, more improvements are to be achieved when dynamic allocation is to be implemented on core selection and 
-DSP message generation.
+At the moment the default calculation configuration is \emph{DSP + NEON}.
+This 'static' configuration benefits only when the input size is greater than a specific value as shown in the analysis section.
+However, better overall performance can be achieved when the 
+configuration is to be dynamically chosen according to the input data size
+Looking at Figure~\ref{fig:speedup_plot} again, when the received input size is less than 90, the calculation can be performed by NEON only,
+whereas when the input size is greater than 90, then the calculation can be handled by the DSP + NEON configuration. This improvement can be simply done without major changes to the coding infrastructure by adding an \textit{if statement} to choose between DSP+NEON and NEON only configuration at run-time.
+
+\subsection{Reducing communication overhead}
+
+The current implementation sends a fixed number of messages over the communication links. That time can be extremely wasteful, e.g. if the input matrix size is 64, we could limit ourselves to one packet being sent to the DSP, 
+however at the moment we are sending three additional packets that contain no useful information. Hence the performance can be improved by reducing the communication time if we dynamically decide how many packets are sufficient enough and send no more than that.
+Alternatively, 
+another area of exploration that could be experimented is to send more messages with smaller size to minimize communication time. The idea is that by having smaller packets we are able to more efficiently 'packetize' the data and send it over the link without fragmentation.
