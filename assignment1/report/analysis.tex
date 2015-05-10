@@ -27,7 +27,7 @@ Figure~\ref{fig:perf_plot} shows execution time for different valid input sizes 
 \end{figure}
 
 \subsection{Theoretical Upper Bound on the Speed-Up}
-We are using the beagleboard to speed up our reference application (Multiplications). Our plan is to distribute the computational load on both the neon and DSP equally. As the DSP has two cores which can perform two operation simultaneously, this means that on the DSP we can perform four operations at the same time. Similarly, by using Neon we can also perform four operations at a time. In order to simplify the calculation for the upper bound on the speed-up, we have made following assumptions:
+We are using the beagleboard to speed up our reference application (Multiplications). Our plan is to distribute the computational load on both the neon and DSP equally. As the DSP has two multipliers which can perform two operations simultaneously, this means that on the DSP we can perform four multiplication operations at the same time. Similarly, by using Neon we can also perform four 32 bit multiplication operations at a time. In order to simplify the calculation for the upper bound on the speed-up, we have made following assumptions:
 
 \begin{itemize}
 \item All the operations take a single clock cycle to complete.
@@ -39,6 +39,6 @@ The complexity of Serial multiplications is in the order of O($n^3$). In order t
 
 As serial multiplications takes $n^3$ cycles to complete in the reference implementation (since it is a triple nested for-loop over the input size), so number of cycles required to complete the multiplications for $n = 16$ would be $16^3 = 4096$. As we are distributing our work load equally on the both DSP and Neon, the effective work load for each one would be $\frac{n * n}{2}$. In our current scenario each of the processor will get $\frac{16 * 16}{2}$ matrices.
 
-As each can perform 4 multiplication operations at a time, the time required to complete all multiplications would be ${16*16}{8} = 32$. So the fraction of the reference application that is strictly serial for our platform is: $\frac{32}{4096} = 0.0078125$.
+As each can perform 4 multiplication operations at a time, the time required to complete all multiplications would be $\frac{16*16}{8} = 32$. So the fraction of the reference application that is strictly serial for our platform is: $\frac{32}{4096} = 0.0078125$.
 
 According to Amdahl's law the speed up would be $S(n) = \frac{1}{B + \frac{1 - B}{n}}$, with $n$ being the number of processors. We can regard this as being 8, as we can perform 8 calculations at the same time. Filling this in the equation gives us a theoretical upperbound on our speedup of $S(8) = \frac{1}{{0.0078125 + \frac{1 - 0.0078125}{8}}} = \frac{1}{0.1318} = 7.6$ times.
