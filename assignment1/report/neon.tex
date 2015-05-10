@@ -22,7 +22,7 @@ Figure~\ref{fig:neon} shows how multiple items are computed simultaneously.
 \end{figure}
 
 \subsection{Hardware Features}
-NEON architecture has the following features:
+NEON architecture has the following features\cite{hardware}:
 \begin{enumerate}
 \item \emph{16-Entry instruction queue}
 \item \emph{32 x 64-bit general purpose registers in register file}
@@ -35,37 +35,38 @@ NEON supports either integer of single precision floating point execute pipeline
 
 \subsection{Implementation}
 To enable the build-in intrinsics of NEON, 
-\emph{\-mfpu\=neon} is used during compiling time.
+\emph{$-$mfpu$=$neon}\cite{ARMoptions} is used during compiling time.
 Also, header file \emph{arm\_neon.h} is included 
 to support NEON intrinsics in the c file.
 In our case, the incoming message contains the matrix with data of 16-bit wide, 
 and then after calculation, when the final outcome is sending back to GPP, data size is 32-bit to avoid overflow.
 In the following, NEON intrinsics that are used for parallel computing in our experiment are explained.
 \subsubsection{Vector Data Type}
-Neon defined its own data type for multiple data operation, the format is given as:
-\textbf{ \textless type \textgreater \textless size \textgreater x \textless number of lanes \textgreater\_t}
+Neon defined its own data type\cite{DataType} for multiple data operation, the format is given as:
+~\\ 
+\textbf{ \textless type\textgreater \textless size \textgreater x\textless number of lanes\textgreater\_t}
 
 For example, the data type we are going to use in NEON is \emph{uint32x4\_t}, 
 which means the vector has four lanes, 
 with each of the them containing an unsigned 32-bit integer. 
 \subsubsection{NEON Intrinsics}
-NEON intrisics provide groups of functions for operation. 
+NEON intrisics \cite{Intrinsics}provide groups of functions for operation. 
 In our case, functions related to load, multiplication and addition are used. 
 \begin{enumerate}
-\item \emph{uint32x4\_t  vmovq\_n\_u32(uint32\_t value)}
+\item \textbf{uint32x4\_t  vmovq\_n\_u32(uint32\_t value)}
 
 This intrinsic loads all lanes of vector to the same input value. 
 The input value is an unsigned 32-bit integer, 
 while the four lanes being loaded each contains an unsigned 32-bit as well.
 
 
-\item \emph{int32x4\_t   vld1q\_s32(\_\_transfersize(4) int32\_t const * ptr)}
+\item \textbf{int32x4\_t   vld1q\_s32(\_\_transfersize(4) int32\_t const * ptr)}
 
 This intrinsic loads a single value from memory to all lanes.
 The data stored in memory is signed 32-bit integer, 
 while the four lanes each contains a signed 32-bit integer.
 
-\item \emph{int32x4\_t   vmlaq\_s32(int32x4\_t a, int32x4\_t b, int32x4\_t c)}
+\item \textbf{int32x4\_t   vmlaq\_s32(int32x4\_t a, int32x4\_t b, int32x4\_t c)}
 
 This intrinsic multiplies b by c, and accumulates the result with a in all four lanes.
 The final results are then stored in four lanes as well.
