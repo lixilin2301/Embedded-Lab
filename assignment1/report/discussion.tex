@@ -6,8 +6,8 @@ Several improvements could be done to our implementation.
 At the moment the default calculation configuration is \emph{DSP + NEON}.
 This 'static' configuration benefits only when the input size is greater than a specific value as shown in the analysis section.
 However, better overall performance can be achieved when the 
-configuration is to be dynamically chosen according to the input data size
-Looking at Figure~\ref{fig:speedup_plot} again, when the received input size is less than 90, the calculation can be performed by NEON only,
+configuration is to be dynamically chosen according to the input data size.
+Looking at Figure~\ref{fig:speedup_plot} on page~\pageref{fig:speedup_plot} again, when the received input size is less than 90, the calculation can be performed by NEON only,
 whereas when the input size is greater than 90, then the calculation can be handled by the DSP + NEON configuration. This improvement can be simply done without major changes to the coding infrastructure by adding an \textit{if statement} to choose between DSP+NEON and NEON only configuration at run-time.
 
 \subsection{Reducing communication overhead}
