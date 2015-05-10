@@ -1,2 +1,3 @@
 \section{Integration}
-Discuss how we split and balance the workload here.
+With a limited knowledge in the hardware architecture of this platform and its capabilities our team has decided to start of by experimenting with different cores individually and then writing the software in an incremental manner such that some improvement is made towards reaching the goal. Furthermore due to the fact that the communication API ( MSGQ API ) of the DSP/BIOS is not trivial we are given a reference helloDSP application on which we would do all the incremental changes.
+Our current design uses a 1:1 load balancing where half of the product is calculated on one core and the other half on a different core. Each core respectively utilizes it's parallel components. Later sections in the report provide more details and other schemes that are possible with the design.
