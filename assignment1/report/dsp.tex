@@ -1,26 +1,26 @@
 \section{DSP}
 The \emph{OMAP3530} general purpose processor (from now on referred to as the
-\emph{GPP}) contains a \emph{TMS320} digital signal processor (\emph{DSP}). This
+\emph{GPP}) contains a \emph{TMS320} digital signal processor (\emph{DSP})\cite{gpp-refman}. This
 core is optimised for using multiple calculation channels simultaneously: it is
 a \emph{VLIW} (Very Long Instruction Word) processor that can utilise eight
 functional units at the same time. More specifically, we can use six ALUs and
 two multipliers per instruction. Another interesting feature is that each
-multiplier can perform two 16 x 16-bit multiplications as well, giving us
+multiplier can perform two 16 x 16-bit multiplications as well\cite{dsp-refman}, giving us
 potentially four multiplications in parallel.
 
 The GPP unit is responsible for starting up the DSP core, giving it an executable to run
 and afterwards detaching the core. Furthermore, the requirements specified
-that the matrices to multiply are generated on the GPP core (which is 
+that the matrices to multiply are generated on the GPP core (which is
 of course not a bad idea because the GPP is way more flexible: it can easily
 be changed to read the matrices from a file or standard input, and we can
-offload a part of the work to the GPP itself and also the \emph{NEON} as we 
-will discuss later as well). 
+offload a part of the work to the GPP itself and also the \emph{NEON} as we
+will discuss later as well).
 
 \subsection{Communication}
 This however brings us to one complication: the matrices have to be moved to
 the DSP core, while the (partial) end result has to be sent back to the GPP.
 Our first goal is thus to set up communications and send matrices back and forth
-between the two cores. 
+between the two cores.
 
 \begin{figure}[h]
 \includegraphics[width=\textwidth]{images/gpp_dsp_com}
@@ -43,24 +43,25 @@ section.
 \subsubsection{Message Format}
 We used the existing reference communication implementation and it's message
 structure, but we extended it with our own matrices and an extra field that
-indicates how big the resulting matrix should be. One thing we had to do 
-was determine the maximum matrix size we could assign, such that it would fit 
+indicates how big the resulting matrix should be. One thing we had to do
+was determine the maximum matrix size we could assign, such that it would fit
 in one message. This message would be stored inside a section of
-\emph{APP\_BUFFER\_SIZE} large, thus our message structure has to fit in there. 
-We experimentally found that we could send up to around 90k bytes per message.
+\emph{APP\_BUFFER\_SIZE} large, thus our message structure has to fit in there.
+This buffer was $16768$ bytes on our system.
+Removing the (negiglable) overhead of $279$ bytes our payload limit is $16489$ bytes.
 
-The source matrices are 16 bit, but the result should be at least 32 bits. 
-To accommodate for both 
+The source matrices are 16 bit, but the result should be at least 32 bits.
+To accommodate for both
 situations in the same control message structure while optimally using our
-message in a uniform way, we opted to use a \emph{union} structure so we 
-can either send two 16 bit matrices or one 32 bit matrix at a time. The 
-structure is given in figure~\ref{code:control_msg}. 
+message in a uniform way, we opted to use a \emph{union} structure so we
+can either send two 16 bit matrices or one 32 bit matrix at a time. The
+structure is given in figure~\ref{code:control_msg}.
 
-Because we have to send up to $128*128*2*2=65.536$ (2 matrices of 16 bits)
+Because we have to send up to $128*128*2*2=65536$ (2 matrices of 16 bits)
 bytes from the GPP to the DSP, we need at least four messages considering
-our bandwidth limit of 90k bytes. Thus we send the source in four messages, 
+our bandwidth limit of $16489$ bytes. Thus we send the source in four messages,
 each containing a quarter of both matrices. The DSP only calculates a half of
-the result matrix, making two messages sufficient: this results in six 
+the result matrix, making two messages sufficient: this results in six
 communication steps.
 
 \begin{figure}[h]
