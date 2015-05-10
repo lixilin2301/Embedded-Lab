@@ -137,7 +137,8 @@ Figure~\ref{fig:neon} shows how multiple items are computed simultaneously.
 \label{fig:neon}
 \end{figure}
 
-\subsubsection{Hardware Features}
+\paragraph{Hardware Features}
+~\\
 The NEON architecture has the following features\cite{hardware}:
 \begin{enumerate}
 \item \emph{16-Entry instruction queue}
@@ -158,7 +159,8 @@ In our case, the incoming message contains the matrix with data of 16-bit wide,
 and then after calculation, when the final outcome is sending back to GPP, the data size is 32-bit to avoid overflow.
 In the following section, NEON intrinsics that are used for parallel computing in our experiment are explained.
 
-\subsubsection{Vector Data Type}
+\paragraph{Vector Data Type}
+~\\
 Neon defined its own data type\cite{DataType} for multiple data operation, the format is given as:
 ~\\ 
 \textbf{ \textless type\textgreater \textless size\textgreater x\textless number of lanes\textgreater\_t}
@@ -167,7 +169,8 @@ For example, the data type we are going to use in NEON is \emph{uint32x4\_t},
 which means the vector has four lanes, 
 with each of the them containing an unsigned 32-bit integer. 
 
-\subsubsection{NEON Intrinsics}
+\paragraph{NEON Intrinsics}
+~\\
 NEON intrinsics \cite{Intrinsics} provide groups of functions for operation. 
 In our case, functions related to load, multiplication and addition are used. 
 \begin{enumerate}
