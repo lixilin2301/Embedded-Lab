@@ -16,7 +16,7 @@ The figure below shows how multiple items are computed simultaneously.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.9\textwidth]{neon}
+\includegraphics[width=0.9\textwidth]{images/neon}
 \caption{Parallel computing based on NEON}
 \label{fig:neon}
 \end{figure}
@@ -109,7 +109,7 @@ The output matrix would be :
 In the output matrix ,  the  elements with the same color are multiplied by the Neon at the same time. In this way, Neon produces the results of 4 multiplications at the same time.  In the above output row, x1y1, x1y2, x1y3 and x1y4 are produces by the neon simultaneously.  But these are just the partial results for the first row of output matrix. In order to get the complete results for the first row these partial results should be added to the other partial results  of the same row.  This complete task of multiplication and addition is done by using "Multiplication and Addition" functional unit of neon. The conceptual diagram of this multiplication and addition is shown in the following diagram:
 \begin{figure}[h]
 \centering 
-\includegraphics[width= 0.7\textwidth]{MandA}
+\includegraphics[width= 0.7\textwidth]{images/MandA}
 \caption{Parallel Multiplication and Addition with Neon  }
 \label{Multiplication and Addition}
 \end{figure}
