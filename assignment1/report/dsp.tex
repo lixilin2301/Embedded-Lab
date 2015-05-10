@@ -93,3 +93,14 @@ typedef struct ControlMsg
 \caption{The message structure we used}
 \label{code:control_msg}
 \end{figure}
+
+
+\subsubsection{Communication Details}
+This section describes the communication model in more detail.
+
+Figure~\ref{fig:gpp_dsp_com} shows how packets are communicated between the two cores. Initially the GPP gets an AWAKE message from the DSP indicating that communication is established and further actions may begin.
+Then we initiate the transfer of data (multiplicand and multiplier matrices) to DSP. Since the packet is fixed in size and not dynamic (as described in the section above) and the actual matrix size is <=128 we have decided to fill in the allocated matrix of size 128 with the given size matrix as shown on the right hand side of the figure in order not to over complicate the process.
+So in the next four iterations the GPP sends a quarter of every matrix to the DSP along with the size of the data matrices since the DSP must know what is being multiplied from the received matrices of size 128. As soon as the GPP sends the fourth message (MSG 4) it immediately begins to calculate the partial product. Similarly as soon as the DSP receives the fourth (final) message it begins doing its partial product calculation and initiates MSGQ\_put() which places the first half of the partial product onto the communication channel (Result 1) followed by the next massage (Result 2). On the other hand, the GPP initiates a MSGQ\_get() action as soon as it is done with its calculations to receive Result 1 and 2 from DSP and stitch the product together.
+In order to examine the results (that are presented later in this report) we put timers in the appropriate places. The first timer is put immediately after the generation of multiplicand and multiplier matricies and before MSG 1 is being transmitted such that to take into account the communication overhead and measure the entire execution time.
+The second timer is placed immediately after MSG 4 is send. The second timer gives us the upperbound on max(ARM, DSP) execution times while neglecting the communication time as much as possible. Both timers are stopped as soon as the calculations are done and the first packet from the DSP (Result 1) is received. In the analysis we would be focusing more on the first timer.
+Also note that there are many different possibilities to place the timers however we figured timer 1 is optimal as it incorporates most of delays, and provides good insight when doing analysis.
