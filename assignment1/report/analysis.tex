@@ -38,11 +38,11 @@ In order to simplify the calculation for upper bound on the speed-up, we  have m
 \item The time to load data data into the processors is negligible. 
 \end{itemize}
 
-The complexity of Serial multiplications= O(n^3).
+The complexity of Serial multiplications= O($n^3$).
 
 In order to make our calculations simple, we have assumed  that n = 16. so our task is to perform the  multiplications of two 16x16 matrices . 
 
-As serial multiplications takes n^3 cycles to complete, so number of cycles required to complete multiplications  for n= 16  would be(16^3) 4096.
+As serial multiplications takes $n^3$ cycles to complete, so number of cycles required to complete multiplications  for n= 16  would be($16^3$) 4096.
 As  we are distributing our work load equally on the both DSP and Neon,  then the effective work load for each one would be nxn/2. In our current scenario each of the processor will get 16x16/2 matrices.
 
 As each can perform 4 multiplication operations at a time,so the time , that would require to complete the  all multiplication would be 16x16/8=  32. 
