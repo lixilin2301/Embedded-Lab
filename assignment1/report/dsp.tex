@@ -1,16 +1,16 @@
 \section{DSP}
 The \emph{OMAP3530} general purpose processor (from now on referred to as the
-\emph{GPP}) contains a \emph{TMS320} digital signal processor (\emph{DSP}).This
+\emph{GPP}) contains a \emph{TMS320} digital signal processor (\emph{DSP}). This
 core is optimised for using multiple calculation channels simultaneously: it is
 a \emph{VLIW} (Very Long Instruction Word) processor that can utilise eight
-functional units at the same time. More specifically, we can use six ALU's and
+functional units at the same time. More specifically, we can use six ALUs and
 two multipliers per instruction. Another interesting feature is that each
 multiplier can perform two 16 x 16-bit multiplications as well, giving us
 potentially four multiplications in parallel.
 
-The GPP unit has to first start up the DSP core, give it an executable to run
-and afterwards detach the core as well. Furthermore, the requirements specified
-that the matrices to multiply are generated on the GPP core as well (which is 
+The GPP unit is responsible for starting up the DSP core, giving it an executable to run
+and afterwards detaching the core. Furthermore, the requirements specified
+that the matrices to multiply are generated on the GPP core (which is 
 of course not a bad idea because the GPP is way more flexible: it can easily
 be changed to read the matrices from a file or standard input, and we can
 offload a part of the work to the GPP itself and also the \emph{NEON} as we 
@@ -29,7 +29,7 @@ between the two cores.
 \end{figure}
 
 Unfortunately the communication API is slightly verbose and hard to handle.
-For example, the sender has to allocate memory for a message, sends it and the
+For example, the sender has to allocate memory for a message, send it and the
 receiver has the possibility to send it back, or free the message. If we opted
 for the latter and re-allocate every message we would always crash the DSP core.
 The former option would mean that if we wanted to send more than one message
