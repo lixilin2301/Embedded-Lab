@@ -81,29 +81,34 @@ The input matrices are following:
 
 $$
 \begin{pmatrix}
- x1 	& \color{red}{x2} 	& \color{green}{x3} & \color{blue}{x4}\\
- x5 	& x6 				& x7&x8\\
- x9 	& x10 				& x11&x12\\
- x13 	& x14 				& x15&x16\\
+ x_{1} 	& \color{red}{x_{2}} 	& \color{green}{x_{3}}	& \color{blue}{x_{4}}\\
+ x_{5} 	& x_{6} 				& x_{7}					& x_{8}\\
+ x_{9} 	& x_{10} 				& x_{11}				& x_{12}\\
+ x_{13} & x_{14} 				& x_{15}				& x_{16}\\
 \end{pmatrix}
 \times
 \begin{pmatrix}
-y1&y2&y3&y4\\
-y5&y6&y7&y8\\
-y9&y10&y11&y12\\
-y13&y14&y15&y16\\
+y_{1} 	& y_{2} 	& y_{3} 	& y_{4} 	\\
+y_{5} 	& y_{6} 	& y_{7} 	& y_{8} 	\\
+y_{9} 	& y_{10} 	& y_{11} 	& y_{12} 	\\
+y_{13}	& y_{14} 	& y_{15} 	& y_{16} 	\\
 \end{pmatrix}
 $$
 
 
-The output matrix would be : 
+The output matrix would be :
 =
 \begin{table}[h]
 	\resizebox{\textwidth}{!}{
 		$\left(
 			\begin{tabular}{cccc}
-				x1y1+\color{red}{x2}y5\color{black}{+}\color{green}{x3}y9\color{black}{+}\color{blue}{x4}y13&x1y2\color{black}{+}\color{red}{x2}y6\color{black}{+}\color{green}{x3}y10\color{black}{+}\color{blue}{x4}y14&x1y3\color{black}{+}\color{red}{x2}y7\color{black}{+}\color{green}{x3}y11\color{black}{+}\color{blue}{x4}y15&x1y4\color{black}{+}\color{red}{x2}y8\color{black}{+}\color{green}{x3}y12\color{black}{+}\color{blue}{x4}y16\\
-				-&-&-&-\\-&-&-&-\\-&-&-&-\\
+				 $ x_{1}y_{1}	+					\color{red}{x_{2}}y_{5} 	\color{black}{+} 	\color{green}{x_{3}} 	y_{9}\color{black}{+} 	\color{blue}{x_{4}}y_{13} $
+				&$ x_{1}y_{2}	\color{black}{+}	\color{red}{x_{2}}y_{6} 	\color{black}{+} 	\color{green}{x_{3}} 	y_{1}0\color{black}{+}	\color{blue}{x_{4}}y_{14} $
+				&$ x_{1}y_{3} 	\color{black}{+} 	\color{red}{x_{2}}y_{7} 	\color{black}{+} 	\color{green}{x_{3}} 	y_{1}1\color{black}{+}	\color{blue}{x_{4}}y_{15} $
+				&$ x_{1}y_{4} 	\color{black}{+} 	\color{red}{x_{2}}y_{8} 	\color{black}{+} 	\color{green}{x_{3}} 	y_{1}2\color{black}{+}	\color{blue}{x_{4}}y_{16} $ \\
+				-&-&-&-\\
+				-&-&-&-\\
+				-&-&-&-\\
 			\end{tabular}
 		\right)$
 	}
