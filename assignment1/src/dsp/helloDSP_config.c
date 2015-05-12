@@ -1,5 +1,5 @@
 /*  ----------------------------------- Sample Headers              */
-#include "matMult_config.h"
+#include <helloDSP_config.h>
 
 #if defined (__cplusplus)
 extern "C" {
@@ -37,13 +37,13 @@ MSGQ_TransportObj transports[MAX_PROCESSORS] =
 #if (MAX_PROCESSORS == 2 ) /* In case of one DSP and one GPP processor */
      MSGQ_NOTRANSPORT,    /* Represents the local processor */
 #endif
-     {
+    {
         &SAMPLEMQT_init,  /* Init Function                 */
         &SAMPLEMQT_FXNS,  /* Transport interface functions */
         &mqtParams,       /* Transport params              */
         NULL,             /* Filled in by transport        */
         ID_GPP            /* Processor Id                  */
-     }
+    }
 };
 
 /* MSGQ configuration information.

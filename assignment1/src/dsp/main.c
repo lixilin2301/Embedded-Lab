@@ -1,5 +1,5 @@
 /*  ----------------------------------- DSP/BIOS Headers            */
-#include "matMultcfg.h"
+#include "helloDSPcfg.h"
 #include <sys.h>
 #include <sem.h>
 #include <msgq.h>
@@ -13,7 +13,7 @@
 #include <tskMessage.h>
 
 /*  ----------------------------------- BSL Headers                 */
- 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -55,8 +55,6 @@ Void main(Int argc, Char* argv [])
     TSK_Handle tskMessageTask;
 
 #if !defined (DSP_BOOTMODE_NOBOOT)
-    /* Get the number of transfers to be done by the application */
-    numTransfers = atoi(argv [0]);
     /* Initialize DSP/BIOS LINK. */
     DSPLINK_init();
 #endif

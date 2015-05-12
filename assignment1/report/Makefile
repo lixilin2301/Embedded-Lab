@@ -3,7 +3,7 @@ SOURCES = conclusion.tex discussion.tex dsp.tex integration.tex main.tex neon.te
 all:	main.pdf
 
 main.pdf:	$(SOURCES)
-	pdflatex main.tex && pdflatex main.tex
+	pdflatex main.tex && bibtex main && pdflatex main.tex && pdflatex main.tex
 
 clean:
-	rm -f *.aux main.log
+	rm -f main.pdf *.aux main.log main.bbl main.toc
