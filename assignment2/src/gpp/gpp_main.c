@@ -54,9 +54,6 @@ int main (int argc, char ** argv)
     else {
         dspExecutable    = argv [1] ;
         strBufferSize    = argv [2] ;
-
-        pool_notify_Main (dspExecutable,
-                          strBufferSize) ;
     }
     
     /****************************************************************************
@@ -81,6 +78,8 @@ int main (int argc, char ** argv)
         dirfilename = composedfname;
     }
     
+    sprintf(strBufferSize, "%d", rows * cols);
+    pool_notify_Main (dspExecutable, strBufferSize, image, rows * cols) ;
     
     /****************************************************************************
     * Perform the edge detection. All of the work takes place here.
