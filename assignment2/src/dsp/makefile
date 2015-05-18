@@ -1,6 +1,6 @@
 SHELL = /bin/sh
 
-BASE_TOOLCHAIN := /data/bbToolChain/usr/local/share
+BASE_TOOLCHAIN := /data/usr/local/share
 BASE_COMPILER := $(BASE_TOOLCHAIN)/c6000
 BASE_SABIOS := $(BASE_TOOLCHAIN)/tidspbios/bios_5_41_00_06
 BASE_BSL := $(BASE_COMPILER)
@@ -8,7 +8,7 @@ BASE_BSL := $(BASE_COMPILER)
 CC := cl6x
 TCONF := tconf
 
-DSPLINK := /data/bbToolChain/usr/local/share/bbframework/platform/beagle-linux/tools/dsplink_linux_1_65_00_03
+DSPLINK := /data/usr/local/share/bbframework/platform/beagle-linux/tools/dsplink_linux_1_65_00_03
 
 
 #   ----------------------------------------------------------------------------
