@@ -6,4 +6,4 @@ main.pdf:	$(SOURCES)
 	pdflatex main.tex && bibtex main && pdflatex main.tex && pdflatex main.tex
 
 clean:
-	rm -f main.pdf *.aux main.log main.bbl main.toc
+	rm -f *.aux main.log main.bbl main.toc
