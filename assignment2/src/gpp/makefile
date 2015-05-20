@@ -9,7 +9,7 @@ DSPLINK := /data/usr/local/share/bbframework/platform/beagle-linux/tools/dsplink
 #   ----------------------------------------------------------------------------
 #   General options, sources and libraries
 #   ----------------------------------------------------------------------------
-SRCS := pool_notify.c gpp_main.c
+SRCS := Timer.c hysteresis.c pgm_io.c canny_edge.c pool_notify.c gpp_main.c
 OBJS :=
 DEBUG :=
 LDFLAGS := -lpthread -lm -static
@@ -136,3 +136,4 @@ clean:
 
 send: $(BINDIR_R)/$(BIN)
 	scp $(BINDIR_R)/$(BIN) root@192.168.0.202:/home/root/esLAB/pool_notify/.
+
