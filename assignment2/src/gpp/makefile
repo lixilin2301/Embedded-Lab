@@ -137,3 +137,6 @@ clean:
 send: $(BINDIR_R)/$(BIN)
 	scp $(BINDIR_R)/$(BIN) root@192.168.0.202:/home/root/esLAB/pool_notify/.
 
+send-debug: $(BINDIR_D)/$(BIN)
+	scp $(BINDIR_D)/$(BIN) root@192.168.0.202:/home/root/esLAB/pool_notify/.
+
