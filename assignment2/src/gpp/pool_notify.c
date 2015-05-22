@@ -148,9 +148,7 @@ sem_t sem;
  *  @modif  None
  *  ============================================================================
  */
-NORMAL_API DSP_STATUS pool_notify_Create (	IN Char8 * dspExecutable,
-											IN Char8 * strBufferSize,
-											IN Uint8   processorId)
+NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * strBufferSize, IN Uint8   processorId)
 {
     DSP_STATUS      status     = DSP_SOK  ;
     Uint32          numArgs    = NUM_ARGS ;
@@ -271,6 +269,10 @@ NORMAL_API DSP_STATUS pool_notify_Create (	IN Char8 * dspExecutable,
     /*
      *  Start execution on DSP.
      */
+	#ifdef DEBUG
+         printf ("Start execution on DSP \n") ;
+	#endif
+
     if (DSP_SUCCEEDED (status)) {
         status = PROC_start (processorId) ;
         if (DSP_FAILED (status)) {
@@ -286,7 +288,11 @@ NORMAL_API DSP_STATUS pool_notify_Create (	IN Char8 * dspExecutable,
      */
     if (DSP_SUCCEEDED (status)) {
         // wait for initialization 
-        sem_wait(&sem);
+ 	#ifdef DEBUG
+         printf ("Wait for initialization, sem_wait(&sem) \n") ;
+	#endif
+     
+        sem_wait(&sem); //there is no point in continuing if DSP is not initialized
     }
 
     /*
@@ -294,6 +300,12 @@ NORMAL_API DSP_STATUS pool_notify_Create (	IN Char8 * dspExecutable,
      *  control structure and data buffer to be used by the application.
      *
      */
+
+    	#ifdef DEBUG
+    printf ("Notify dspDataBuf, Notify pool_notify_BufferSize \n") ;
+    printf ("dspDataBuf = %d, pool_notify_BufferSize = %d ", (Uint32) dspDataBuf, (Uint32) pool_notify_BufferSize);
+     #endif
+
     status = NOTIFY_notify (processorId,
                             pool_notify_IPS_ID,
                             pool_notify_IPS_EVENTNO,
@@ -317,18 +329,19 @@ NORMAL_API DSP_STATUS pool_notify_Create (	IN Char8 * dspExecutable,
     }
 
 	#ifdef DEBUG
-    printf ("Leaving pool_notify_Create ()\n") ;
+    printf ("Leaving pool_notify_Create ()\n\n") ;
 	#endif
 
     return status ;
 }
 
-void unit_init(unsigned char *image, unsigned int size) 
+void unit_init(void) 
 {
     unsigned int i;
 
-    for(i=0;i<size;i++) {
-       pool_notify_DataBuf[i] = image[i];
+    // Initialize the array with something
+    for(i=0;i<pool_notify_BufferSize;i++) {
+       pool_notify_DataBuf[i] = i % 20 + i % 5;
     }
 }
 
@@ -363,7 +376,7 @@ int sum_dsp(unsigned char* buf, int length)
  *  @modif  None
  *  ============================================================================
  */
-NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 processorId, unsigned char *image, unsigned int imgsize)
+NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 processorId)
 {
     DSP_STATUS  status    = DSP_SOK ;
 
@@ -377,7 +390,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     printf ("Entered pool_notify_Execute ()\n") ;
 	#endif
 
-    unit_init(image, imgsize);
+    unit_init();
 
     start = get_usec();
 
@@ -390,12 +403,13 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
                     pool_notify_DataBuf,
                     pool_notify_BufferSize);
 
-    POOL_translateAddr ( POOL_makePoolId(processorId, SAMPLE_POOL_ID),
+/*    POOL_translateAddr ( POOL_makePoolId(processorId, SAMPLE_POOL_ID),
                          (void*)&buf_dsp,
                          AddrType_Dsp,
                          (Void *) pool_notify_DataBuf,
                          AddrType_Usr) ;
-    NOTIFY_notify (processorId,pool_notify_IPS_ID,pool_notify_IPS_EVENTNO,1);
+*/  
+  NOTIFY_notify (processorId,pool_notify_IPS_ID,pool_notify_IPS_EVENTNO,1);
 
     sem_wait(&sem);
 	#endif
@@ -502,7 +516,7 @@ NORMAL_API Void pool_notify_Delete (Uint8 processorId)
  *  @modif  None
  *  ============================================================================
  */
-NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBufferSize, unsigned char *image, unsigned int imgsize)
+NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBufferSize)
 {
     DSP_STATUS status       = DSP_SOK ;
     Uint8      processorId  = 0 ;
@@ -540,7 +554,7 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
 
         if (DSP_SUCCEEDED (status)) 
 		{
-            status = pool_notify_Execute (pool_notify_NumIterations, 0, image, imgsize) ;
+            status = pool_notify_Execute (pool_notify_NumIterations, 0) ;
         }
 
          pool_notify_Delete (processorId) ;
@@ -553,7 +567,7 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
                          "pool_notify application\n") ;
     }
 
-    printf ("====================================================\n") ;
+    printf ("==========end of main===============================\n") ;
 }
 
 /** ----------------------------------------------------------------------------

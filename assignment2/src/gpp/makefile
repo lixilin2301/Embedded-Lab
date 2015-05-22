@@ -9,7 +9,7 @@ DSPLINK := /data/usr/local/share/bbframework/platform/beagle-linux/tools/dsplink
 #   ----------------------------------------------------------------------------
 #   General options, sources and libraries
 #   ----------------------------------------------------------------------------
-SRCS := Timer.c hysteresis.c pgm_io.c canny_edge.c pool_notify.c gpp_main.c
+SRCS :=  pool_notify.c gpp_main.c
 OBJS :=
 DEBUG :=
 LDFLAGS := -lpthread -lm -static

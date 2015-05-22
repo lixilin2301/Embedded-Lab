@@ -74,7 +74,7 @@ pool_notify_Create (IN Char8 * dspExecutable,
  */
 NORMAL_API
 DSP_STATUS
-pool_notify_Execute (IN Uint32 numIterations, IN Uint8 processorId, unsigned char *image, unsigned int imgsize) ;
+pool_notify_Execute (IN Uint32 numIterations, IN Uint8 processorId) ;
 
 
 /** ============================================================================
@@ -134,7 +134,7 @@ pool_notify_Delete (IN Uint8 processorId) ;
 NORMAL_API
 Void
 pool_notify_Main (IN Char8 * dspExecutable,
-               IN Char8 * strBufferSize,  unsigned char *image, unsigned int imgsize) ;
+               IN Char8 * strBufferSize) ;
 
 
 #endif /* !defined (pool_notify_H) */
