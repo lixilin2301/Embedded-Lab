@@ -19,6 +19,7 @@
 #include <pool_notify.h>
 //#include <pool_notify_os.h>
 
+#include "pgm_io.h"
 
 #if defined (__cplusplus)
 extern "C" {
@@ -138,6 +139,9 @@ Uint16 * pool_notify_DataBuf = NULL ;
 STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info) ;
 
 sem_t sem;
+
+unsigned char *image;
+int imageSize;
 
 /** ============================================================================
  *  @func   pool_notify_Create
@@ -337,12 +341,13 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
 
 void unit_init(void) 
 {
-    unsigned int i;
+    //unsigned int i;
 
     // Initialize the array with something
-    for(i=0;i<pool_notify_BufferSize;i++) {
-       pool_notify_DataBuf[i] = i % 20 + i % 5;
-    }
+    //for(i=0;i<pool_notify_BufferSize;i++) {
+    //   pool_notify_DataBuf[i] = i % 20 + i % 5;
+    //}
+	memcpy(pool_notify_DataBuf, image, imageSize);
 }
 
 #include <sys/time.h>
@@ -520,6 +525,37 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
 {
     DSP_STATUS status       = DSP_SOK ;
     Uint8      processorId  = 0 ;
+//
+    //char *infilename = NULL;  /* Name of the input image */
+	char strbuf[32];
+    char infilename[32] = "pics/tiger.pgm";
+    char *dirfilename = NULL; /* Name of the output gradient direction image */
+    char outfilename[128];    /* Name of the output "edge" image */
+    char composedfname[128];  /* Name of the output "direction" image */
+    unsigned char *edge;      /* The output edge image */
+    int rows, cols;           /* The dimensions of the image. */
+    float sigma=2.5,              /* Standard deviation of the gaussian kernel. */
+          tlow=0.5,               /* Fraction of the high threshold in hysteresis. */
+          thigh=0.5;              /* High hysteresis threshold control. The actual
+			        threshold is the (100 * thigh) percentage point
+			        in the histogram of the magnitude of the
+			        gradient image that passes non-maximal
+			        suppression. */
+    
+    /****************************************************************************
+    * Read in the image. This read function allocates memory for the image.
+    ****************************************************************************/
+    
+    #ifdef VERBOSE
+		printf("Reading the image %s.\n", infilename);
+    #endif
+	if(read_pgm_image(infilename, &image, &rows, &cols) == 0)
+    {
+        fprintf(stderr, "Error reading the input image, %s.\n", infilename);
+        exit(1);
+    }
+
+	imageSize = rows * cols;
 
 	#ifdef DEBUG
     printf ("========== Sample Application : pool_notify ==========\n") ;
@@ -530,8 +566,11 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
         /*
          *  Validate the buffer size and number of iterations specified.
          */
-        pool_notify_BufferSize = DSPLINK_ALIGN ( atoi (strBufferSize),
-                                             DSPLINK_BUF_ALIGN) ;
+        pool_notify_BufferSize = DSPLINK_ALIGN ( rows * cols * sizeof(char),
+                                             DSPLINK_BUF_ALIGN);
+
+		sprintf(strbuf, "%d", pool_notify_BufferSize);
+
 		#ifdef DEBUG
         printf(" Allocated a buffer of %d bytes\n",(int)pool_notify_BufferSize );
 		#endif
@@ -549,7 +588,7 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
          *  pool_notify creation phase.
          */
         status = pool_notify_Create (dspExecutable,
-                                     strBufferSize,
+                                     strbuf,
                                      0) ;
 
         if (DSP_SUCCEEDED (status)) 
