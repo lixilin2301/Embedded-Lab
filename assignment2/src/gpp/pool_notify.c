@@ -1,5 +1,6 @@
-#include<stdlib.h>
-#include<stdio.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <semaphore.h>
 /*  ----------------------------------- DSP/BIOS Link                   */
@@ -107,7 +108,7 @@ STATIC Uint32  pool_notify_NumIterations ;
  *          application.
  *  ============================================================================
  */
-Uint16 * pool_notify_DataBuf = NULL ;
+unsigned char * pool_notify_DataBuf = NULL ;
 
 
 /** ============================================================================
@@ -142,6 +143,8 @@ sem_t sem;
 
 unsigned char *image;
 int imageSize;
+int rows, cols;           /* The dimensions of the image. */
+char infilename[32] = "pics/tiger.pgm";
 
 /** ============================================================================
  *  @func   pool_notify_Create
@@ -173,6 +176,7 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
      */
     status = PROC_setup (NULL) ;
 
+	printf("Attach the dsp\n");
     /*
      *  Attach the Dsp with which the transfers have to be done.
      */
@@ -188,6 +192,8 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
 	{
         printf ("PROC_setup () failed. Status = [0x%x]\n", (int)status) ;
     }
+
+	printf("Open pool \n");
 
     /*
      *  Open the pool.
@@ -206,6 +212,7 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
         }
     }
 
+	printf("Allocate buffer\n");
     /*
      *  Allocate the data buffer to be used for the application.
      */
@@ -256,6 +263,7 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
         }
     }
 
+
     /*
      *  Load the executable on the DSP.
      */
@@ -305,7 +313,7 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
      *
      */
 
-    	#ifdef DEBUG
+    #ifdef DEBUG
     printf ("Notify dspDataBuf, Notify pool_notify_BufferSize \n") ;
     printf ("dspDataBuf = %d, pool_notify_BufferSize = %d ", (Uint32) dspDataBuf, (Uint32) pool_notify_BufferSize);
      #endif
@@ -528,12 +536,10 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
 //
     //char *infilename = NULL;  /* Name of the input image */
 	char strbuf[32];
-    char infilename[32] = "pics/tiger.pgm";
     char *dirfilename = NULL; /* Name of the output gradient direction image */
     char outfilename[128];    /* Name of the output "edge" image */
     char composedfname[128];  /* Name of the output "direction" image */
     unsigned char *edge;      /* The output edge image */
-    int rows, cols;           /* The dimensions of the image. */
     float sigma=2.5,              /* Standard deviation of the gaussian kernel. */
           tlow=0.5,               /* Fraction of the high threshold in hysteresis. */
           thigh=0.5;              /* High hysteresis threshold control. The actual
@@ -620,7 +626,8 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
  *  ----------------------------------------------------------------------------
  */
 STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info)
-{
+{   
+    char outfilename[32];
 	#ifdef DEBUG
     printf("Notification %8d \n", (int)info);
 	#endif
@@ -631,6 +638,27 @@ STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info)
     } 
     else 
 	{
+       POOL_invalidate (POOL_makePoolId(0, SAMPLE_POOL_ID),
+                    pool_notify_DataBuf,
+                    pool_notify_BufferSize);
+
+    /****************************************************************************
+    * Write out the edge image to a file.
+    ****************************************************************************/
+     
+	sprintf(outfilename, "%s_out.pgm", infilename);
+        	    //sigma, tlow, thigh);
+   #ifdef VERBOSE 
+   printf("Writing the edge iname in the file %s.\n", outfilename);
+   #endif
+    	if(write_pgm_image(outfilename, (unsigned char*)pool_notify_DataBuf, rows, cols, "", 255) == 0)
+    	{
+        	fprintf(stderr, "Error writing the edge image, %s.\n", outfilename);
+        	exit(1);
+    	}
+
+	    free(image);
+ 
         printf(" Result on DSP is %d \n", (int)info);
     }
 }
