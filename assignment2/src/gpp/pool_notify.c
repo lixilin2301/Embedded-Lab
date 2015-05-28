@@ -400,7 +400,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     DSP_STATUS  status    = DSP_SOK ;
 
     long long start;
-
+    long long dspTime;
 	#if defined(DSP)
     //    unsigned char *buf_dsp;
 	#endif
@@ -435,13 +435,13 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
                          AddrType_Usr) ;
 */  
 
-    //Before canny shit
+    dspTime= get_usec();
     NOTIFY_notify (processorId,pool_notify_IPS_ID,pool_notify_IPS_EVENTNO,1);
-
     sem_wait(&sem);
+	printf("DSP execution time %lld us.\n", get_usec()-dspTime);
     POOL_invalidate (POOL_makePoolId(0, SAMPLE_POOL_ID),
-		     pool_notify_DataBuf,
-		     pool_notify_BufferSize);
+								    pool_notify_DataBuf,
+		     						pool_notify_BufferSize);
 	#endif
 
     //Starting canny shit

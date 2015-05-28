@@ -85,6 +85,8 @@ double angle_radians(double x, double y);
 void non_max_supp(short *mag, short *gradx, short *grady, int nrows,
                   int ncols, unsigned char *result);
 
+Timer gaussianTime;
+
 int main(int argc, char *argv[])
 {
     char *infilename = NULL;  /* Name of the input image */
@@ -117,6 +119,8 @@ int main(int argc, char *argv[])
 
     Timer totalTime;
     initTimer(&totalTime, "Total Time");
+    initTimer(&gaussianTime, "Gaussian Time");
+
 
     /****************************************************************************
     * Read in the image. This read function allocates memory for the image.
@@ -186,7 +190,12 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
     * deviation.
     ****************************************************************************/
     if(VERBOSE) printf("Smoothing the image using a gaussian kernel.\n");
+    
+	startTimer(&gaussianTime);
     smoothedim = gaussian_smooth(image, rows, cols, sigma);
+    stopTimer(&gaussianTime);
+    printTimer(&gaussianTime);
+
 
     /****************************************************************************
     * Compute the first derivative in the x and y directions.

@@ -8,7 +8,7 @@ MCPROF_DIR=$(MCPROF_ROOT)
 # use the following to compile application for PC
 CC = gcc
 INC = -I.
-CFLAGS =-O2 -Wall
+CFLAGS =-O2 -Wall -DPROFILE
 LFLAGS = -L.
 LIBS = -lm
 LDFLAGS=
