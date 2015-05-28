@@ -505,7 +505,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     free(delta_y);
     free(magnitude);
     free(nms);
-    free(*edge);
+    free(edge);
     return status ;
 }
 
