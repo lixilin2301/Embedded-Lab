@@ -15,6 +15,7 @@
 #include <loaderdefs.h>
 #endif
 
+#define VERBOSE
 
 /*  ----------------------------------- Application Header              */
 #include <pool_notify.h>
@@ -318,7 +319,7 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
 
     #ifdef DEBUG
     printf ("Notify dspDataBuf, Notify pool_notify_BufferSize \n") ;
-    printf ("dspDataBuf = %d, pool_notify_BufferSize = %d ", (Uint32) dspDataBuf, (Uint32) pool_notify_BufferSize);
+    printf ("dspDataBuf = %lu, pool_notify_BufferSize = %lu ", (Uint32) dspDataBuf, (Uint32) pool_notify_BufferSize);
      #endif
 
     status = NOTIFY_notify (processorId,
@@ -401,8 +402,14 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     long long start;
 
 	#if defined(DSP)
-    unsigned char *buf_dsp;
+    //    unsigned char *buf_dsp;
 	#endif
+
+    unsigned char *nms;
+    unsigned char *edge = NULL;
+    short int *delta_x,*delta_y,*magnitude;
+    float *dir_radians=NULL;
+    char outfilename[128];    /* Name of the output "edge" image */
 
 	#ifdef DEBUG
     printf ("Entered pool_notify_Execute ()\n") ;
@@ -427,14 +434,78 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
                          (Void *) pool_notify_DataBuf,
                          AddrType_Usr) ;
 */  
-  NOTIFY_notify (processorId,pool_notify_IPS_ID,pool_notify_IPS_EVENTNO,1);
+
+    //Before canny shit
+    NOTIFY_notify (processorId,pool_notify_IPS_ID,pool_notify_IPS_EVENTNO,1);
 
     sem_wait(&sem);
+    POOL_invalidate (POOL_makePoolId(0, SAMPLE_POOL_ID),
+		     pool_notify_DataBuf,
+		     pool_notify_BufferSize);
 	#endif
 
+    //Starting canny shit
+
+    derrivative_x_y((short int *)databuf16,rows,cols,&delta_x,&delta_y);
+
+    radian_direction(delta_x,delta_y,rows,cols,&dir_radians,-1,-1);
+
+    if((magnitude = (short *) malloc(rows*cols* sizeof(short))) == NULL)
+    {
+        fprintf(stderr, "Error allocating the magnitude image.\n");
+        //exit(1);
+    }
+
+    #ifdef VERBOSE
+    printf("Computing the magnitude of the gradient.\n");
+    #endif
+    magnitude_x_y(delta_x, delta_y, rows, cols, magnitude);
+
+    #ifdef VERBOSE
+    printf("Computing the non_max_supp function.\n");
+    #endif
+    if((nms = (unsigned char *) malloc(rows*cols*sizeof(unsigned char)))==NULL)
+    {
+        fprintf(stderr, "Error allocating the nms image.\n");
+        //exit(1);
+    }
+    non_max_supp(magnitude, delta_x, delta_y, rows, cols, nms);
+
+    #ifdef VERBOSE
+    printf("Computing the hysteresis.\n");
+    #endif
+    if( (edge=(unsigned char *)malloc(rows*cols*sizeof(unsigned char))) == NULL )
+    {
+        fprintf(stderr, "Error allocating the edge image.\n");
+        exit(1);
+    }
+    apply_hysteresis(magnitude, nms, rows, cols, 0.5, 0.5, edge);
+
+
+    /****************************************************************************
+    * Write out the edge image to a file.
+    ****************************************************************************/
+
+    sprintf(outfilename, "%s_out.pgm", infilename);
+        	    //sigma, tlow, thigh);
+#ifdef VERBOSE 
+    printf("Writing the edge iname in the file %s.\n", outfilename);
+#endif
+    if(write_pgm_image(outfilename, edge, rows, cols, "", 255) == 0)
+      {
+	fprintf(stderr, "Error writing the edge image, %s.\n", outfilename);
+	exit(1);
+      }
+
+    free(image);
 
     printf("Sum execution time %lld us.\n", get_usec()-start);
 
+    free(delta_x);
+    free(delta_y);
+    free(magnitude);
+    free(nms);
+    free(*edge);
     return status ;
 }
 
@@ -542,14 +613,14 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
 //
     //char *infilename = NULL;  /* Name of the input image */
 	char strbuf[32];
-    char *dirfilename = NULL; /* Name of the output gradient direction image */
-    char outfilename[128];    /* Name of the output "edge" image */
-    char composedfname[128];  /* Name of the output "direction" image */
-    unsigned char *edge;      /* The output edge image */
-    float sigma=2.5,              /* Standard deviation of the gaussian kernel. */
-          tlow=0.5,               /* Fraction of the high threshold in hysteresis. */
-          thigh=0.5;              /* High hysteresis threshold control. The actual
-			        threshold is the (100 * thigh) percentage point
+	//char *dirfilename = NULL; /* Name of the output gradient direction image */
+    //char outfilename[128];    /* Name of the output "edge" image */
+    //char composedfname[128];  /* Name of the output "direction" image */
+    //unsigned char *edge;      /* The output edge image */
+    //float sigma=2.5,              /* Standard deviation of the gaussian kernel. */
+    //      tlow=0.5,               /* Fraction of the high threshold in hysteresis. */
+    //      thigh=0.5;              /* High hysteresis threshold control. The actual
+    /*			        threshold is the (100 * thigh) percentage point
 			        in the histogram of the magnitude of the
 			        gradient image that passes non-maximal
 			        suppression. */
@@ -581,7 +652,7 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
         pool_notify_BufferSize = DSPLINK_ALIGN ( rows * cols * sizeof(Uint16),
                                              DSPLINK_BUF_ALIGN);
 
-		sprintf(strbuf, "%d", pool_notify_BufferSize);
+		sprintf(strbuf, "%lu", pool_notify_BufferSize);
 
 		#ifdef DEBUG
         printf(" Allocated a buffer of %d bytes\n",(int)pool_notify_BufferSize );
@@ -633,7 +704,7 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
  */
 STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info)
 {   
-    char outfilename[32];
+  //char outfilename[32];
 	#ifdef DEBUG
     printf("Notification %8d \n", (int)info);
 	#endif
@@ -644,28 +715,8 @@ STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info)
     } 
     else if ((int)info == 42) 
 	{
-       POOL_invalidate (POOL_makePoolId(0, SAMPLE_POOL_ID),
-                    pool_notify_DataBuf,
-                    pool_notify_BufferSize);
-
-    /****************************************************************************
-    * Write out the edge image to a file.
-    ****************************************************************************/
-     
-	sprintf(outfilename, "%s_out.pgm", infilename);
-        	    //sigma, tlow, thigh);
-   #ifdef VERBOSE 
-   printf("Writing the edge iname in the file %s.\n", outfilename);
-   #endif
-    	if(write_pgm_image(outfilename, (unsigned char*)pool_notify_DataBuf, rows, cols, "", 255) == 0)
-    	{
-        	fprintf(stderr, "Error writing the edge image, %s.\n", outfilename);
-        	exit(1);
-    	}
-
-	    free(image);
         sem_post(&free_sem);
-        printf(" Result on DSP is %d \n", (int)info);
+        printf(" Gaussian Ended! %d \n", (int)info);
     }
     #ifdef DEBUG
     else
