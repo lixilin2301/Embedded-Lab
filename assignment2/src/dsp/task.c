@@ -100,6 +100,7 @@ Int Task_create (Task_TransferInfo ** infoPtr)
 }
 
 unsigned char* buf;
+unsigned short int* bufOut;
 int length, rows, cols;
 
 int invert() 
@@ -121,27 +122,20 @@ Int Task_execute (Task_TransferInfo * info)
 	SEM_pend (&(info->notifySemObj), SYS_FOREVER);
 
 	//invalidate cache
-    BCACHE_inv ((Ptr)buf, length, TRUE) ;
+    BCACHE_inv ((Ptr)buf, length*2, TRUE) ;
 
 	//call the functionality to be performed by dsp
     //sum = invert();
     sum = 42;
 
     smoothedim = gaussian_smooth(buf, rows, cols);
-	
+    bufOut = (unsigned short int *)buf;
     for (i=0; i<length; i++)
 	{
-        if (smoothedim[i] >255) 
-           {
-             buf[i] = 255;
-           }
-        else 
-           {
-	  	     buf[i] = smoothedim[i];
-           }
+	    bufOut[i] = smoothedim[i];
 	}
 
-    BCACHE_wbInv ((Ptr)buf, length, TRUE) ;
+    BCACHE_wbInv ((Ptr)buf, length*2, TRUE) ;
 	
     //notify that we are done
     NOTIFY_notify(ID_GPP,MPCSXFER_IPS_ID,MPCSXFER_IPS_EVENTNO,(Uint32)0);

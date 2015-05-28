@@ -111,7 +111,7 @@ STATIC Uint32  pool_notify_NumIterations ;
  *  ============================================================================
  */
 unsigned char * pool_notify_DataBuf = NULL ;
-
+Uint16* databuf16 = NULL;
 
 /** ============================================================================
  *  @func   pool_notify_Notify
@@ -360,6 +360,7 @@ void unit_init(void)
     //   pool_notify_DataBuf[i] = i % 20 + i % 5;
     //}
 	memcpy(pool_notify_DataBuf, image, imageSize);
+	databuf16 = (Uint16*)pool_notify_DataBuf;
 }
 
 #include <sys/time.h>
@@ -577,7 +578,7 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
         /*
          *  Validate the buffer size and number of iterations specified.
          */
-        pool_notify_BufferSize = DSPLINK_ALIGN ( rows * cols * sizeof(char),
+        pool_notify_BufferSize = DSPLINK_ALIGN ( rows * cols * sizeof(Uint16),
                                              DSPLINK_BUF_ALIGN);
 
 		sprintf(strbuf, "%d", pool_notify_BufferSize);
