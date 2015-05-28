@@ -282,7 +282,7 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
                     sum += kernel[center+rr];
                 }
             }
-            temp = ((dot/sum));
+            temp = ((dot*90/sum));
             smoothedim[r*cols+c] = temp;
         }
     }
