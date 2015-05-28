@@ -181,3 +181,96 @@ static Void Task_notify (Uint32 eventNo, Ptr arg, Ptr info)
 
     SEM_post(&(mpcsInfo->notifySemObj));
 }
+
+
+/*******************************************************************************
+* PROCEDURE: gaussian_smooth
+* PURPOSE: Blur an image with a gaussian filter.
+* NAME: Mike Heath
+* DATE: 2/15/96
+*******************************************************************************/
+
+short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma)
+{
+    int r, c, rr, cc,     /* Counter variables. */
+        windowsize,        /* Dimension of the gaussian kernel. */
+        center;            /* Half of the windowsize. */
+    int *tempim,        /* Buffer for separable filter gaussian smoothing. */
+          //*kernel,        /* A one dimensional gaussian kernel. */
+          dot,            /* Dot product summing variable. */
+          sum,            /* Sum of the kernel weights variable. */
+          temp;
+          
+    short int* smoothedim;
+          
+    // normalized fixed point kernel
+    static short int kernel[] = {
+         208, 1418,  1418, 2936, 5103,
+        7613, 9678, 10484, 9678, 7613,
+        5103, 2915,  1418,  582,  208
+    };
+    windowsize = 15;
+
+    /****************************************************************************
+    * Create a 1-dimensional gaussian smoothing kernel.
+    ****************************************************************************/
+    center = windowsize / 2;
+
+
+    /****************************************************************************
+    * Allocate a temporary buffer image and the smoothed image.
+    ****************************************************************************/
+    if((tempim = (int *) malloc(rows*cols* sizeof(int))) == NULL)
+    {
+        // out of memory
+    }
+    if(((smoothedim) = (short int *) malloc(rows*cols*sizeof(short int))) == NULL)
+    {
+        // out of memory
+    }
+
+    /****************************************************************************
+    * Blur in the x - direction.
+    ****************************************************************************/
+    for(r=0; r<rows; r++)
+    {
+        for(c=0; c<cols; c++)
+        {
+            dot = 0;
+            sum = 0;
+            for(cc=(-center); cc<=center; cc++)
+            {
+                if(((c+cc) >= 0) && ((c+cc) < cols))
+                {
+                    dot += image[r*cols+(c+cc)] * kernel[center+cc];
+                    sum += kernel[center+cc];
+                }
+            }
+            tempim[r*cols+c] = dot/sum;
+        }
+    }
+    /****************************************************************************
+    * Blur in the y - direction.
+    ****************************************************************************/
+    for(c=0; c<cols; c++)
+    {
+        for(r=0; r<rows; r++)
+        {
+            sum = 0;
+            dot = 0;
+            for(rr=(-center); rr<=center; rr++)
+            {
+                if(((r+rr) >= 0) && ((r+rr) < rows))
+                {
+                    dot += tempim[(r+rr)*cols+c] * kernel[center+rr];
+                    sum += kernel[center+rr];
+                }
+            }
+            temp = (dot*90/sum);
+            smoothedim[r*cols+c] = temp;
+        }
+    }
+
+    free(tempim);
+    return smoothedim;
+}
