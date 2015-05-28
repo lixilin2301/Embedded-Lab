@@ -21,6 +21,8 @@
 //#include <pool_notify_os.h>
 
 #include "pgm_io.h"
+#include "canny_edge.h"
+#include "hysteresis.h"
 
 #if defined (__cplusplus)
 extern "C" {
@@ -428,6 +430,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
 
     sem_wait(&sem);
 	#endif
+
 
     printf("Sum execution time %lld us.\n", get_usec()-start);
 
