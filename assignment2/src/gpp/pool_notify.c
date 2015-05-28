@@ -140,6 +140,7 @@ unsigned char * pool_notify_DataBuf = NULL ;
 STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info) ;
 
 sem_t sem;
+sem_t free_sem;
 
 unsigned char *image;
 int imageSize;
@@ -170,7 +171,7 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
 	#endif
  
     sem_init(&sem,0,0);
-
+    sem_init(&free_sem,0,0);
     /*
      *  Create and initialize the proc object.
      */
@@ -332,7 +333,8 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
     status = NOTIFY_notify (processorId,
                             pool_notify_IPS_ID,
                             pool_notify_IPS_EVENTNO,
-                            (Uint32) pool_notify_BufferSize);
+                            (Uint32) ((rows<<16) | cols));
+							 //(Uint32) pool_notify_BufferSize);
     if (DSP_FAILED (status)) 
 	{
         printf ("NOTIFY_notify () DataBuf failed."
@@ -601,7 +603,7 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
 		{
             status = pool_notify_Execute (pool_notify_NumIterations, 0) ;
         }
-
+		 sem_wait(&free_sem);
          pool_notify_Delete (processorId) ;
         
     }
@@ -636,7 +638,7 @@ STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info)
 	{
         sem_post(&sem);
     } 
-    else 
+    else if ((int)info == 42) 
 	{
        POOL_invalidate (POOL_makePoolId(0, SAMPLE_POOL_ID),
                     pool_notify_DataBuf,
@@ -658,9 +660,15 @@ STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info)
     	}
 
 	    free(image);
- 
+        sem_post(&free_sem);
         printf(" Result on DSP is %d \n", (int)info);
     }
+    #ifdef DEBUG
+    else
+	{
+       printf(" xxxDEBUG : %d \n", (int)info);
+    }
+    #endif
 }
 
 

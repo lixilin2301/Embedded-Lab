@@ -17,10 +17,14 @@
 #include <pool_notify_config.h>
 #include <task.h>
 
+#include <stdlib.h>
+
+
 extern Uint16 MPCSXFER_BufferSize ;
 
 
 static Void Task_notify (Uint32 eventNo, Ptr arg, Ptr info) ;
+unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols);
 
 Int Task_create (Task_TransferInfo ** infoPtr)
 {
@@ -96,31 +100,23 @@ Int Task_create (Task_TransferInfo ** infoPtr)
 }
 
 unsigned char* buf;
-int length;
+int length, rows, cols;
 
-int sum_dsp() 
+int invert() 
 {
-/*    int sum=0,i;
-    for(i=0;i<length;i++) 
-	{
-       sum=sum+buf[i];
-    }
-    return sum;
-*/
 	int i;    
 	for(i=0;i<length;i++) 
 	{
        buf[i] = 255 - buf[i];
     }
     return 42;
-
-
 }
 
 Int Task_execute (Task_TransferInfo * info)
 {
+    int i; //iterator
     int sum;
-
+    unsigned short int *smoothedim;
     //wait for semaphore
 	SEM_pend (&(info->notifySemObj), SYS_FOREVER);
 
@@ -128,16 +124,31 @@ Int Task_execute (Task_TransferInfo * info)
     BCACHE_inv ((Ptr)buf, length, TRUE) ;
 
 	//call the functionality to be performed by dsp
-    sum = sum_dsp();
-    //
-    BCACHE_wbInv ((Ptr)buf, length, TRUE) ;
+    //sum = invert();
+    sum = 42;
 
- 
-	//notify that we are done
+    smoothedim = gaussian_smooth(buf, rows, cols);
+	
+    for (i=0; i<length; i++)
+	{
+        if (smoothedim[i] >255) 
+           {
+             buf[i] = 255;
+           }
+        else 
+           {
+	  	     buf[i] = smoothedim[i];
+           }
+	}
+
+    BCACHE_wbInv ((Ptr)buf, length, TRUE) ;
+	
+    //notify that we are done
     NOTIFY_notify(ID_GPP,MPCSXFER_IPS_ID,MPCSXFER_IPS_EVENTNO,(Uint32)0);
 	//notify the result
     NOTIFY_notify(ID_GPP,MPCSXFER_IPS_ID,MPCSXFER_IPS_EVENTNO,(Uint32)sum);
-
+    
+    free(smoothedim);
     return SYS_OK;
 }
 
@@ -176,7 +187,10 @@ static Void Task_notify (Uint32 eventNo, Ptr arg, Ptr info)
         buf =(unsigned char*)info ;
     }
     if (count==2) {
-        length = (int)info;
+        //length = (int)info;
+        rows = ((Uint32)info >> 16) & 0x00FF;
+		cols = (Uint32)info & 0x00FF;
+        length = rows * cols;
     }
 
     SEM_post(&(mpcsInfo->notifySemObj));
@@ -190,21 +204,22 @@ static Void Task_notify (Uint32 eventNo, Ptr arg, Ptr info)
 * DATE: 2/15/96
 *******************************************************************************/
 
-short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma)
+unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
 {
     int r, c, rr, cc,     /* Counter variables. */
         windowsize,        /* Dimension of the gaussian kernel. */
         center;            /* Half of the windowsize. */
-    int *tempim,        /* Buffer for separable filter gaussian smoothing. */
+    unsigned int *tempim,        /* Buffer for separable filter gaussian smoothing. */
           //*kernel,        /* A one dimensional gaussian kernel. */
           dot,            /* Dot product summing variable. */
           sum,            /* Sum of the kernel weights variable. */
           temp;
           
-    short int* smoothedim;
+    unsigned short int* smoothedim;
+    unsigned char * tmp;
           
     // normalized fixed point kernel
-    static short int kernel[] = {
+    static unsigned short int kernel[] = {
          208, 1418,  1418, 2936, 5103,
         7613, 9678, 10484, 9678, 7613,
         5103, 2915,  1418,  582,  208
@@ -220,11 +235,16 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
     /****************************************************************************
     * Allocate a temporary buffer image and the smoothed image.
     ****************************************************************************/
-    if((tempim = (int *) malloc(rows*cols* sizeof(int))) == NULL)
+    if((tempim = (unsigned int *) malloc(rows*cols* sizeof(unsigned int))) == NULL)
     {
         // out of memory
     }
-    if(((smoothedim) = (short int *) malloc(rows*cols*sizeof(short int))) == NULL)
+    if((tmp = (unsigned char *) malloc(rows*cols* sizeof(unsigned char))) == NULL)
+    {
+        // out of memory
+    }
+ 
+    if(((smoothedim) = (unsigned short int *) malloc(rows*cols*sizeof(unsigned short int))) == NULL)
     {
         // out of memory
     }
@@ -246,7 +266,9 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
                     sum += kernel[center+cc];
                 }
             }
-            tempim[r*cols+c] = dot/sum;
+           // tempim[r*cols+c] = dot/sum;
+            tmp [r*cols+c] = dot/sum;
+          // smoothedim [r*cols+c] = tempim[r*cols+c];
         }
     }
     /****************************************************************************
@@ -262,11 +284,11 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
             {
                 if(((r+rr) >= 0) && ((r+rr) < rows))
                 {
-                    dot += tempim[(r+rr)*cols+c] * kernel[center+rr];
+                    dot += tmp[(r+rr)*cols+c] * kernel[center+rr];
                     sum += kernel[center+rr];
                 }
             }
-            temp = (dot*90/sum);
+            temp = ((dot/sum));
             smoothedim[r*cols+c] = temp;
         }
     }
