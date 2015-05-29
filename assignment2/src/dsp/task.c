@@ -314,5 +314,6 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
     }
 
     free(tempim);
+    free(tmp);
     return smoothedim;
 }
