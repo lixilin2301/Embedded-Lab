@@ -4,16 +4,20 @@ PIN_DIR=$(PIN_ROOT)
 MCPROF_DIR=$(MCPROF_ROOT)
 
 # set the path to the toolchain
-# CC =/data/usr/local/share/codesourcery/bin/arm-none-linux-gnueabi-gcc
+ CC =/data/usr/local/share/codesourcery/bin/arm-none-linux-gnueabi-gcc
 # use the following to compile application for PC
-CC = gcc
+#CC = gcc
 INC = -I.
-CFLAGS =-O2 -Wall -DPROFILE
+
+CFLAGS =-O3 -Wall -g -mtune=cortex-a8 -march=armv7-a -mfloat-abi=softfp -ftree-vectorize -ffast-math -fomit-frame-pointer -funroll-loops -mfpu=neon
+
+
+#CFLAGS =-O3 -Wall  -mfloat-abi=softfp  -mfpu=neon
 LFLAGS = -L.
 LIBS = -lm
 LDFLAGS=
 
-CSRCS 	= canny_edge.c hysteresis.c pgm_io.c Timer.c
+CSRCS 	= canny_edge_neon.c hysteresis.c pgm_io.c Timer.c
 OBJS	=$(CSRCS:%.c=%.o)
 
 # Use one of the following pictures
@@ -43,7 +47,7 @@ gprof: CFLAGS=-O2 -g -pg -Wall
 gprof: LDFLAGS=-pg
 gprof: clean $(EXEC)
 	$(CMD)
-	gprof -b $(EXEC) > gprof.txt
+	gprof -b $(EXEC)> gprof.txt
 
 MCPROF_OPT:=-RecordStack 0  -TrackObjects 1 -Engine 1 -TrackStartStop 1 -StaticSymbols 0 -TrackZones 1 -Threshold 100
 mcprof: CFLAGS= -O1 -g -fno-inline -fno-omit-frame-pointer -Wall
@@ -54,5 +58,9 @@ mcprof: clean $(EXEC)
 
 clean:
 	rm -f $(EXEC) $(OBJS) *~ gmon.out pin.log
+
+send:	$(EXEC)
+	scp $(EXEC) hbeagle:~/esLAB/$(EXEC)
+	#scp $(EXEC) root@192.168.0.202:/home/root/esLAB/$(EXEC)
 
 .PHONY: clean canny run all debug gprof mcprof
