@@ -4,12 +4,14 @@ PIN_DIR=$(PIN_ROOT)
 MCPROF_DIR=$(MCPROF_ROOT)
 
 # set the path to the toolchain
- CC =/data/usr/local/share/codesourcery/bin/arm-none-linux-gnueabi-gcc
+# CC =/data/usr/local/share/codesourcery/bin/arm-none-linux-gnueabi-gcc
 # use the following to compile application for PC
-#CC = gcc
+CC = gcc
 INC = -I.
 
-CFLAGS =-O3 -Wall -g -mtune=cortex-a8 -march=armv7-a -mfloat-abi=softfp -ftree-vectorize -ffast-math -fomit-frame-pointer -funroll-loops -mfpu=neon
+CFLAGS =-O3 -Wall -g
+
+#-mtune=cortex-a8 -march=armv7-a -mfloat-abi=softfp -ftree-vectorize -ffast-math -fomit-frame-pointer -funroll-loops -mfpu=neon
 
 
 #CFLAGS =-O3 -Wall  -mfloat-abi=softfp  -mfpu=neon
@@ -17,7 +19,7 @@ LFLAGS = -L.
 LIBS = -lm
 LDFLAGS=
 
-CSRCS 	= canny_edge_neon.c hysteresis.c pgm_io.c Timer.c
+CSRCS 	= canny_edge.c hysteresis.c pgm_io.c Timer.c
 OBJS	=$(CSRCS:%.c=%.o)
 
 # Use one of the following pictures

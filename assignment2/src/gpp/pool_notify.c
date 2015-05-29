@@ -15,7 +15,7 @@
 #include <loaderdefs.h>
 #endif
 
-#define VERBOSE
+//#define VERBOSE
 
 /*  ----------------------------------- Application Header              */
 #include <pool_notify.h>
@@ -26,7 +26,9 @@
 #include "hysteresis.h"
 #include "neon.h"
 
-#define FRAC 50
+
+/* ---- Specify the fraction of computations to be performed on the NEON ----- */
+#define FRAC 50  
 
 #if defined (__cplusplus)
 extern "C" {
@@ -148,10 +150,24 @@ STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info) ;
 sem_t sem;
 sem_t free_sem;
 
+long long start;
+long long dspTime;
+long long neonTime;
+long long Time0;
+long long Time1;
+long long Time2;
+long long Time3;
+long long Time4;
+long long Time5;
+long long Time6;
+long long Time7;
+
+
 unsigned char *image;
 int imageSize;
 int rows, cols;           /* The dimensions of the image. */
-char infilename[32] = "pics/tiger.pgm";
+
+char infilename[32] = "pics/klomp.pgm";
 
 /** ============================================================================
  *  @func   pool_notify_Create
@@ -182,9 +198,10 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
      *  Create and initialize the proc object.
      */
     status = PROC_setup (NULL) ;
-
+    #ifdef VERBOSE
 	printf("Attach the dsp\n");
-    /*
+    #endif
+     /*
      *  Attach the Dsp with which the transfers have to be done.
      */
     if (DSP_SUCCEEDED (status)) 
@@ -199,9 +216,9 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
 	{
         printf ("PROC_setup () failed. Status = [0x%x]\n", (int)status) ;
     }
-
+    #ifdef VERBOSE
 	printf("Open pool \n");
-
+    #endif
     /*
      *  Open the pool.
      */
@@ -218,8 +235,9 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
             printf ("POOL_open () failed. Status = [0x%x]\n", (int)status );
         }
     }
-
+#ifdef VERBOSE
 	printf("Allocate buffer\n");
+#endif
     /*
      *  Allocate the data buffer to be used for the application.
      */
@@ -408,9 +426,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
 {
     DSP_STATUS  status    = DSP_SOK ;
 
-    long long start;
-    long long dspTime;
-	#if defined(DSP)
+    	#if defined(DSP)
     //    unsigned char *buf_dsp;
 	#endif
 
@@ -425,6 +441,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
 	#ifdef DEBUG
     printf ("Entered pool_notify_Execute ()\n") ;
 	#endif
+    printf ("**Current Load Balancing is %d \n", FRAC) ;
 
     unit_init();
 
@@ -434,7 +451,6 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
         //exit(1);
     }
 
-    start = get_usec();
 
 	#if !defined(DSP)
     // printf(" Result is %d \n", sum_dsp(pool_notify_DataBuf,pool_notify_BufferSize));
@@ -454,20 +470,32 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
                          AddrType_Usr) ;
 */  
     //START GAUSSIAN FILTERING
+
+    start = get_usec();
     dspTime= get_usec();
     NOTIFY_notify (processorId,pool_notify_IPS_ID,pool_notify_IPS_EVENTNO,1); //<--tells DSP to start
 
     neon_rows = (int)rows*FRAC/100;
-    smoothedIm = (unsigned short int*)gaussian_smooth_neon(pool_notify_DataBuf,neon_rows+8,cols,2.5);/////<-f
+    
+    neonTime= get_usec();
+    smoothedIm = (unsigned short int*)gaussian_smooth_neon(pool_notify_DataBuf,neon_rows+8,cols,2.5);
+    printf("---NEON execution time %lld us.\n", get_usec()-neonTime);
+
+
 
     sem_wait(&sem); // <--- that DSP is done.
 
-    printf("DSP execution time %lld us.\n", get_usec()-dspTime);
-    POOL_invalidate (POOL_makePoolId(0, SAMPLE_POOL_ID),
+        POOL_invalidate (POOL_makePoolId(0, SAMPLE_POOL_ID),
                      pool_notify_DataBuf,
                      pool_notify_BufferSize);
 
+#ifdef DEBUG
+    Time0 = get_usec();
+#endif
     memcpy(databuf16, smoothedIm, cols*neon_rows*sizeof(short int));
+#ifdef DEBUG
+    printf("memcpy execution time %lld us.\n", get_usec()-Time0);
+#endif
 
 	#endif
 
@@ -477,10 +505,25 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
 
 //CONTINUE THE REST
 
+#ifdef DEBUG
+    Time1 = get_usec();
+#endif
     derrivative_x_y((short int *)databuf16,rows,cols,&delta_x,&delta_y);
+	#ifdef DEBUG
+    printf("derrivative execution time %lld us.\n", get_usec()-Time1);
+#endif
 
+	#ifdef DEBUG
+    Time2 = get_usec();
+#endif
     radian_direction(delta_x,delta_y,rows,cols,&dir_radians,-1,-1);
+	#ifdef DEBUG
+    printf("radian direction execution time %lld us.\n", get_usec()-Time2);
+#endif
 
+	#ifdef DEBUG
+    Time3 = get_usec();
+#endif
     if((magnitude = (short *) malloc(rows*cols* sizeof(short))) == NULL)
     {
         fprintf(stderr, "Error allocating the magnitude image.\n");
@@ -491,7 +534,13 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     printf("Computing the magnitude of the gradient.\n");
     #endif
     magnitude_x_y(delta_x, delta_y, rows, cols, magnitude);
+	#ifdef DEBUG
+    printf("magnitude execution time %lld us.\n", get_usec()-Time3);
+#endif
 
+	#ifdef DEBUG
+    Time4 = get_usec();
+#endif
     #ifdef VERBOSE
     printf("Computing the non_max_supp function.\n");
     #endif
@@ -501,7 +550,13 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
         //exit(1);
     }
     non_max_supp(magnitude, delta_x, delta_y, rows, cols, nms);
+	#ifdef DEBUG
+    printf("non max supp execution time %lld us.\n", get_usec()-Time4);
+#endif
 
+	#ifdef DEBUG
+    Time5 = get_usec();
+#endif
     #ifdef VERBOSE
     printf("Computing the hysteresis.\n");
     #endif
@@ -511,33 +566,53 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
         exit(1);
     }
     apply_hysteresis(magnitude, nms, rows, cols, 0.5, 0.5, edge);
+	#ifdef DEBUG
+    printf("hysteresis execution time %lld us.\n", get_usec()-Time5);
+#endif
 
 
     /****************************************************************************
     * Write out the edge image to a file.
     ****************************************************************************/
 
+	#ifdef DEBUG
+    Time6 = get_usec();
+#endif
     sprintf(outfilename, "%s_out.pgm", infilename);
         	    //sigma, tlow, thigh);
 #ifdef VERBOSE 
     printf("Writing the edge iname in the file %s.\n", outfilename);
 #endif
+
     if(write_pgm_image(outfilename, edge, rows, cols, "", 255) == 0)
       {
 	fprintf(stderr, "Error writing the edge image, %s.\n", outfilename);
 	exit(1);
       }
 
+	#ifdef DEBUG
+    printf("writing image execution time %lld us.\n", get_usec()-Time6);
+#endif
+
+	#ifdef DEBUG
+    Time7 = get_usec();
+#endif
+
     free(image);
 
-    printf("Sum execution time %lld us.\n", get_usec()-start);
 
     free(delta_x);
     free(delta_y);
     free(magnitude);
     free(nms);
     free(edge);
-    return status ;
+	#ifdef DEBUG
+    printf("free execution time %lld us.\n", get_usec()-Time7);
+#endif
+
+    printf("-----Sum execution time %lld us.\n", get_usec()-start);
+  
+  return status ;
 }
 
 
@@ -670,7 +745,7 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
     }
 
 	imageSize = rows * cols;
-
+    printf ("rows: %d,  cols: %d \n", rows, cols);
 	#ifdef DEBUG
     printf ("========== Sample Application : pool_notify ==========\n") ;
 	#endif
@@ -735,26 +810,29 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
  */
 STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info)
 {   
-  //char outfilename[32];
-	#ifdef DEBUG
+#ifdef DEBUG
     printf("Notification %8d \n", (int)info);
-	#endif
+#endif
     /* Post the semaphore. */
     if((int)info==0) 
-	{
+    {
         sem_post(&sem);
     } 
     else if ((int)info == 42) 
-	{
-        sem_post(&free_sem);
+	{   
+	    printf("---DSP execution time %lld us.\n", get_usec()-dspTime);
+        sem_post(&sem);
+        sem_post(&free_sem); //we can proceed with deletion
+#ifdef VERBOSE    
         printf(" Gaussian Ended! %d \n", (int)info);
-    }
-    #ifdef DEBUG
+#endif    
+   }
+#ifdef DEBUG
     else
 	{
        printf(" xxxDEBUG : %d \n", (int)info);
     }
-    #endif
+#endif
 }
 
 

@@ -5,7 +5,7 @@
 #include <arm_neon.h>
 #include <string.h>
 
-#define VERBOSE 1
+#define VERBOSE 0 
 
 /*******************************************************************************
 * PROCEDURE: make_gaussian_kernel
@@ -123,7 +123,7 @@ short int* gaussian_smooth_neon(unsigned char *image, int rows, int cols, float 
 	float kernelSum = 0.0f;
 
 
-	printf("\n the ouput image\n");
+	//printf("\n the ouput image\n");
 	for( a=8; a<=16; a++){
 		Basekernel += new_kernel[a];
 	}

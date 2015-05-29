@@ -140,7 +140,7 @@ Int Task_execute (Task_TransferInfo * info)
     BCACHE_wbInv ((Ptr)buf, length*2, TRUE) ;
 	
     //notify that we are done
-    NOTIFY_notify(ID_GPP,MPCSXFER_IPS_ID,MPCSXFER_IPS_EVENTNO,(Uint32)0);
+    //NOTIFY_notify(ID_GPP,MPCSXFER_IPS_ID,MPCSXFER_IPS_EVENTNO,(Uint32)0);
 	//notify the result
     NOTIFY_notify(ID_GPP,MPCSXFER_IPS_ID,MPCSXFER_IPS_EVENTNO,(Uint32)sum);
     
