@@ -137,4 +137,8 @@ pool_notify_Main (IN Char8 * dspExecutable,
                IN Char8 * strBufferSize) ;
 
 
+#define MSG_DSP_INITIALIZED ((Uint32)1)
+#define MSG_DSP_DONE		((Uint32)2)
+
+
 #endif /* !defined (pool_notify_H) */

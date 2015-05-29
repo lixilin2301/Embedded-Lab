@@ -28,7 +28,7 @@
 
 
 /* ---- Specify the fraction of computations to be performed on the NEON ----- */
-#define FRAC 50  
+#define FRAC 50
 
 #if defined (__cplusplus)
 extern "C" {
@@ -191,7 +191,7 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
 	#ifdef DEBUG
     printf ("Entered pool_notify_Create ()\n") ;
 	#endif
- 
+
     sem_init(&sem,0,0);
     sem_init(&free_sem,0,0);
     /*
@@ -204,15 +204,15 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
      /*
      *  Attach the Dsp with which the transfers have to be done.
      */
-    if (DSP_SUCCEEDED (status)) 
+    if (DSP_SUCCEEDED (status))
 	{
         status = PROC_attach (processorId, NULL) ;
-        if (DSP_FAILED (status)) 
+        if (DSP_FAILED (status))
 		{
             printf ("PROC_attach () failed. Status = [0x%x]\n", (int)status );
         }
     }
-    else 
+    else
 	{
         printf ("PROC_setup () failed. Status = [0x%x]\n", (int)status) ;
     }
@@ -222,7 +222,7 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
     /*
      *  Open the pool.
      */
-    if (DSP_SUCCEEDED (status)) 
+    if (DSP_SUCCEEDED (status))
 	{
         size [0] = pool_notify_BufferSize ;
         poolAttrs.bufSizes      = (Uint32 *) &size ;
@@ -230,7 +230,7 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
         poolAttrs.numBufPools   = NUM_BUF_SIZES ;
         poolAttrs.exactMatchReq = TRUE ;
         status = POOL_open (POOL_makePoolId(processorId, SAMPLE_POOL_ID), &poolAttrs) ;
-        if (DSP_FAILED (status)) 
+        if (DSP_FAILED (status))
 		{
             printf ("POOL_open () failed. Status = [0x%x]\n", (int)status );
         }
@@ -241,14 +241,14 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
     /*
      *  Allocate the data buffer to be used for the application.
      */
-    if (DSP_SUCCEEDED (status)) 
+    if (DSP_SUCCEEDED (status))
 	{
         status = POOL_alloc (POOL_makePoolId(processorId, SAMPLE_POOL_ID),
                              (Void **) &pool_notify_DataBuf,
                              pool_notify_BufferSize) ;
 
         /* Get the translated DSP address to be sent to the DSP. */
-        if (DSP_SUCCEEDED (status)) 
+        if (DSP_SUCCEEDED (status))
 		{
             status = POOL_translateAddr (
                                    POOL_makePoolId(processorId, SAMPLE_POOL_ID),
@@ -257,14 +257,14 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
                                          (Void *) pool_notify_DataBuf,
                                          AddrType_Usr) ;
 
-            if (DSP_FAILED (status)) 
+            if (DSP_FAILED (status))
 			{
                 printf ("POOL_translateAddr () DataBuf failed."
                                  " Status = [0x%x]\n",
                                  (int)status) ;
             }
         }
-        else 
+        else
 		{
             printf ("POOL_alloc() DataBuf failed. Status = [0x%x]\n",(int)status);
         }
@@ -274,14 +274,14 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
      *  Register for notification that the DSP-side application setup is
      *  complete.
      */
-    if (DSP_SUCCEEDED (status)) 
+    if (DSP_SUCCEEDED (status))
 	{
         status = NOTIFY_register (processorId,
                                   pool_notify_IPS_ID,
                                   pool_notify_IPS_EVENTNO,
                                   (FnNotifyCbck) pool_notify_Notify,
                                   0/* vladms XFER_SemPtr*/) ;
-        if (DSP_FAILED (status)) 
+        if (DSP_FAILED (status))
 		{
             printf ("NOTIFY_register () failed Status = [0x%x]\n",
                              (int)status) ;
@@ -324,11 +324,11 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
      *  when it is ready to proceed with further execution of the application.
      */
     if (DSP_SUCCEEDED (status)) {
-        // wait for initialization 
+        // wait for initialization
  	#ifdef DEBUG
          printf ("Wait for initialization, sem_wait(&sem) \n") ;
 	#endif
-     
+
         sem_wait(&sem); //there is no point in continuing if DSP is not initialized
     }
 
@@ -347,7 +347,7 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
                             pool_notify_IPS_ID,
                             pool_notify_IPS_EVENTNO,
                             (Uint32) dspDataBuf);
-    if (DSP_FAILED (status)) 
+    if (DSP_FAILED (status))
 	{
         printf ("NOTIFY_notify () DataBuf failed."
                 " Status = [0x%x]\n",
@@ -359,7 +359,7 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
                             pool_notify_IPS_EVENTNO,
                             (Uint32) ((rows<<16) | cols));
 							 //(Uint32) pool_notify_BufferSize);
-    if (DSP_FAILED (status)) 
+    if (DSP_FAILED (status))
 	{
         printf ("NOTIFY_notify () DataBuf failed."
                 " Status = [0x%x]\n",
@@ -370,7 +370,7 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
                             pool_notify_IPS_ID,
                             pool_notify_IPS_EVENTNO,
                             (Uint32) FRAC);
-    if (DSP_FAILED (status)) 
+    if (DSP_FAILED (status))
 	{
         printf ("NOTIFY_notify () FRAC failed."
                 " Status = [0x%x]\n",
@@ -384,7 +384,7 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
     return status ;
 }
 
-void unit_init(void) 
+void unit_init(void)
 {
 	memcpy(pool_notify_DataBuf, image, imageSize);
 	databuf16 = (Uint16*)pool_notify_DataBuf;
@@ -395,7 +395,7 @@ void unit_init(void)
 
 long long get_usec(void);
 
-long long get_usec(void) 
+long long get_usec(void)
 {
   long long r;
   struct timeval t;
@@ -404,10 +404,10 @@ long long get_usec(void)
   return r;
 }
 
-int sum_dsp(unsigned char* buf, int length) 
+int sum_dsp(unsigned char* buf, int length)
 {
     int a=0,i;
-    for(i=0;i<length;i++) 
+    for(i=0;i<length;i++)
 	{
        a=a+buf[i];
     }
@@ -468,7 +468,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
                          AddrType_Dsp,
                          (Void *) pool_notify_DataBuf,
                          AddrType_Usr) ;
-*/  
+*/
     //START GAUSSIAN FILTERING
 
     start = get_usec();
@@ -476,7 +476,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     NOTIFY_notify (processorId,pool_notify_IPS_ID,pool_notify_IPS_EVENTNO,1); //<--tells DSP to start
 
     neon_rows = (int)rows*FRAC/100;
-    
+
     neonTime= get_usec();
     smoothedIm = (unsigned short int*)gaussian_smooth_neon(pool_notify_DataBuf,neon_rows+8,cols,2.5);
     printf("---NEON execution time %lld us.\n", get_usec()-neonTime);
@@ -499,7 +499,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
 
 	#endif
 
-    
+
 
 //THIS the place where both need to be done.
 
@@ -580,7 +580,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
 #endif
     sprintf(outfilename, "%s_out.pgm", infilename);
         	    //sigma, tlow, thigh);
-#ifdef VERBOSE 
+#ifdef VERBOSE
     printf("Writing the edge iname in the file %s.\n", outfilename);
 #endif
 
@@ -611,7 +611,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
 #endif
 
     printf("-----Sum execution time %lld us.\n", get_usec()-start);
-  
+
   return status ;
 }
 
@@ -730,11 +730,11 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
 			        in the histogram of the magnitude of the
 			        gradient image that passes non-maximal
 			        suppression. */
-    
+
     /****************************************************************************
     * Read in the image. This read function allocates memory for the image.
     ****************************************************************************/
-    
+
     #ifdef VERBOSE
 		printf("Reading the image %s.\n", infilename);
     #endif
@@ -750,7 +750,7 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
     printf ("========== Sample Application : pool_notify ==========\n") ;
 	#endif
 
-    if (   (dspExecutable != NULL) && (strBufferSize != NULL)   ) 
+    if (   (dspExecutable != NULL) && (strBufferSize != NULL)   )
 	{
         /*
          *  Validate the buffer size and number of iterations specified.
@@ -763,9 +763,9 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
 		#ifdef DEBUG
         printf(" Allocated a buffer of %d bytes\n",(int)pool_notify_BufferSize );
 		#endif
-		
+
         processorId = 0 ;
-        if (pool_notify_BufferSize == 0) 
+        if (pool_notify_BufferSize == 0)
 		{
             status = DSP_EINVALIDARG ;
             printf ("ERROR! Invalid arguments specified for  ");
@@ -780,15 +780,15 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
                                      strbuf,
                                      0) ;
 
-        if (DSP_SUCCEEDED (status)) 
+        if (DSP_SUCCEEDED (status))
 		{
             status = pool_notify_Execute (pool_notify_NumIterations, 0) ;
         }
 		 sem_wait(&free_sem);
          pool_notify_Delete (processorId) ;
-        
+
     }
-    else 
+    else
 	{
         status = DSP_EINVALIDARG ;
         printf ("ERROR! Invalid arguments specified for  "
@@ -809,23 +809,23 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
  *  ----------------------------------------------------------------------------
  */
 STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info)
-{   
+{
 #ifdef DEBUG
     printf("Notification %8d \n", (int)info);
 #endif
     /* Post the semaphore. */
-    if((int)info==0) 
+    if((int)info==MSG_DSP_INITIALIZED)
     {
         sem_post(&sem);
-    } 
-    else if ((int)info == 42) 
-	{   
+    }
+    else if ((int)info == MSG_DSP_DONE)
+	{
 	    printf("---DSP execution time %lld us.\n", get_usec()-dspTime);
         sem_post(&sem);
         sem_post(&free_sem); //we can proceed with deletion
-#ifdef VERBOSE    
+#ifdef VERBOSE
         printf(" Gaussian Ended! %d \n", (int)info);
-#endif    
+#endif
    }
 #ifdef DEBUG
     else
