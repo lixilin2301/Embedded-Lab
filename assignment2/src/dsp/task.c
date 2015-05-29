@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 
+Uint32 FRAC = 0;
 
 extern Uint16 MPCSXFER_BufferSize ;
 
@@ -93,6 +94,7 @@ Int Task_create (Task_TransferInfo ** infoPtr)
      *  Wait for the event callback from the GPP-side to post the semaphore
      *  indicating receipt of the data buffer pointer and image width and height.
      */
+    SEM_pend (&(info->notifySemObj), SYS_FOREVER) ;
     SEM_pend (&(info->notifySemObj), SYS_FOREVER) ;
     SEM_pend (&(info->notifySemObj), SYS_FOREVER) ;
 
@@ -186,6 +188,9 @@ static Void Task_notify (Uint32 eventNo, Ptr arg, Ptr info)
 		cols = (Uint32)info & 0x00FF;
         length = rows * cols;
     }
+    if(count==3) {
+        FRAC = (Uint32)info;
+    }
 
     SEM_post(&(mpcsInfo->notifySemObj));
 }
@@ -211,12 +216,20 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
           
     unsigned short int* smoothedim;
     unsigned char * tmp;
+
+    int start = (rows*FRAC/100)-8;
           
     // normalized fixed point kernel
     static unsigned short int kernel[] = {
-         208, 1418,  1418, 2936, 5103,
+         208, 588,  1418, 2915, 5103,
         7613, 9678, 10484, 9678, 7613,
-        5103, 2915,  1418,  582,  208
+        5103, 2915,  1418,  588,  208
+    };
+    
+    static unsigned short int kernel2[] = {
+          416,  1177,  2837,  5830, 10206,
+        15226, 19356, 20969, 19356, 15226,
+        10206,  5830,  2837,  1177,  416
     };
     windowsize = 15;
 
@@ -246,7 +259,7 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
     /****************************************************************************
     * Blur in the x - direction.
     ****************************************************************************/
-    for(r=0; r<rows; r++)
+    for(r=start; r<rows; r++)
     {
         for(c=0; c<cols; c++)
         {
@@ -270,7 +283,7 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
     ****************************************************************************/
     for(c=0; c<cols; c++)
     {
-        for(r=0; r<rows; r++)
+        for(r=start+8; r<rows; r++)
         {
             sum = 0;
             dot = 0;

@@ -442,12 +442,17 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
           *kernel,        /* A one dimensional gaussian kernel. */
           dot,            /* Dot product summing variable. */
           sum;            /* Sum of the kernel weights variable. */
-
+    int i;
     /****************************************************************************
     * Create a 1-dimensional gaussian smoothing kernel.
     ****************************************************************************/
     if(VERBOSE) printf("   Computing the gaussian smoothing kernel.\n");
     make_gaussian_kernel(sigma, &kernel, &windowsize);
+    for(i=0;i<16;i++){
+      printf("%d: %f, ",i,kernel[i]);
+      printf("%lu, ",(unsigned short int)(kernel[i]*(1<<16)));
+      printf("%lu, \n",(unsigned short int)(kernel[i]*(1<<17)));
+    }
     center = windowsize / 2;
 
 

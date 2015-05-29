@@ -24,6 +24,9 @@
 #include "pgm_io.h"
 #include "canny_edge.h"
 #include "hysteresis.h"
+#include "neon.h"
+
+#define FRAC 50
 
 #if defined (__cplusplus)
 extern "C" {
@@ -345,7 +348,18 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
                  (int)status) ;
     }
 
-	#ifdef DEBUG
+    status = NOTIFY_notify (processorId,
+                            pool_notify_IPS_ID,
+                            pool_notify_IPS_EVENTNO,
+                            (Uint32) FRAC);
+    if (DSP_FAILED (status)) 
+	{
+        printf ("NOTIFY_notify () FRAC failed."
+                " Status = [0x%x]\n",
+                 (int)status) ;
+    }
+
+#ifdef DEBUG
     printf ("Leaving pool_notify_Create ()\n\n") ;
 	#endif
 
@@ -354,17 +368,12 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
 
 void unit_init(void) 
 {
-    //unsigned int i;
-
-    // Initialize the array with something
-    //for(i=0;i<pool_notify_BufferSize;i++) {
-    //   pool_notify_DataBuf[i] = i % 20 + i % 5;
-    //}
 	memcpy(pool_notify_DataBuf, image, imageSize);
 	databuf16 = (Uint16*)pool_notify_DataBuf;
 }
 
 #include <sys/time.h>
+
 
 long long get_usec(void);
 
@@ -406,10 +415,12 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
 	#endif
 
     unsigned char *nms;
+    unsigned short int *smoothedIm = NULL;
     unsigned char *edge = NULL;
     short int *delta_x,*delta_y,*magnitude;
     float *dir_radians=NULL;
     char outfilename[128];    /* Name of the output "edge" image */
+    int neon_rows;
 
 	#ifdef DEBUG
     printf ("Entered pool_notify_Execute ()\n") ;
@@ -417,11 +428,19 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
 
     unit_init();
 
+    if((smoothedIm = malloc(rows*cols* sizeof(short int))) == NULL)
+    {
+  fprintf(stderr, "Error allocating the smoothed image.\n");
+        //exit(1);
+    }
+
     start = get_usec();
 
 	#if !defined(DSP)
-    printf(" Result is %d \n", sum_dsp(pool_notify_DataBuf,pool_notify_BufferSize));
-	#endif
+    // printf(" Result is %d \n", sum_dsp(pool_notify_DataBuf,pool_notify_BufferSize));
+	printf(" DSP is off. \n");
+    #endif
+
 
 	#if defined(DSP)
     POOL_writeback (POOL_makePoolId(processorId, SAMPLE_POOL_ID),
@@ -434,17 +453,29 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
                          (Void *) pool_notify_DataBuf,
                          AddrType_Usr) ;
 */  
-
+    //START GAUSSIAN FILTERING
     dspTime= get_usec();
-    NOTIFY_notify (processorId,pool_notify_IPS_ID,pool_notify_IPS_EVENTNO,1);
-    sem_wait(&sem);
-	printf("DSP execution time %lld us.\n", get_usec()-dspTime);
+    NOTIFY_notify (processorId,pool_notify_IPS_ID,pool_notify_IPS_EVENTNO,1); //<--tells DSP to start
+
+    neon_rows = (int)rows*FRAC/100;
+    smoothedIm = (unsigned short int*)gaussian_smooth_neon(pool_notify_DataBuf,neon_rows+8,cols,2.5);/////<-f
+
+    sem_wait(&sem); // <--- that DSP is done.
+
+    printf("DSP execution time %lld us.\n", get_usec()-dspTime);
     POOL_invalidate (POOL_makePoolId(0, SAMPLE_POOL_ID),
-								    pool_notify_DataBuf,
-		     						pool_notify_BufferSize);
+                     pool_notify_DataBuf,
+                     pool_notify_BufferSize);
+
+    memcpy(databuf16, smoothedIm, cols*neon_rows*sizeof(short int));
+
 	#endif
 
-    //Starting canny shit
+    
+
+//THIS the place where both need to be done.
+
+//CONTINUE THE REST
 
     derrivative_x_y((short int *)databuf16,rows,cols,&delta_x,&delta_y);
 
