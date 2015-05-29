@@ -139,12 +139,12 @@ int main(int argc, char *argv[])
         dirfilename = composedfname;
     }
 
-    startTimer(&totalTime);
+    
  //   MCPROF_START();
     canny(image, rows, cols, sigma, tlow, thigh, &edge, dirfilename);
    // MCPROF_STOP();
-    stopTimer(&totalTime);
-    printTimer(&totalTime);
+    
+    
 
 
     /****************************************************************************
@@ -457,7 +457,7 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
         fprintf(stderr, "Error allocating the smoothed image.\n");
         exit(1);
     }
-
+    startTimer(&totalTime);
     //Neon impelementation of gaussian smooth starts here
     /****************************************************************************
     * Blur in the x - direction.
@@ -636,7 +636,9 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
 			temp_output=0; 
 		}
 	}
-
+    stopTimer(&totalTime);
+    printTimer(&totalTime);
+    
     free(tempim);
     free(kernel);
     return smoothedim;
