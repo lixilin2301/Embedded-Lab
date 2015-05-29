@@ -451,37 +451,28 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
         exit(1);
     }
     short int* smoothedim;
-    short int* smoothedim1;// just for the pupose of testing 
+
     if(((smoothedim) = (short int *) malloc(rows*cols*sizeof(short int))) == NULL)
     {
         fprintf(stderr, "Error allocating the smoothed image.\n");
         exit(1);
     }
-      smoothedim1 = (short int *) malloc(rows*cols*sizeof(short int));
- if((tempim1 = (float *) malloc(rows*cols* sizeof(float))) == NULL)
-    {
-        fprintf(stderr, "Error allocating the buffer image.\n");
-        exit(1);
-    }
 
-
- //   MCPROF_ZONE_ENTER(1);// #################################################
+    //Neon impelementation of gaussian smooth starts here
     /****************************************************************************
     * Blur in the x - direction.
     ****************************************************************************/
-	int loop; 
-	/*unsigned char imagetest[289];
-	for ( loop = 0 ; loop < 289; loop++ )
-	
-		imagetest[loop] = loop; 
-	rows = 2; 
-	cols = 17;*/ 
-	
+	int loop; 	
 	int floop;
+    //Modification of input image for neon implementation
+    //For Filter 1
 	float * new_image;
+    //For Filter 2
 	float *new_image_col;
+    //kernel is changed to 17 from 15 for neon (two 0s at the beginning and the end)
 	float new_kernel[17];
 
+    //Generating now kernel filter
 	for (floop = 0 ; floop < 17 ; floop++)
 	{
 		if(floop == 0 || floop == 16 )
@@ -489,12 +480,15 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
 		else
 			new_kernel [floop] = kernel[floop -1];	
 	}
+    //For filter 1, new cols number for neon
 	unsigned int new_cols;
 	new_cols=cols+16;
 	unsigned int i, k; 
 	unsigned int a; 
 	unsigned int m; 
 	unsigned int n, j;
+
+    //Malloc of new image used by neon
 	new_image = (float*)malloc(new_cols*rows*sizeof(float));
 	for( i =0; i<rows; i++){
 		memset(&new_image[i*new_cols],0,8*sizeof(float));
@@ -504,13 +498,7 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
 		}
 		memset(&new_image[i*new_cols+8+cols],0,8*sizeof(float));
 	}
-	//for(loop = 0 ; loop < (new_cols*rows) ; loop++)
-	//{
-	//	printf("%f ", new_image[loop]);
-	//	if(loop == new_cols)
-	//		printf("\n");
-	//}
-
+    // Neon handles four piexel at a time
   	float32x4_t neon_input;
 	float32x4_t neon_filter;
 	float32x4_t temp_sum;
@@ -520,18 +508,14 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
 	float32_t temp_output;
 	float Basekernel = 0.0f;
 	float kernelSum;
-	/*printf("\n the filter taps\n");
-	for(loop= 0 ; loop < 16 ; loop++)
-	{
-	 	printf("%f \t", new_kernel[loop]);
-	}*/
 
-	printf("\n the ouput image\n");
+    //When using the new filter, we always assume the image has more than 9 pixels in a row
+    //Base sum for the filter
 	for( a=8; a<=16; a++){
 		Basekernel += new_kernel[a];
 	}
 
-
+    //Filter 1, filtering row by row
 	for(m=0; m<rows; m++){
 		for( n=0; n<cols; n++){
 			temp_sum = vdupq_n_f32(0);
@@ -544,8 +528,8 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
 			else if(n>=cols-8){
 				kernelSum -=new_kernel[cols-n+8];
 			}
-			//printf("\n kernel sum= %f for the loop count %d \n", kernelSum,n);
 
+            //For each pixel, filtering is performed four times
 			for( j=0; j<4; j++)
 			{
 				int kk=0;
@@ -559,16 +543,11 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
 			}
 			
 			unsigned int t;
-			//tempUpper = vget_high_f32(temp_sum);
-			//tempLower = vget_low_f32(temp_sum);	
+	
 			for( t=0; t<=3; t++){	
 						
 				temp_output += vgetq_lane_f32(temp_sum,t ); 
-			
-				//temp_output += vgetq_lane_f32(temp_sum,1 ); 
-				//temp_output += vgetq_lane_f32(temp_sum,2 );
-						 
-				//temp_output += vgetq_lane_f32(temp_sum,3 );
+
 			}
 			temp_output += new_image[m*new_cols+n+8] * new_kernel[8];
 			temp_output /= kernelSum;
@@ -577,20 +556,7 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
 		}
 	}
 
-	//for(loop= 0 ; loop < (rows* cols); loop++ )
-	//{
-	//	printf("%f \t", tempim[loop]);
-	//}
-  //  MCPROF_ZONE_EXIT(1);######################################################
-
-    // MCPROF_ZONE_ENTER(1);
-    // /****************************************************************************
-    // * Blur in the x - direction.
-    // ****************************************************************************/
-    // if(VERBOSE) printf("   Bluring the image in the X-direction.\n");
- 
    	
-
      for(r=0; r<rows; r++)
      {
          for(c=0; c<cols; c++)
@@ -608,48 +574,11 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
              tempim1[r*cols+c] = dot/sum;
          }
      }
-	/*unsigned int cloop;
-	for(cloop = 0 ; cloop < rows*cols ; cloop++)
-	{
-		if (tempim1[cloop] != tempim[cloop])
-		{
-			printf("\n The neon %f \n",tempim[cloop] );
-			printf("\n The sequential %f \n",tempim1[cloop] );			
-		}
-	}*/
-		
-	/*printf("\n the Sequential out put\n");
-	for(loop= 0 ; loop < (rows* cols); loop++ )
-        {
-                printf("%f \t", tempim1[loop]);
-        }*/
 
-    //MCPROF_ZONE_EXIT(1);
-
-    //MCPROF_ZONE_ENTER(2);##########################################################
     /****************************************************************************
     * Blur in the y - direction.
     ****************************************************************************/
 
-
-	/*int loop; 
-	 float imagetest1[100];
-	for ( loop = 0 ; loop < 100; loop++ )
-
-	{
-	
-		imagetest1[loop] = loop;
-	}*/
-	//rows = 17; 
-	//cols = 2; 
-	//printf("This is the output");
-/*	for ( loop = 0 ; loop < rows*cols ; loop++)
-	{
-		printf("%d\t", imagetest1[loop]);
-		if( loop == cols)
-		    printf("\n");
-	
-	}*/
     unsigned int new_rows;
 	new_rows=rows+16;
 	new_image_col = (float*)malloc(new_rows*cols*sizeof(float));
@@ -665,12 +594,6 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
 		memset(&new_image_col[i*new_rows+8+rows],0,8*sizeof(float));
 	}
 
-	/*for ( loop = 0 ; loop < new_rows*cols ; loop++)
-	{
-		printf("%f\t", new_image_col[loop]);
-		
-	
-	}*/
 	Basekernel = 0.0; 
 	for( a=8; a<=16; a++){
 		Basekernel += new_kernel[a];
@@ -688,7 +611,6 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
 			else if(n>=rows-8){
 				kernelSum -=new_kernel[rows-n+8];
 			}
-			//printf("\n kernel sum= %f for the loop count %d \n", kernelSum,n);
 
 			for( j=0; j<4; j++)
 			{
@@ -703,59 +625,17 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
 			}
 			
 			unsigned int t;
-			//tempUpper = vget_high_f32(temp_sum);
-			//tempLower = vget_low_f32(temp_sum);	
 			for( t=0; t<=3; t++){	
 						
 				temp_output += vgetq_lane_f32(temp_sum,t ); 
-	
-				//temp_output += vgetq_lane_f32(temp_sum,1 ); 
-				//temp_output += vgetq_lane_f32(temp_sum,2 );
-						 
-				//temp_output += vgetq_lane_f32(temp_sum,3 );
 			}
 			temp_output += new_image_col[m*new_rows+n+8] * new_kernel[8];
 			temp_output = (temp_output * BOOSTBLURFACTOR) / kernelSum + 0.5;
-			//temp_output /= kernelSum;
 			
 			 smoothedim[n*cols+m] = (short int )temp_output;
 			temp_output=0; 
 		}
 	}
-	
-	/*printf("\nThe output from the NEON\n");
-	for(loop = 0 ; loop < rows*cols ; loop++)
-	{
-		printf("%d ",smoothedim[loop]); 
-	}*/
-
-
-    for(c=0; c<cols; c++)
-    {
-        for(r=0; r<rows; r++)
-        {
-            sum = 0.0;
-            dot = 0.0;
-            for(rr=(-center); rr<=center; rr++)
-            {
-                if(((r+rr) >= 0) && ((r+rr) < rows))
-                {
-                    //dot += tempim[(r+rr)*cols+c] * kernel[center+rr];
-			dot += (float)(tempim1[(r+rr)*cols+c]) * kernel[center+rr];
-                    sum += kernel[center+rr];
-                }
-            }
-            smoothedim1[r*cols+c] = (short int)(dot*BOOSTBLURFACTOR/sum + 0.5);
-        }
-    }
-	printf("\nThe mismatch output \n");
-	for(loop = 0 ; loop < rows*cols ; loop++)
-	{
-		if (smoothedim1[loop] != smoothedim[loop])		
-		printf("\nSequential %d  Neon %d",smoothedim1[loop], smoothedim[loop]); 
-	}
-
-    //MCPROF_ZONE_EXIT(2);#################################################################
 
     free(tempim);
     free(kernel);
