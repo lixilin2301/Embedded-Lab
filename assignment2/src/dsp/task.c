@@ -245,15 +245,28 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
     if((tempim = (unsigned int *) malloc(rows*cols* sizeof(unsigned int))) == NULL)
     {
         // out of memory
+        NOTIFY_notify (ID_GPP,
+                       MPCSXFER_IPS_ID,
+                       MPCSXFER_IPS_EVENTNO,
+                       MSG_DSP_MEMORY_ERROR);
+
     }
     if((tmp = (unsigned char *) malloc(rows*cols* sizeof(unsigned char))) == NULL)
     {
         // out of memory
+        NOTIFY_notify (ID_GPP,
+                       MPCSXFER_IPS_ID,
+                       MPCSXFER_IPS_EVENTNO,
+                       MSG_DSP_MEMORY_ERROR);
     }
 
     if(((smoothedim) = (unsigned short int *) malloc(rows*cols*sizeof(unsigned short int))) == NULL)
     {
         // out of memory
+        NOTIFY_notify (ID_GPP,
+                       MPCSXFER_IPS_ID,
+                       MPCSXFER_IPS_EVENTNO,
+                       MSG_DSP_MEMORY_ERROR);
     }
 
     /****************************************************************************

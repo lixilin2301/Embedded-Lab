@@ -826,7 +826,11 @@ STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info)
 #ifdef VERBOSE
         printf(" Gaussian Ended! %d \n", (int)info);
 #endif
-   }
+    }
+    else if ((int)info == MSG_DSP_MEMORY_ERROR)
+    {
+        printf("DSP Memory error!\n");
+    }
 #ifdef DEBUG
     else
 	{
