@@ -20,7 +20,7 @@ Int Task_execute (Task_TransferInfo * transferInfo) ;
 
 Int Task_delete (Task_TransferInfo * transferInfo) ;
 
-#define MSG_DSP_INITIALIZED ((Uint32)0)
-#define MSG_DSP_DONE		((Uint32)42)
+#define MSG_DSP_INITIALIZED ((Uint32)1)
+#define MSG_DSP_DONE		((Uint32)2)
 
 #endif /* !defined (Task_) */
