@@ -810,33 +810,30 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
  */
 STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info)
 {
-#ifdef DEBUG
+    #ifdef DEBUG
     printf("Notification %8d \n", (int)info);
-#endif
-    /* Post the semaphore. */
-    if((int)info==MSG_DSP_INITIALIZED)
+    #endif
+
+    switch((int)info)
     {
-        sem_post(&sem);
+        case MSG_DSP_INITIALIZED:
+            /* Post the semaphore. */
+            sem_post(&sem);
+            break;
+        case MSG_DSP_DONE:
+            printf("---DSP execution time %lld us.\n", get_usec()-dspTime);
+            sem_post(&sem);
+            sem_post(&free_sem); //we can proceed with deletion
+            #ifdef VERBOSE
+            printf(" Gaussian Ended! %d \n", (int)info);
+            #endif
+            break;
+        case MSG_DSP_MEMORY_ERROR:
+            printf("DSP Memory error!\n");
+            break;
+        default:
+            printf(" xxxDEBUG : %d \n", (int)info);
     }
-    else if ((int)info == MSG_DSP_DONE)
-	{
-	    printf("---DSP execution time %lld us.\n", get_usec()-dspTime);
-        sem_post(&sem);
-        sem_post(&free_sem); //we can proceed with deletion
-#ifdef VERBOSE
-        printf(" Gaussian Ended! %d \n", (int)info);
-#endif
-    }
-    else if ((int)info == MSG_DSP_MEMORY_ERROR)
-    {
-        printf("DSP Memory error!\n");
-    }
-#ifdef DEBUG
-    else
-	{
-       printf(" xxxDEBUG : %d \n", (int)info);
-    }
-#endif
 }
 
 
