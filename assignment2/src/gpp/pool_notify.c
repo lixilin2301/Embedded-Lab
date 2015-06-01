@@ -15,7 +15,8 @@
 #include <loaderdefs.h>
 #endif
 
-//#define VERBOSE
+#define VERBOSE
+#define DEBUG
 
 /*  ----------------------------------- Application Header              */
 #include <pool_notify.h>
@@ -167,7 +168,7 @@ unsigned char *image;
 int imageSize;
 int rows, cols;           /* The dimensions of the image. */
 
-char infilename[32] = "pics/klomp.pgm";
+char infilename[32] = "pics/square.pgm";
 
 /** ============================================================================
  *  @func   pool_notify_Create
@@ -828,8 +829,10 @@ STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info)
             printf(" Gaussian Ended! %d \n", (int)info);
             #endif
             break;
-        case MSG_DSP_MEMORY_ERROR:
-            printf("DSP Memory error!\n");
+        case MSG_DSP_MEMORY_ERROR1:
+        case MSG_DSP_MEMORY_ERROR2:
+        case MSG_DSP_MEMORY_ERROR3:
+            printf("DSP Memory error %d!\n", (int)info);
             break;
         default:
             printf(" xxxDEBUG : %d \n", (int)info);

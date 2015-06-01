@@ -242,22 +242,22 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
     /****************************************************************************
     * Allocate a temporary buffer image and the smoothed image.
     ****************************************************************************/
-    if((tempim = (unsigned int *) malloc(rows*cols* sizeof(unsigned int))) == NULL)
+/*    if((tempim = (unsigned int *) malloc(rows*cols* sizeof(unsigned int))) == NULL)
     {
         // out of memory
         NOTIFY_notify (ID_GPP,
                        MPCSXFER_IPS_ID,
                        MPCSXFER_IPS_EVENTNO,
-                       MSG_DSP_MEMORY_ERROR);
+                       MSG_DSP_MEMORY_ERROR1);
 
-    }
+    }*/
     if((tmp = (unsigned char *) malloc(rows*cols* sizeof(unsigned char))) == NULL)
     {
         // out of memory
         NOTIFY_notify (ID_GPP,
                        MPCSXFER_IPS_ID,
                        MPCSXFER_IPS_EVENTNO,
-                       MSG_DSP_MEMORY_ERROR);
+                       MSG_DSP_MEMORY_ERROR2);
     }
 
     if(((smoothedim) = (unsigned short int *) malloc(rows*cols*sizeof(unsigned short int))) == NULL)
@@ -266,7 +266,7 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
         NOTIFY_notify (ID_GPP,
                        MPCSXFER_IPS_ID,
                        MPCSXFER_IPS_EVENTNO,
-                       MSG_DSP_MEMORY_ERROR);
+                       MSG_DSP_MEMORY_ERROR3);
     }
 
     /****************************************************************************
@@ -313,7 +313,7 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
         }
     }
 
-    free(tempim);
+    //free(tempim);
     free(tmp);
     return smoothedim;
 }
