@@ -33,7 +33,7 @@ int main (int argc, char **argv) {
 
 	for (y = 0; y < rows1; ++y) {
 		for (x = 0; x < cols1; ++x) {
-			diff[y * rows1 + x] = abs(image1[y * rows1 + x] - image2[y * rows1 + x]);
+			diff[y * rows1 + x] = 255 - abs(image1[y * rows1 + x] - image2[y * rows1 + x]);
 		}
 	}
 
