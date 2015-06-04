@@ -11,7 +11,7 @@ void apply_hysteresis(short int *mag, unsigned char *nms, int rows, int cols,
                       float tlow, float thigh, unsigned char *edge);
 void radian_direction(short int *delta_x, short int *delta_y, int rows,
                       int cols, float **dir_radians, int xdirtag, int ydirtag);
-double angle_radians(double x, double y);
+float angle_radians(float x, float y);
 
 void non_max_supp(short *mag, short *gradx, short *grady, int nrows,
                   int ncols, unsigned char *result);
