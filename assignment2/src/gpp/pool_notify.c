@@ -168,7 +168,7 @@ unsigned char *image;
 int imageSize;
 int rows, cols;           /* The dimensions of the image. */
 
-char infilename[32] = "pics/square.pgm";
+char filename[32] = "";
 
 /** ============================================================================
  *  @func   pool_notify_Create
@@ -579,7 +579,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
 	#ifdef DEBUG
     Time6 = get_usec();
 #endif
-    sprintf(outfilename, "%s_out.pgm", infilename);
+    sprintf(outfilename, "%s_out.pgm", filename);
         	    //sigma, tlow, thigh);
 #ifdef VERBOSE
     printf("Writing the edge iname in the file %s.\n", outfilename);
@@ -713,12 +713,12 @@ NORMAL_API Void pool_notify_Delete (Uint8 processorId)
  *  @modif  None
  *  ============================================================================
  */
-NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBufferSize)
+NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * infilename)
 {
     DSP_STATUS status       = DSP_SOK ;
     Uint8      processorId  = 0 ;
-//
-    //char *infilename = NULL;  /* Name of the input image */
+    strcpy(filename, infilename);
+
 	char strbuf[32];
 	//char *dirfilename = NULL; /* Name of the output gradient direction image */
     //char outfilename[128];    /* Name of the output "edge" image */
@@ -735,13 +735,12 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
     /****************************************************************************
     * Read in the image. This read function allocates memory for the image.
     ****************************************************************************/
-
     #ifdef VERBOSE
-		printf("Reading the image %s.\n", infilename);
+		printf("Reading the image %s.\n", filename);
     #endif
-	if(read_pgm_image(infilename, &image, &rows, &cols) == 0)
+	if(read_pgm_image(filename, &image, &rows, &cols) == 0)
     {
-        fprintf(stderr, "Error reading the input image, %s.\n", infilename);
+        fprintf(stderr, "Error reading the input image, %s.\n", filename);
         exit(1);
     }
 
@@ -751,7 +750,7 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * strBuffer
     printf ("========== Sample Application : pool_notify ==========\n") ;
 	#endif
 
-    if (   (dspExecutable != NULL) && (strBufferSize != NULL)   )
+    if   (dspExecutable != NULL) 
 	{
         /*
          *  Validate the buffer size and number of iterations specified.

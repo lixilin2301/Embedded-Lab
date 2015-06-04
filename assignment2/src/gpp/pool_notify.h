@@ -134,7 +134,7 @@ pool_notify_Delete (IN Uint8 processorId) ;
 NORMAL_API
 Void
 pool_notify_Main (IN Char8 * dspExecutable,
-               IN Char8 * strBufferSize) ;
+               IN Char8 * infilename) ;
 
 
 #define MSG_DSP_INITIALIZED 	((Uint32)1)
