@@ -15,8 +15,8 @@
 #include <loaderdefs.h>
 #endif
 
-#define VERBOSE
-#define DEBUG
+//#define VERBOSE
+//#define DEBUG
 
 /*  ----------------------------------- Application Header              */
 #include <pool_notify.h>

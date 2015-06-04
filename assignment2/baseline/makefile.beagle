@@ -8,7 +8,7 @@ MCPROF_DIR=$(MCPROF_ROOT)
 # use the following to compile application for PC
 #CC = gcc
 INC = -I.
-CFLAGS =-O3 -Wall -g -mtune=cortex-a8 -march=armv7-a -mfloat-abi=softfp -ftree-vectorize -ffast-math -fomit-frame-pointer -funroll-loops -mfpu=neon
+CFLAGS =-O3 -Wall -g # -mtune=cortex-a8 -march=armv7-a -mfloat-abi=softfp -ftree-vectorize -ffast-math -fomit-frame-pointer -funroll-loops -mfpu=neon
 LFLAGS = -L.
 LIBS = -lm
 LDFLAGS=
