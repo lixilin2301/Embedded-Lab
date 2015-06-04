@@ -107,8 +107,6 @@ int length, rows, cols;
 
 Int Task_execute (Task_TransferInfo * info)
 {
-    int i;
-
     //wait for semaphore
 	SEM_pend (&(info->notifySemObj), SYS_FOREVER);
 

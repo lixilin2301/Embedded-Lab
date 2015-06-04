@@ -423,7 +423,6 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     float *dir_radians=NULL;
     char outfilename[128];    /* Name of the output "edge" image */
     int neon_rows;
-int k;
 
 	#ifdef DEBUG
     printf ("Entered pool_notify_Execute ()\n") ;
@@ -551,11 +550,14 @@ int k;
     #ifdef DEBUG
     Time6 = get_usec();
     #endif
-    sprintf(outfilename, "%s_out.pgm", filename);
-        	    //sigma, tlow, thigh);
-    #ifdef VERBOSE
-    printf("Writing the edge iname in the file %s.\n", outfilename);
-    #endif
+    
+    strcpy(outfilename, filename );
+    outfilename[strlen(outfilename)-4] = 0;
+    sprintf(outfilename, "%s_out.pgm", outfilename);
+    
+    //#ifdef VERBOSE
+    printf("Writing the edge iname in the file %s \n", outfilename);
+    //#endif
 
     if(write_pgm_image(outfilename, edge, rows, cols, "", 255) == 0)
       {
@@ -696,9 +698,9 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * infilenam
     /****************************************************************************
     * Read in the image. This read function allocates memory for the image.
     ****************************************************************************/
-    #ifdef VERBOSE
+    //#ifdef VERBOSE
 		printf("Reading the image %s.\n", filename);
-    #endif
+    //#endif
 	if(read_pgm_image(filename, &image, &rows, &cols) == 0)
     {
         fprintf(stderr, "Error reading the input image, %s.\n", filename);
@@ -793,8 +795,11 @@ STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info)
             printf("DSP Memory error %d!\n", (int)info);
             break;
         default:
+#ifdef DEBUG
             printf(" xxxDEBUG : %d \n", (int)info);
-    }
+#endif    
+   			break;
+	}
 }
 
 
