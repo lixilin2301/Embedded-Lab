@@ -138,7 +138,7 @@ Int Task_execute (Task_TransferInfo * info)
 */
 
 
-    memcpy(&bufOut[start*cols], smoothedim, (rows-start)*cols*sizeof(short int)); //length*sizeof(short int));
+ //   memcpy(&bufOut[start*cols], smoothedim, (rows-start)*cols*sizeof(short int)); //length*sizeof(short int));
 //    memcpy(&buf[start*cols], smoothedim, cols*sizeof(short int)); //length*sizeof(short int));
 
     BCACHE_wbInv ((Ptr)buf, length*2, TRUE) ;
@@ -146,7 +146,7 @@ Int Task_execute (Task_TransferInfo * info)
     //notify that we are done
     NOTIFY_notify(ID_GPP,MPCSXFER_IPS_ID,MPCSXFER_IPS_EVENTNO, MSG_DSP_DONE);
 
-    free(smoothedim);
+    //free(smoothedim);
     return SYS_OK;
 }
 
@@ -276,7 +276,7 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
                        MSG_DSP_MEMORY_ERROR2);
     }
 
-    if(((smoothedim) = (unsigned short int *) malloc((rows-start)*cols*sizeof(unsigned short int))) == NULL)
+    /*if(((smoothedim) = (unsigned short int *) malloc((rows-start)*cols*sizeof(unsigned short int))) == NULL)
     {
         // out of memory
         NOTIFY_notify (ID_GPP,
@@ -284,6 +284,9 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
                        MPCSXFER_IPS_EVENTNO,
                        MSG_DSP_MEMORY_ERROR3);
     }
+    */
+ 
+     smoothedim = (unsigned short *) image;
 
     /****************************************************************************
     * Blur in the x - direction.
@@ -298,8 +301,8 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
             {
                 if(((c+cc) >= 0) && ((c+cc) < cols))
                 {
-                    dot += image[r*cols+(c+cc)] * kernel[center+cc];
-                    sum += kernel[center+cc];
+                    dot += image[r*cols+(c+cc)] * kernel2[center+cc];
+                    sum += kernel2[center+cc];
                 }
             }
             tmp [(r-start)*cols+c] = dot/sum;
@@ -318,12 +321,12 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
             {
                 if(((r+rr) >= 0) && ((r+rr) < rows))
                 {
-                    dot += tmp[(r+rr)*cols+c] * kernel[center+rr];
-                    sum += kernel[center+rr];
+                    dot += tmp[(r+rr)*cols+c] * kernel2[center+rr];
+                    sum += kernel2[center+rr];
                 }
             }
             temp = ((dot*90/sum));
-            smoothedim[r*cols+c] = temp;
+            smoothedim[(r+start)*cols+c] = temp;
         }
     }
 
