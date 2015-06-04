@@ -29,7 +29,7 @@
 
 
 /* ---- Specify the fraction of computations to be performed on the NEON ----- */
-#define FRAC 50
+#define FRAC 70 
 
 #if defined (__cplusplus)
 extern "C" {
@@ -427,7 +427,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
 {
     DSP_STATUS  status    = DSP_SOK ;
 
-    	#if defined(DSP)
+   	#if defined(DSP)
     //    unsigned char *buf_dsp;
 	#endif
 
@@ -438,6 +438,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     float *dir_radians=NULL;
     char outfilename[128];    /* Name of the output "edge" image */
     int neon_rows;
+int k;
 
 	#ifdef DEBUG
     printf ("Entered pool_notify_Execute ()\n") ;
@@ -448,13 +449,12 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
 
     if((smoothedIm = malloc(rows*cols* sizeof(short int))) == NULL)
     {
-  fprintf(stderr, "Error allocating the smoothed image.\n");
+        fprintf(stderr, "Error allocating the smoothed image.\n");
         //exit(1);
     }
 
 
 	#if !defined(DSP)
-    // printf(" Result is %d \n", sum_dsp(pool_notify_DataBuf,pool_notify_BufferSize));
 	printf(" DSP is off. \n");
     #endif
 
@@ -475,11 +475,19 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     start = get_usec();
     dspTime= get_usec();
     NOTIFY_notify (processorId,pool_notify_IPS_ID,pool_notify_IPS_EVENTNO,1); //<--tells DSP to start
+    
+    float temp;
+    temp = rows*FRAC/100;
+    neon_rows = (int)temp; //rows*FRAC/100;
 
-    neon_rows = (int)rows*FRAC/100;
+#ifdef DEBUG
+printf("Neon rows = %d \n", neon_rows);
+#endif
+ neonTime= get_usec();
 
-    neonTime= get_usec();
-    smoothedIm = gaussian_smooth_neon(pool_notify_DataBuf,neon_rows+8,cols,2.5);
+  smoothedIm = gaussian_smooth_neon(pool_notify_DataBuf,neon_rows+8,cols,2.5);
+//smoothedIm = (unsigned short int*)gaussian_smooth_neon(pool_notify_DataBuf,rows,cols,2.5);
+
     printf("---NEON execution time %lld us.\n", get_usec()-neonTime);
 
 
@@ -493,16 +501,27 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
 #ifdef DEBUG
     Time0 = get_usec();
 #endif
-    memcpy(databuf16, smoothedIm, cols*neon_rows*sizeof(short int));
+
+/*for (k=0; k< cols*neon_rows ; k++)
+   {
+    pool_notify_DataBuf [k] = image[k];
+   }
+*/
+    memcpy(pool_notify_DataBuf, smoothedIm, cols*neon_rows*sizeof(short int));
+   //memset(databuf16, 0, cols*neon_rows*sizeof(short int));
+
 #ifdef DEBUG
     printf("memcpy execution time %lld us.\n", get_usec()-Time0);
 #endif
+/* if(write_pgm_image(outfilename, edge, rows, cols, "", 255) == 0)
+      {
+	fprintf(stderr, "Error writing the edge image, %s.\n", outfilename);
+	exit(1);
+      }
 
-	#endif
+*/
+	#endif //defined(DSP)
 
-
-
-//THIS the place where both need to be done.
 
 //CONTINUE THE REST
 

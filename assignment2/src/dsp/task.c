@@ -132,9 +132,9 @@ Int Task_execute (Task_TransferInfo * info)
 
     smoothedim = gaussian_smooth(buf, rows, cols);
     bufOut = (unsigned short int *)buf;
-    for (i=0; i<length; i++)
+    for (i=0; i<length; i++)  //(rows*FRAC/100f)
 	{
-	    bufOut[i] = smoothedim[i];
+	    bufOut[i] =0;// smoothedim[i];
 	}
 
     BCACHE_wbInv ((Ptr)buf, length*2, TRUE) ;
@@ -170,7 +170,7 @@ Int Task_delete (Task_TransferInfo * info)
     return status ;
 }
 
-
+//callback
 static Void Task_notify (Uint32 eventNo, Ptr arg, Ptr info)
 {
     static int count = 0;
@@ -185,8 +185,25 @@ static Void Task_notify (Uint32 eventNo, Ptr arg, Ptr info)
     if (count==2) {
         //length = (int)info;
         rows = ((Uint32)info >> 16) & 0xFFFF;
-		cols = (Uint32)info & 0xFFFF;
-        length = rows * cols;
+		//rows = 100;
+		//cols = 320;
+        cols = (Uint32)info & 0xFFFF;
+        length = rows * cols; 
+
+
+NOTIFY_notify (ID_GPP,
+                       MPCSXFER_IPS_ID,
+                       MPCSXFER_IPS_EVENTNO,
+                       rows);
+
+NOTIFY_notify (ID_GPP,
+                       MPCSXFER_IPS_ID,
+                       MPCSXFER_IPS_EVENTNO,
+                       cols);
+
+
+
+
     }
     if(count==3) {
         FRAC = (Uint32)info;
@@ -217,9 +234,8 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
     unsigned short int* smoothedim;
     unsigned char * tmp;
 
-    int start = (rows*FRAC/100)-8;
-
-    // normalized fixed point kernel
+    int start = rows*(float)(FRAC/100.0f)-8;
+            // normalized fixed point kernel
     static unsigned short int kernel[] = {
          208, 588,  1418, 2915, 5103,
         7613, 9678, 10484, 9678, 7613,
@@ -232,6 +248,11 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
         10206,  5830,  2837,  1177,  416
     };
     windowsize = 15;
+NOTIFY_notify (ID_GPP,
+                       MPCSXFER_IPS_ID,
+                       MPCSXFER_IPS_EVENTNO,
+                       start);
+ 
 
     /****************************************************************************
     * Create a 1-dimensional gaussian smoothing kernel.
