@@ -23,6 +23,7 @@ Uint32 FRAC = 0;
 
 extern Uint16 MPCSXFER_BufferSize ;
 
+int start;
 
 static Void Task_notify (Uint32 eventNo, Ptr arg, Ptr info) ;
 unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols);
@@ -118,7 +119,6 @@ int invert()
 Int Task_execute (Task_TransferInfo * info)
 {
     int i; //iterator
-    int sum;
     unsigned short int *smoothedim;
     //wait for semaphore
 	SEM_pend (&(info->notifySemObj), SYS_FOREVER);
@@ -126,22 +126,22 @@ Int Task_execute (Task_TransferInfo * info)
 	//invalidate cache
     BCACHE_inv ((Ptr)buf, length*2, TRUE) ;
 
-	//call the functionality to be performed by dsp
-    //sum = invert();
-    //sum = 42;
 
     smoothedim = gaussian_smooth(buf, rows, cols);
+
     bufOut = (unsigned short int *)buf;
-    for (i=0; i<length; i++)  //(rows*FRAC/100f)
+
+   /* for (i=start; i<length; i++) 
 	{
-	    bufOut[i] =0;// smoothedim[i];
+	    bufOut[i] = smoothedim[i];
 	}
+*/
+
+   memcpy(buf, smoothedim, length*sizeof(short int));
 
     BCACHE_wbInv ((Ptr)buf, length*2, TRUE) ;
 
     //notify that we are done
-    //NOTIFY_notify(ID_GPP,MPCSXFER_IPS_ID,MPCSXFER_IPS_EVENTNO,(Uint32)0);
-	//notify the result
     NOTIFY_notify(ID_GPP,MPCSXFER_IPS_ID,MPCSXFER_IPS_EVENTNO, MSG_DSP_DONE);
 
     free(smoothedim);
@@ -207,6 +207,9 @@ NOTIFY_notify (ID_GPP,
     }
     if(count==3) {
         FRAC = (Uint32)info;
+        
+        start = rows*(float)(FRAC/100.0f)-8;
+
     }
 
     SEM_post(&(mpcsInfo->notifySemObj));
@@ -234,7 +237,6 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
     unsigned short int* smoothedim;
     unsigned char * tmp;
 
-    int start = rows*(float)(FRAC/100.0f)-8;
             // normalized fixed point kernel
     static unsigned short int kernel[] = {
          208, 588,  1418, 2915, 5103,
@@ -248,7 +250,7 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
         10206,  5830,  2837,  1177,  416
     };
     windowsize = 15;
-NOTIFY_notify (ID_GPP,
+    NOTIFY_notify (ID_GPP,
                        MPCSXFER_IPS_ID,
                        MPCSXFER_IPS_EVENTNO,
                        start);
