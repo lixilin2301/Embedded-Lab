@@ -23,7 +23,7 @@ Uint32 FRAC = 0;
 
 extern Uint16 MPCSXFER_BufferSize ;
 
-int start;
+int start; // starting row
 
 static Void Task_notify (Uint32 eventNo, Ptr arg, Ptr info) ;
 unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols);
@@ -103,50 +103,25 @@ Int Task_create (Task_TransferInfo ** infoPtr)
 }
 
 unsigned char* buf;
-unsigned short int* bufOut;
 int length, rows, cols;
-
-int invert()
-{
-	int i;
-	for(i=0;i<length;i++)
-	{
-       buf[i] = 255 - buf[i];
-    }
-    return 42;
-}
 
 Int Task_execute (Task_TransferInfo * info)
 {
-    int i; //iterator
-    unsigned short int *smoothedim;
+    int i;
+
     //wait for semaphore
 	SEM_pend (&(info->notifySemObj), SYS_FOREVER);
 
 	//invalidate cache
     BCACHE_inv ((Ptr)buf, length*2, TRUE) ;
 
-
-    smoothedim = gaussian_smooth(buf, rows, cols);
-
-    bufOut = (unsigned short int *)buf;
-
-   /* for (i=start; i<length; i++) 
-	{
-	    bufOut[i] = smoothedim[i];
-	}
-*/
-
-
- //   memcpy(&bufOut[start*cols], smoothedim, (rows-start)*cols*sizeof(short int)); //length*sizeof(short int));
-//    memcpy(&buf[start*cols], smoothedim, cols*sizeof(short int)); //length*sizeof(short int));
+    gaussian_smooth(buf, rows, cols);
 
     BCACHE_wbInv ((Ptr)buf, length*2, TRUE) ;
 
     //notify that we are done
     NOTIFY_notify(ID_GPP,MPCSXFER_IPS_ID,MPCSXFER_IPS_EVENTNO, MSG_DSP_DONE);
 
-    //free(smoothedim);
     return SYS_OK;
 }
 
@@ -185,12 +160,9 @@ static Void Task_notify (Uint32 eventNo, Ptr arg, Ptr info)
         buf =(unsigned char*)info ;
     }
     if (count==2) {
-        //length = (int)info;
         rows = ((Uint32)info >> 16) & 0xFFFF;
-		//rows = 100;
-		//cols = 320;
         cols = (Uint32)info & 0xFFFF;
-        length = rows * cols; 
+        length = rows * cols;
 
 
 NOTIFY_notify (ID_GPP,
@@ -209,7 +181,6 @@ NOTIFY_notify (ID_GPP,
     }
     if(count==3) {
         FRAC = (Uint32)info;
-        
         start = rows*(float)(FRAC/100.0f)-8;
 
     }
@@ -228,41 +199,32 @@ NOTIFY_notify (ID_GPP,
 unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
 {
     int r, c, rr, cc,     /* Counter variables. */
-        windowsize,        /* Dimension of the gaussian kernel. */
-        center;            /* Half of the windowsize. */
-    unsigned int *tempim,        /* Buffer for separable filter gaussian smoothing. */
-          //*kernel,        /* A one dimensional gaussian kernel. */
-          dot,            /* Dot product summing variable. */
+        windowsize,       /* Dimension of the gaussian kernel. */
+        center;           /* Half of the windowsize. */
+    unsigned int dot,     /* Dot product summing variable. */
           sum,            /* Sum of the kernel weights variable. */
           temp;
 
     unsigned short int* smoothedim;
     unsigned char * tmp;
 
-            // normalized fixed point kernel
+    /* A one dimensional gaussian kernel, normalized to fixed point. */
     static unsigned short int kernel[] = {
-         208, 588,  1418, 2915, 5103,
-        7613, 9678, 10484, 9678, 7613,
-        5103, 2915,  1418,  588,  208
-    };
-
-    static unsigned short int kernel2[] = {
           416,  1177,  2837,  5830, 10206,
         15226, 19356, 20969, 19356, 15226,
         10206,  5830,  2837,  1177,  416
     };
     windowsize = 15;
     NOTIFY_notify (ID_GPP,
-                       MPCSXFER_IPS_ID,
-                       MPCSXFER_IPS_EVENTNO,
-                       start);
- 
+                   MPCSXFER_IPS_ID,
+                   MPCSXFER_IPS_EVENTNO,
+                   start);
+
 
     /****************************************************************************
     * Create a 1-dimensional gaussian smoothing kernel.
     ****************************************************************************/
     center = windowsize / 2;
-
 
     /****************************************************************************
     * Allocate a temporary buffer image and the smoothed image.
@@ -273,20 +235,10 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
         NOTIFY_notify (ID_GPP,
                        MPCSXFER_IPS_ID,
                        MPCSXFER_IPS_EVENTNO,
-                       MSG_DSP_MEMORY_ERROR2);
+                       MSG_DSP_MEMORY_ERROR);
     }
 
-    /*if(((smoothedim) = (unsigned short int *) malloc((rows-start)*cols*sizeof(unsigned short int))) == NULL)
-    {
-        // out of memory
-        NOTIFY_notify (ID_GPP,
-                       MPCSXFER_IPS_ID,
-                       MPCSXFER_IPS_EVENTNO,
-                       MSG_DSP_MEMORY_ERROR3);
-    }
-    */
- 
-     smoothedim = (unsigned short *) image;
+    smoothedim = (unsigned short *) image;
 
     /****************************************************************************
     * Blur in the x - direction.
@@ -301,8 +253,8 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
             {
                 if(((c+cc) >= 0) && ((c+cc) < cols))
                 {
-                    dot += image[r*cols+(c+cc)] * kernel2[center+cc];
-                    sum += kernel2[center+cc];
+                    dot += image[r*cols+(c+cc)] * kernel[center+cc];
+                    sum += kernel[center+cc];
                 }
             }
             tmp [(r-start)*cols+c] = dot/sum;
@@ -321,8 +273,8 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
             {
                 if(((r+rr) >= 0) && ((r+rr) < rows))
                 {
-                    dot += tmp[(r+rr)*cols+c] * kernel2[center+rr];
-                    sum += kernel2[center+rr];
+                    dot += tmp[(r+rr)*cols+c] * kernel[center+rr];
+                    sum += kernel[center+rr];
                 }
             }
             temp = ((dot*90/sum));

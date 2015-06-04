@@ -334,10 +334,10 @@ static Int Task ()
     status = Task_create (&info) ;
 
     /* Execute Phase */
-    if (status == SYS_OK) 
+    if (status == SYS_OK)
 	{
         status = Task_execute (info) ;
-        if (status != SYS_OK) 
+        if (status != SYS_OK)
 		{
             SET_FAILURE_REASON (status) ;
         }
@@ -345,7 +345,7 @@ static Int Task ()
 
     /* Delete Phase */
     status = Task_delete (info) ;
-    if (status != SYS_OK) 
+    if (status != SYS_OK)
 	{
         SET_FAILURE_REASON (status) ;
     }
