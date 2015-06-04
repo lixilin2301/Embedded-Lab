@@ -137,7 +137,9 @@ Int Task_execute (Task_TransferInfo * info)
 	}
 */
 
-   memcpy(buf, smoothedim, length*sizeof(short int));
+
+    memcpy(&bufOut[start*cols], smoothedim, (rows-start)*cols*sizeof(short int)); //length*sizeof(short int));
+//    memcpy(&buf[start*cols], smoothedim, cols*sizeof(short int)); //length*sizeof(short int));
 
     BCACHE_wbInv ((Ptr)buf, length*2, TRUE) ;
 
@@ -265,16 +267,7 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
     /****************************************************************************
     * Allocate a temporary buffer image and the smoothed image.
     ****************************************************************************/
-/*    if((tempim = (unsigned int *) malloc(rows*cols* sizeof(unsigned int))) == NULL)
-    {
-        // out of memory
-        NOTIFY_notify (ID_GPP,
-                       MPCSXFER_IPS_ID,
-                       MPCSXFER_IPS_EVENTNO,
-                       MSG_DSP_MEMORY_ERROR1);
-
-    }*/
-    if((tmp = (unsigned char *) malloc(rows*cols* sizeof(unsigned char))) == NULL)
+   if((tmp = (unsigned char *) malloc((rows-start)*cols* sizeof(unsigned char))) == NULL)
     {
         // out of memory
         NOTIFY_notify (ID_GPP,
@@ -283,7 +276,7 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
                        MSG_DSP_MEMORY_ERROR2);
     }
 
-    if(((smoothedim) = (unsigned short int *) malloc(rows*cols*sizeof(unsigned short int))) == NULL)
+    if(((smoothedim) = (unsigned short int *) malloc((rows-start)*cols*sizeof(unsigned short int))) == NULL)
     {
         // out of memory
         NOTIFY_notify (ID_GPP,
@@ -309,9 +302,7 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
                     sum += kernel[center+cc];
                 }
             }
-           // tempim[r*cols+c] = dot/sum;
-            tmp [r*cols+c] = dot/sum;
-          // smoothedim [r*cols+c] = tempim[r*cols+c];
+            tmp [(r-start)*cols+c] = dot/sum;
         }
     }
     /****************************************************************************
@@ -319,7 +310,7 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
     ****************************************************************************/
     for(c=0; c<cols; c++)
     {
-        for(r=start+8; r<rows; r++)
+        for(r=8; r<rows-start; r++)
         {
             sum = 0;
             dot = 0;
@@ -336,7 +327,6 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
         }
     }
 
-    //free(tempim);
     free(tmp);
     return smoothedim;
 }
