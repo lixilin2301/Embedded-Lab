@@ -140,8 +140,6 @@ pool_notify_Main (IN Char8 * dspExecutable,
 #define MSG_DSP_INITIALIZED 	((Uint32)1)
 #define MSG_DSP_DONE			((Uint32)2)
 
-#define MSG_DSP_MEMORY_ERROR1	((Uint32)3)
-#define MSG_DSP_MEMORY_ERROR2	((Uint32)4)
-#define MSG_DSP_MEMORY_ERROR3	((Uint32)5)
+#define MSG_DSP_MEMORY_ERROR	((Uint32)3)
 
 #endif /* !defined (pool_notify_H) */

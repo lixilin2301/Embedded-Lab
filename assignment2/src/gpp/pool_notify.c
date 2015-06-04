@@ -29,7 +29,7 @@
 
 
 /* ---- Specify the fraction of computations to be performed on the NEON ----- */
-#define FRAC 40 
+#define FRAC 40
 
 #if defined (__cplusplus)
 extern "C" {
@@ -359,7 +359,6 @@ NORMAL_API DSP_STATUS pool_notify_Create (IN Char8 * dspExecutable, IN Char8 * s
                             pool_notify_IPS_ID,
                             pool_notify_IPS_EVENTNO,
                             (Uint32) ((rows<<16) | cols));
-							 //(Uint32) pool_notify_BufferSize);
     if (DSP_FAILED (status))
 	{
         printf ("NOTIFY_notify () DataBuf failed."
@@ -405,16 +404,6 @@ long long get_usec(void)
   return r;
 }
 
-int sum_dsp(unsigned char* buf, int length)
-{
-    int a=0,i;
-    for(i=0;i<length;i++)
-	{
-       a=a+buf[i];
-    }
-    return a;
-}
-
 /** ============================================================================
  *  @func   pool_notify_Execute
  *
@@ -426,10 +415,6 @@ int sum_dsp(unsigned char* buf, int length)
 NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 processorId)
 {
     DSP_STATUS  status    = DSP_SOK ;
-
-   	#if defined(DSP)
-    //    unsigned char *buf_dsp;
-	#endif
 
     unsigned char *nms;
     unsigned short int *smoothedIm = NULL;
@@ -450,47 +435,30 @@ int k;
     if((smoothedIm = malloc(rows*cols* sizeof(short int))) == NULL)
     {
         fprintf(stderr, "Error allocating the smoothed image.\n");
-        //exit(1);
     }
 
-
-	#if !defined(DSP)
-	printf(" DSP is off. \n");
-    #endif
-
-
-	#if defined(DSP)
     POOL_writeback (POOL_makePoolId(processorId, SAMPLE_POOL_ID),
                     pool_notify_DataBuf,
                     pool_notify_BufferSize);
 
-/*    POOL_translateAddr ( POOL_makePoolId(processorId, SAMPLE_POOL_ID),
-                         (void*)&buf_dsp,
-                         AddrType_Dsp,
-                         (Void *) pool_notify_DataBuf,
-                         AddrType_Usr) ;
-*/
     //START GAUSSIAN FILTERING
 
     start = get_usec();
     dspTime= get_usec();
     NOTIFY_notify (processorId,pool_notify_IPS_ID,pool_notify_IPS_EVENTNO,1); //<--tells DSP to start
-    
+
     float temp;
     temp = rows*FRAC/100;
-    neon_rows = (int)temp; //rows*FRAC/100;
+    neon_rows = (int)temp;
 
-#ifdef DEBUG
-printf("Neon rows = %d \n", neon_rows);
-#endif
- neonTime= get_usec();
+    #ifdef DEBUG
+    printf("Neon rows = %d \n", neon_rows);
+    #endif
+    neonTime= get_usec();
 
-  smoothedIm = gaussian_smooth_neon(pool_notify_DataBuf,neon_rows+8,cols,2.5);
-//smoothedIm = (unsigned short int*)gaussian_smooth_neon(pool_notify_DataBuf,rows,cols,2.5);
+    smoothedIm = gaussian_smooth_neon(pool_notify_DataBuf,neon_rows+8,cols,2.5);
 
     printf("---NEON execution time %lld us.\n", get_usec()-neonTime);
-
-
 
     sem_wait(&sem); // <--- that DSP is done.
 
@@ -498,56 +466,41 @@ printf("Neon rows = %d \n", neon_rows);
                      pool_notify_DataBuf,
                      pool_notify_BufferSize);
 
-#ifdef DEBUG
+    #ifdef DEBUG
     Time0 = get_usec();
-#endif
+    #endif
 
-/*for (k=0; k< cols*neon_rows ; k++)
-   {
-    pool_notify_DataBuf [k] = image[k];
-   }
-*/
     memcpy(pool_notify_DataBuf, smoothedIm, cols*neon_rows*sizeof(short int));
-   //memset(databuf16, 0, cols*neon_rows*sizeof(short int));
 
-#ifdef DEBUG
+    #ifdef DEBUG
     printf("memcpy execution time %lld us.\n", get_usec()-Time0);
-#endif
-/* if(write_pgm_image(outfilename, edge, rows, cols, "", 255) == 0)
-      {
-	fprintf(stderr, "Error writing the edge image, %s.\n", outfilename);
-	exit(1);
-      }
+    #endif
 
-*/
-	#endif //defined(DSP)
+    //CONTINUE THE REST
 
-
-//CONTINUE THE REST
-
-#ifdef DEBUG
+    #ifdef DEBUG
     Time1 = get_usec();
-#endif
+    #endif
     derrivative_x_y((short int *)databuf16,rows,cols,&delta_x,&delta_y);
-	#ifdef DEBUG
+    #ifdef DEBUG
     printf("derrivative execution time %lld us.\n", get_usec()-Time1);
-#endif
+    #endif
 
-	#ifdef DEBUG
+    #ifdef DEBUG
     Time2 = get_usec();
-#endif
+    #endif
     radian_direction(delta_x,delta_y,rows,cols,&dir_radians,-1,-1);
-	#ifdef DEBUG
+    #ifdef DEBUG
     printf("radian direction execution time %lld us.\n", get_usec()-Time2);
-#endif
+    #endif
 
-	#ifdef DEBUG
+    #ifdef DEBUG
     Time3 = get_usec();
-#endif
+    #endif
+
     if((magnitude = (short *) malloc(rows*cols* sizeof(short))) == NULL)
     {
         fprintf(stderr, "Error allocating the magnitude image.\n");
-        //exit(1);
     }
 
     #ifdef VERBOSE
@@ -556,27 +509,27 @@ printf("Neon rows = %d \n", neon_rows);
     magnitude_x_y(delta_x, delta_y, rows, cols, magnitude);
 	#ifdef DEBUG
     printf("magnitude execution time %lld us.\n", get_usec()-Time3);
-#endif
+    #endif
 
-	#ifdef DEBUG
+    #ifdef DEBUG
     Time4 = get_usec();
-#endif
+    #endif
+
     #ifdef VERBOSE
     printf("Computing the non_max_supp function.\n");
     #endif
     if((nms = (unsigned char *) malloc(rows*cols*sizeof(unsigned char)))==NULL)
     {
         fprintf(stderr, "Error allocating the nms image.\n");
-        //exit(1);
     }
     non_max_supp(magnitude, delta_x, delta_y, rows, cols, nms);
-	#ifdef DEBUG
+    #ifdef DEBUG
     printf("non max supp execution time %lld us.\n", get_usec()-Time4);
-#endif
+    #endif
 
-	#ifdef DEBUG
+    #ifdef DEBUG
     Time5 = get_usec();
-#endif
+    #endif
     #ifdef VERBOSE
     printf("Computing the hysteresis.\n");
     #endif
@@ -586,37 +539,37 @@ printf("Neon rows = %d \n", neon_rows);
         exit(1);
     }
     apply_hysteresis(magnitude, nms, rows, cols, 0.5, 0.5, edge);
-	#ifdef DEBUG
+    #ifdef DEBUG
     printf("hysteresis execution time %lld us.\n", get_usec()-Time5);
-#endif
+    #endif
 
 
     /****************************************************************************
     * Write out the edge image to a file.
     ****************************************************************************/
 
-	#ifdef DEBUG
+    #ifdef DEBUG
     Time6 = get_usec();
-#endif
+    #endif
     sprintf(outfilename, "%s_out.pgm", filename);
         	    //sigma, tlow, thigh);
-#ifdef VERBOSE
+    #ifdef VERBOSE
     printf("Writing the edge iname in the file %s.\n", outfilename);
-#endif
+    #endif
 
     if(write_pgm_image(outfilename, edge, rows, cols, "", 255) == 0)
       {
-	fprintf(stderr, "Error writing the edge image, %s.\n", outfilename);
-	exit(1);
+    fprintf(stderr, "Error writing the edge image, %s.\n", outfilename);
+    exit(1);
       }
 
-	#ifdef DEBUG
+    #ifdef DEBUG
     printf("writing image execution time %lld us.\n", get_usec()-Time6);
-#endif
+    #endif
 
-	#ifdef DEBUG
+    #ifdef DEBUG
     Time7 = get_usec();
-#endif
+    #endif
 
     free(image);
 
@@ -739,17 +692,6 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * infilenam
     strcpy(filename, infilename);
 
 	char strbuf[32];
-	//char *dirfilename = NULL; /* Name of the output gradient direction image */
-    //char outfilename[128];    /* Name of the output "edge" image */
-    //char composedfname[128];  /* Name of the output "direction" image */
-    //unsigned char *edge;      /* The output edge image */
-    //float sigma=2.5,              /* Standard deviation of the gaussian kernel. */
-    //      tlow=0.5,               /* Fraction of the high threshold in hysteresis. */
-    //      thigh=0.5;              /* High hysteresis threshold control. The actual
-    /*			        threshold is the (100 * thigh) percentage point
-			        in the histogram of the magnitude of the
-			        gradient image that passes non-maximal
-			        suppression. */
 
     /****************************************************************************
     * Read in the image. This read function allocates memory for the image.
@@ -769,7 +711,7 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * infilenam
     printf ("========== Sample Application : pool_notify ==========\n") ;
 	#endif
 
-    if   (dspExecutable != NULL) 
+    if(dspExecutable != NULL)
 	{
         /*
          *  Validate the buffer size and number of iterations specified.
@@ -799,7 +741,7 @@ NORMAL_API Void pool_notify_Main (IN Char8 * dspExecutable, IN Char8 * infilenam
                                      strbuf,
                                      0) ;
 
-        if (DSP_SUCCEEDED (status))
+        if(DSP_SUCCEEDED (status))
 		{
             status = pool_notify_Execute (pool_notify_NumIterations, 0) ;
         }
@@ -847,9 +789,7 @@ STATIC Void pool_notify_Notify (Uint32 eventNo, Pvoid arg, Pvoid info)
             printf(" Gaussian Ended! %d \n", (int)info);
             #endif
             break;
-        case MSG_DSP_MEMORY_ERROR1:
-        case MSG_DSP_MEMORY_ERROR2:
-        case MSG_DSP_MEMORY_ERROR3:
+        case MSG_DSP_MEMORY_ERROR:
             printf("DSP Memory error %d!\n", (int)info);
             break;
         default:
