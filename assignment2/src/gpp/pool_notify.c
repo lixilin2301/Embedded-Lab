@@ -479,7 +479,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     neon_rows = (int)rows*FRAC/100;
 
     neonTime= get_usec();
-    smoothedIm = (unsigned short int*)gaussian_smooth_neon(pool_notify_DataBuf,neon_rows+8,cols,2.5);
+    smoothedIm = gaussian_smooth_neon(pool_notify_DataBuf,neon_rows+8,cols,2.5);
     printf("---NEON execution time %lld us.\n", get_usec()-neonTime);
 
 

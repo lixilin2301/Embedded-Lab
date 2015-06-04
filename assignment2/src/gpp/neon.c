@@ -45,7 +45,7 @@ void make_gaussian_kernel(float sigma, float **kernel, int *windowsize)
     }
 }
 
-short int* gaussian_smooth_neon(unsigned char *image, int rows, int cols, float sigma)
+unsigned short int* gaussian_smooth_neon(unsigned char *image, int rows, int cols, float sigma)
 {
     int r, c, rr, cc,     /* Counter variables. */
         windowsize,        /* Dimension of the gaussian kernel. */
@@ -71,9 +71,9 @@ short int* gaussian_smooth_neon(unsigned char *image, int rows, int cols, float 
         fprintf(stderr, "Error allocating the buffer image.\n");
         exit(1);
     }
-    short int* smoothedim;
-    short int* smoothedim1;// just for the pupose of testing 
-    if(((smoothedim) = (short int *) malloc(rows*cols*sizeof(short int))) == NULL)
+    unsigned short int* smoothedim;
+    unsigned short int* smoothedim1;// just for the pupose of testing 
+    if(((smoothedim) = (unsigned short int *) malloc(rows*cols*sizeof(short int))) == NULL)
     {
         fprintf(stderr, "Error allocating the smoothed image.\n");
         exit(1);
@@ -232,12 +232,13 @@ short int* gaussian_smooth_neon(unsigned char *image, int rows, int cols, float 
 			temp_output += new_image_col[m*new_rows+n+8] * new_kernel[8];
 			temp_output = (temp_output * 90) / kernelSum + 0.5;
 			
-			 smoothedim[n*cols+m] = (short int )temp_output;
+			smoothedim[n*cols+m] = (unsigned short int )temp_output;
 			temp_output=0; 
 		}
 	}
 
-
+	free(new_image);
+	free(new_image_col);
     free(tempim);
     free(kernel);
     return smoothedim;
