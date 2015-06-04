@@ -139,3 +139,5 @@ clean:
 send: $(BINDIR_R)/$(BIN)
 	scp $(BINDIR_R)/$(BIN) root@192.168.0.202:/home/root/esLAB/pool_notify/.
 
+sendh: $(BINDIR_R)/$(BIN)
+	scp $(BINDIR_R)/$(BIN) hbeagle:/home/root/esLAB/pool_notify/.

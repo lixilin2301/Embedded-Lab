@@ -184,8 +184,8 @@ static Void Task_notify (Uint32 eventNo, Ptr arg, Ptr info)
     }
     if (count==2) {
         //length = (int)info;
-        rows = ((Uint32)info >> 16) & 0x00FF;
-		cols = (Uint32)info & 0x00FF;
+        rows = ((Uint32)info >> 16) & 0xFFFF;
+		cols = (Uint32)info & 0xFFFF;
         length = rows * cols;
     }
     if(count==3) {
