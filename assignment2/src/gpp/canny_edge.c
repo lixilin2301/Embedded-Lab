@@ -81,7 +81,7 @@ void radian_direction(short int *delta_x, short int *delta_y, int rows,
 {
     int r, c, pos;
     float *dirim=NULL;
-    double dx, dy;
+    float dx, dy;
 
     /****************************************************************************
     * Allocate an image to store the direction of the gradient.
@@ -97,8 +97,8 @@ void radian_direction(short int *delta_x, short int *delta_y, int rows,
     {
         for(c=0; c<cols; c++,pos++)
         {
-            dx = (double)delta_x[pos];
-            dy = (double)delta_y[pos];
+            dx = (float)delta_x[pos];
+            dy = (float)delta_y[pos];
 
             if(xdirtag == 1) dx = -dx;
             if(ydirtag == -1) dy = -dy;
@@ -114,9 +114,9 @@ void radian_direction(short int *delta_x, short int *delta_y, int rows,
 * y. It returns this angle in radians with the answer being in the range
 * 0 <= angle <2*PI.
 *******************************************************************************/
-double angle_radians(double x, double y)
+float angle_radians(float x, float y)
 {
-    double xu, yu, ang;
+    float xu, yu, ang;
 
     xu = fabs(x);
     yu = fabs(y);

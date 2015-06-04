@@ -29,7 +29,7 @@
 
 
 /* ---- Specify the fraction of computations to be performed on the NEON ----- */
-#define FRAC 40
+#define FRAC 35
 
 #if defined (__cplusplus)
 extern "C" {
