@@ -212,6 +212,13 @@ unsigned short int* gaussian_smooth(unsigned char *image, int rows, int cols)
         15226, 19356, 20969, 19356, 15226,
         10206,  5830,  2837,  1177,  416
     };
+
+    static unsigned short int kernel2[] = {
+          208,   588,  1418,  2915, 5103,
+         7613,  9678, 10484,  9678, 7613,
+         5103,  2915,  1418,   588,  208
+    };
+ 
     windowsize = 15;
     NOTIFY_notify (ID_GPP,
                    MPCSXFER_IPS_ID,
