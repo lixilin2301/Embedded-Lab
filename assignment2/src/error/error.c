@@ -14,10 +14,10 @@ int main (int argc, char **argv) {
 
 	if (argc < 5) {
 		printf("Usage: %s <original> <image1> <image2> <output>\n", argv[0]);
-		printf("\n<original> is the filename of the original image\n");
-		printf("\n<image1> is the filename of the \"correct\" image\n");
-		printf("\n<image2> is the filename of the second image\n");
-		printf("\n<output> is the filename where a difference map will be written to\n");
+		printf("\t<original> is the filename of the original image\n");
+		printf("\t<image1> is the filename of the \"correct\" image\n");
+		printf("\t<image2> is the filename of the second image\n");
+		printf("\t<output> is the filename where a difference map will be written to\n");
 		return 1;
 	}
 
@@ -34,27 +34,28 @@ int main (int argc, char **argv) {
 		return 3;
 	}
 
-	if (rows1 != rows2 || cols1 != cols2) {
+	if (rows != rows1 || cols != cols1 || rows1 != rows2 || cols1 != cols2) {
 		printf("Images are of different sizes!\n");
 		return 4;
 	}
 
-	diff = malloc(rows1 * cols1 * sizeof(unsigned char));
 
-	for (y = 0; y < rows1; ++y) {
-		for (x = 0; x < cols1; ++x) {
-			diff[y * rows1 + x] = 255 - abs(image1[y * rows1 + x] - image2[y * rows1 + x]);
+	diff = malloc(rows * cols * sizeof(unsigned char));
 
-			temp1 = (original[y * rows1 + x] - image1[y * rows1 + x]);
-			temp2 = (original[y * rows1 + x] - image2[y * rows1 + x]);
+	for (y = 0; y < rows; ++y) {
+		for (x = 0; x < cols; ++x) {
+			diff[y * rows + x] = 255 - (unsigned char)abs(image1[y * rows + x] - image2[y * rows + x]);
+
+			temp1 = (original[y * rows + x] - image1[y * rows + x]);
+			temp2 = (original[y * rows + x] - image2[y * rows + x]);
 			mse1 += (temp1 * temp1);
 			mse2 += (temp2 * temp2);
 		}
 	}
-	mse1 /= (rows1 * cols1);
-	mse2 /= (rows1 * cols1);
+	mse1 /= (rows * cols);
+	mse2 /= (rows * cols);
 
-	if (write_pgm_image(argv[4], diff, rows1, cols1, "", 255) == 0) {
+	if (write_pgm_image(argv[4], diff, rows, cols, "", 255) == 0) {
 		printf("Unable to write image %s\n", argv[4]);
 		return 5;
 	}
