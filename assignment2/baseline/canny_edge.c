@@ -185,6 +185,13 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
           *magnitude;      /* The magnitude of the gadient image.      */
     float *dir_radians=NULL;   /* Gradient direction image.                */
 
+	Timer derivative, radian, magnitudeTimer, nonmax, hysteresis;
+	initTimer(&derivative, "derivative");
+	initTimer(&radian, "radian");
+	initTimer(&magnitudeTimer, "magnitude");
+	initTimer(&nonmax, "nonmax");
+	initTimer(&hysteresis, "hysteresis");
+
     /****************************************************************************
     * Perform gaussian smoothing on the image using the input standard
     * deviation.
@@ -201,7 +208,10 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
     * Compute the first derivative in the x and y directions.
     ****************************************************************************/
     if(VERBOSE) printf("Computing the X and Y first derivatives.\n");
+	startTimer(&derivative);
     derrivative_x_y(smoothedim, rows, cols, &delta_x, &delta_y);
+	stopTimer(&derivative);
+	printTimer(&derivative);
 
     /****************************************************************************
     * This option to write out the direction of the edge gradient was added
@@ -214,7 +224,10 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
         * Compute the direction up the gradient, in radians that are
         * specified counteclockwise from the positive x-axis.
         *************************************************************************/
+		startTimer(&radian);
         radian_direction(delta_x, delta_y, rows, cols, &dir_radians, -1, -1);
+		stopTimer(&radian);
+		printTimer(&radian);
 
         /*************************************************************************
         * Write the gradient direction image out to a file.
@@ -242,7 +255,10 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
     }
 
     if(VERBOSE) printf("Computing the magnitude of the gradient.\n");
+	startTimer(&magnitudeTimer);
     magnitude_x_y(delta_x, delta_y, rows, cols, magnitude);
+	stopTimer(&magnitudeTimer);
+	printTimer(&magnitudeTimer);
 
     /****************************************************************************
     * Perform non-maximal suppression.
@@ -253,7 +269,10 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
         fprintf(stderr, "Error allocating the nms image.\n");
         exit(1);
     }
+	startTimer(&nonmax);
     non_max_supp(magnitude, delta_x, delta_y, rows, cols, nms);
+	stopTimer(&nonmax);
+	printTimer(&nonmax);
 
     /****************************************************************************
     * Use hysteresis to mark the edge pixels.
@@ -264,7 +283,10 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
         fprintf(stderr, "Error allocating the edge image.\n");
         exit(1);
     }
+	startTimer(&hysteresis);
     apply_hysteresis(magnitude, nms, rows, cols, tlow, thigh, *edge);
+	stopTimer(&hysteresis);
+	printTimer(&hysteresis);
 
     /****************************************************************************
     * Free all of the memory that we allocated except for the edge image that
