@@ -45,7 +45,7 @@ void make_gaussian_kernel(float sigma, float **kernel, int *windowsize)
     }
 }
 
-unsigned short int* gaussian_smooth_neon(unsigned char *image, int rows, int cols, float sigma)
+unsigned short int* gaussian_smooth_neon(unsigned char *image, int rows, int cols, float sigma, int complete_rows)
 {
     int r, c, rr, cc,     /* Counter variables. */
         windowsize,        /* Dimension of the gaussian kernel. */
@@ -73,7 +73,7 @@ unsigned short int* gaussian_smooth_neon(unsigned char *image, int rows, int col
     }
     unsigned short int* smoothedim;
     unsigned short int* smoothedim1;// just for the pupose of testing 
-    if(((smoothedim) = (unsigned short int *) malloc(rows*cols*sizeof(short int))) == NULL)
+    if(((smoothedim) = (unsigned short int *) malloc(complete_rows*cols*sizeof(short int))) == NULL)
     {
         fprintf(stderr, "Error allocating the smoothed image.\n");
         exit(1);
