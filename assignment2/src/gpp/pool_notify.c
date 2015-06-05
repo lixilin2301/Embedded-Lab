@@ -15,8 +15,8 @@
 #include <loaderdefs.h>
 #endif
 
-//#define VERBOSE
-//#define DEBUG
+#define VERBOSE
+#define DEBUG
 
 /*  ----------------------------------- Application Header              */
 #include <pool_notify.h>
@@ -419,6 +419,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     unsigned char *nms;
     unsigned short int *smoothedIm = NULL;
     unsigned char *edge = NULL;
+	short int *imgbuf = NULL;
     short int *delta_x,*delta_y,*magnitude;
     float *dir_radians=NULL;
     char outfilename[128];    /* Name of the output "edge" image */
@@ -456,6 +457,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     neonTime= get_usec();
 
     smoothedIm = gaussian_smooth_neon(pool_notify_DataBuf,neon_rows+8,cols,2.5);
+	imgbuf = malloc(rows * cols * sizeof(short int));
 
     printf("---NEON execution time %lld us.\n", get_usec()-neonTime);
 
@@ -465,12 +467,14 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
                      pool_notify_DataBuf,
                      pool_notify_BufferSize);
 
+
     #ifdef DEBUG
     Time0 = get_usec();
     #endif
 
     memcpy(pool_notify_DataBuf, smoothedIm, cols*neon_rows*sizeof(short int));
 
+	memcpy(imgbuf, databuf16, rows * cols * sizeof(short int));
     #ifdef DEBUG
     printf("memcpy execution time %lld us.\n", get_usec()-Time0);
     #endif
@@ -480,11 +484,12 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     #ifdef DEBUG
     Time1 = get_usec();
     #endif
-    derrivative_x_y((short int *)databuf16,rows,cols,&delta_x,&delta_y);
+    derrivative_x_y((short int *)imgbuf,rows,cols,&delta_x,&delta_y);
     #ifdef DEBUG
     printf("derrivative execution time %lld us.\n", get_usec()-Time1);
     #endif
 
+	#ifdef RADIANS
     #ifdef DEBUG
     Time2 = get_usec();
     #endif
@@ -492,6 +497,7 @@ NORMAL_API DSP_STATUS pool_notify_Execute (IN Uint32 numIterations, Uint8 proces
     #ifdef DEBUG
     printf("radian direction execution time %lld us.\n", get_usec()-Time2);
     #endif
+	#endif /* RADIAN */
 
     #ifdef DEBUG
     Time3 = get_usec();

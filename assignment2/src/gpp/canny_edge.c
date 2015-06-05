@@ -177,13 +177,6 @@ void derrivative_x_y(short int *smoothedim, int rows, int cols,
         short int **delta_x, short int **delta_y)
 {
    int r, c, pos;
-   int i;
-   for (i = 0; i < rows * cols; ++i){
-      if (smoothedim[i] < 0) {
-         printf("SHITS BROKEN MAN!!!!!!!!!!!!!!!!\n");
-      }
-
-   }
    /****************************************************************************
    * Allocate images to store the derivatives.
    ****************************************************************************/
@@ -195,6 +188,7 @@ void derrivative_x_y(short int *smoothedim, int rows, int cols,
       fprintf(stderr, "Error allocating the delta_x image.\n");
       exit(1);
    }
+	
 
 
    for(r=0;r<rows;r++){
