@@ -41,11 +41,18 @@
 #define __PIN_MAKE_CMD_ARG(cmd, arg) ((cmd) << __PIN_CMD_OFFSET | ((arg) & __PIN_ID_MASK))
 #define __PIN_CMD_ARG(cmd, arg)     __PIN_MAGIC(__PIN_MAKE_CMD_ARG(cmd, arg))
 
-
+#ifdef PROFILE
 #define MCPROF_START()                 __PIN_MAGIC(__PIN_MAGIC_START)
 #define MCPROF_STOP()                  __PIN_MAGIC(__PIN_MAGIC_STOP)
 
 #define MCPROF_ZONE_ENTER(rid)         __PIN_CMD_ARG(__PIN_MAGIC_ZONE_ENTER, rid)
 #define MCPROF_ZONE_EXIT(rid)          __PIN_CMD_ARG(__PIN_MAGIC_ZONE_EXIT, rid)
+
+#else 
+#define MCPROF_START()
+#define MCPROF_STOP()
+#define MCPROF_ZONE_ENTER(rid)
+#define MCPROF_ZONE_EXIT(rid)
+#endif
 
 #endif // MARKERS_H

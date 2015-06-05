@@ -18,7 +18,7 @@
 *    Method for Assessing the Relative Performance of Edge Detection
 *    Algorithms, IEEE Transactions on Pattern Analysis and Machine
 *    Intelligence 19 (12),  1338-1359, December 1997.
-*  ------------------------------------------------------
+*  ------------------------------------------------------  
 *
 * PROGRAM: canny_edge
 * PURPOSE: This program implements a "Canny" edge detector. The processing
@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
+#include <arm_neon.h>
 #include "markers.h"
 #include "Timer.h"
 
@@ -84,8 +84,6 @@ double angle_radians(double x, double y);
 
 void non_max_supp(short *mag, short *gradx, short *grady, int nrows,
                   int ncols, unsigned char *result);
-
-Timer gaussianTime;
 
 int main(int argc, char *argv[])
 {
@@ -119,8 +117,6 @@ int main(int argc, char *argv[])
 
     Timer totalTime;
     initTimer(&totalTime, "Total Time");
-    initTimer(&gaussianTime, "Gaussian Time");
-
 
     /****************************************************************************
     * Read in the image. This read function allocates memory for the image.
@@ -143,12 +139,12 @@ int main(int argc, char *argv[])
         dirfilename = composedfname;
     }
 
-    startTimer(&totalTime);
-    MCPROF_START();
+    
+ //   MCPROF_START();
     canny(image, rows, cols, sigma, tlow, thigh, &edge, dirfilename);
-    MCPROF_STOP();
-    stopTimer(&totalTime);
-    printTimer(&totalTime);
+   // MCPROF_STOP();
+    
+    
 
 
     /****************************************************************************
@@ -190,12 +186,7 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
     * deviation.
     ****************************************************************************/
     if(VERBOSE) printf("Smoothing the image using a gaussian kernel.\n");
-    
-	startTimer(&gaussianTime);
     smoothedim = gaussian_smooth(image, rows, cols, sigma);
-    stopTimer(&gaussianTime);
-    printTimer(&gaussianTime);
-
 
     /****************************************************************************
     * Compute the first derivative in the x and y directions.
@@ -438,21 +429,16 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
     int r, c, rr, cc,     /* Counter variables. */
         windowsize,        /* Dimension of the gaussian kernel. */
         center;            /* Half of the windowsize. */
-    float *tempim,        /* Buffer for separable filter gaussian smoothing. */
+    float *tempim,*tempim1,        /* Buffer for separable filter gaussian smoothing. */
           *kernel,        /* A one dimensional gaussian kernel. */
           dot,            /* Dot product summing variable. */
           sum;            /* Sum of the kernel weights variable. */
-    int i;
+
     /****************************************************************************
     * Create a 1-dimensional gaussian smoothing kernel.
     ****************************************************************************/
     if(VERBOSE) printf("   Computing the gaussian smoothing kernel.\n");
     make_gaussian_kernel(sigma, &kernel, &windowsize);
-    for(i=0;i<16;i++){
-      printf("%d: %f, ",i,kernel[i]);
-      printf("%lu, ",(unsigned short int)(kernel[i]*(1<<16)));
-      printf("%lu, \n",(unsigned short int)(kernel[i]*(1<<17)));
-    }
     center = windowsize / 2;
 
 
@@ -465,60 +451,194 @@ short int* gaussian_smooth(unsigned char *image, int rows, int cols, float sigma
         exit(1);
     }
     short int* smoothedim;
+
     if(((smoothedim) = (short int *) malloc(rows*cols*sizeof(short int))) == NULL)
     {
         fprintf(stderr, "Error allocating the smoothed image.\n");
         exit(1);
     }
-
-    MCPROF_ZONE_ENTER(1);
+    startTimer(&totalTime);
+    //Neon impelementation of gaussian smooth starts here
     /****************************************************************************
     * Blur in the x - direction.
     ****************************************************************************/
-    if(VERBOSE) printf("   Bluring the image in the X-direction.\n");
-    for(r=0; r<rows; r++)
-    {
-        for(c=0; c<cols; c++)
-        {
-            dot = 0.0;
-            sum = 0.0;
-            for(cc=(-center); cc<=center; cc++)
-            {
-                if(((c+cc) >= 0) && ((c+cc) < cols))
-                {
-                    dot += (float)image[r*cols+(c+cc)] * kernel[center+cc];
-                    sum += kernel[center+cc];
-                }
-            }
-            tempim[r*cols+c] = dot/sum;
-        }
-    }
-    MCPROF_ZONE_EXIT(1);
+	int loop; 	
+	int floop;
+    //Modification of input image for neon implementation
+    //For Filter 1
+	float * new_image;
+    //For Filter 2
+	float *new_image_col;
+    //kernel is changed to 17 from 15 for neon (two 0s at the beginning and the end)
+	float new_kernel[17];
 
-    MCPROF_ZONE_ENTER(2);
+    //Generating now kernel filter
+	for (floop = 0 ; floop < 17 ; floop++)
+	{
+		if(floop == 0 || floop == 16 )
+			new_kernel[floop] = 0 ;
+		else
+			new_kernel [floop] = kernel[floop -1];	
+	}
+    //For filter 1, new cols number for neon
+	unsigned int new_cols;
+	new_cols=cols+16;
+	unsigned int i, k; 
+	unsigned int a; 
+	unsigned int m; 
+	unsigned int n, j;
+
+    //Malloc of new image used by neon
+	new_image = (float*)malloc(new_cols*rows*sizeof(float));
+	for( i =0; i<rows; i++){
+		memset(&new_image[i*new_cols],0,8*sizeof(float));
+
+		for( k=0; k<cols;k++){
+			new_image[i*new_cols+8+k] = (float)image[i*cols+k];
+		}
+		memset(&new_image[i*new_cols+8+cols],0,8*sizeof(float));
+	}
+    // Neon handles four piexel at a time
+  	float32x4_t neon_input;
+	float32x4_t neon_filter;
+	float32x4_t temp_sum;
+	float32x2_t tempUpper;
+	float32x2_t tempLower; 
+	float32_t zero = 0;
+	float32_t temp_output;
+	float Basekernel = 0.0f;
+	float kernelSum;
+
+    //When using the new filter, we always assume the image has more than 9 pixels in a row
+    //Base sum for the filter
+	for( a=8; a<=16; a++){
+		Basekernel += new_kernel[a];
+	}
+
+    //Filter 1, filtering row by row
+	for(m=0; m<rows; m++){
+		for( n=0; n<cols; n++){
+			temp_sum = vdupq_n_f32(0);
+			if(n==0){
+				kernelSum = Basekernel;
+			}
+			else if(n <=8){
+				kernelSum += new_kernel[8-n];
+			}
+			else if(n>=cols-8){
+				kernelSum -=new_kernel[cols-n+8];
+			}
+
+            //For each pixel, filtering is performed four times
+			for( j=0; j<4; j++)
+			{
+				int kk=0;
+				if(j>=2)
+				{
+					kk=1;
+				}
+				neon_input = vld1q_f32(&new_image[m*new_cols+n+j*4+kk]);
+				neon_filter = vld1q_f32(&new_kernel[j*4+kk]);
+				temp_sum = vmlaq_f32(temp_sum,neon_input,neon_filter);
+			}
+			
+			unsigned int t;
+	
+			for( t=0; t<=3; t++){	
+						
+				temp_output += vgetq_lane_f32(temp_sum,t ); 
+
+			}
+			temp_output += new_image[m*new_cols+n+8] * new_kernel[8];
+			temp_output /= kernelSum;
+			tempim[m*cols+n] = temp_output;
+			temp_output=0; 
+		}
+	}
+
+   	
+     for(r=0; r<rows; r++)
+     {
+         for(c=0; c<cols; c++)
+         {
+             dot = 0.0;
+             sum = 0.0;
+             for(cc=(-center); cc<=center; cc++)
+             {
+             	   if(((c+cc) >= 0) && ((c+cc) < cols))
+                 {
+                    dot += (float)image[r*cols+(c+cc)] * kernel[center+cc];
+                     sum += kernel[center+cc];
+                 }
+             }
+             tempim1[r*cols+c] = dot/sum;
+         }
+     }
+
     /****************************************************************************
     * Blur in the y - direction.
     ****************************************************************************/
-    if(VERBOSE) printf("   Bluring the image in the Y-direction.\n");
-    for(c=0; c<cols; c++)
-    {
-        for(r=0; r<rows; r++)
-        {
-            sum = 0.0;
-            dot = 0.0;
-            for(rr=(-center); rr<=center; rr++)
-            {
-                if(((r+rr) >= 0) && ((r+rr) < rows))
-                {
-                    dot += tempim[(r+rr)*cols+c] * kernel[center+rr];
-                    sum += kernel[center+rr];
-                }
-            }
-            smoothedim[r*cols+c] = (short int)(dot*BOOSTBLURFACTOR/sum + 0.5);
-        }
-    }
-    MCPROF_ZONE_EXIT(2);
 
+    unsigned int new_rows;
+	new_rows=rows+16;
+	new_image_col = (float*)malloc(new_rows*cols*sizeof(float));
+	if(VERBOSE) printf("   Bluring the image in the Y-direction.\n");
+
+	for( i =0; i<cols; i++){//actually nember of new rows are the number of columns here 
+		memset(&new_image_col[i*new_rows],0,8*sizeof(float));
+
+		for( k=0; k<rows;k++){
+			new_image_col[i*new_rows+8+k] = tempim[k*cols+i];
+			//new_image_col[i*new_rows+8+k] = imagetest1[k*cols+i];
+		}
+		memset(&new_image_col[i*new_rows+8+rows],0,8*sizeof(float));
+	}
+
+	Basekernel = 0.0; 
+	for( a=8; a<=16; a++){
+		Basekernel += new_kernel[a];
+	}
+
+	for(m=0; m<cols; m++){// it was rows at br
+		for( n=0; n<rows; n++){
+			temp_sum = vdupq_n_f32(0);
+			if(n==0){
+				kernelSum = Basekernel;
+			}
+			else if(n <=8){
+				kernelSum += new_kernel[8-n];
+			}
+			else if(n>=rows-8){
+				kernelSum -=new_kernel[rows-n+8];
+			}
+
+			for( j=0; j<4; j++)
+			{
+				int kk=0;
+				if(j>=2)
+				{
+					kk=1;
+				}
+				neon_input = vld1q_f32(&new_image_col[m*new_rows+n+j*4+kk]);
+			 	neon_filter = vld1q_f32(&new_kernel[j*4+kk]);
+				temp_sum = vmlaq_f32(temp_sum,neon_input,neon_filter);
+			}
+			
+			unsigned int t;
+			for( t=0; t<=3; t++){	
+						
+				temp_output += vgetq_lane_f32(temp_sum,t ); 
+			}
+			temp_output += new_image_col[m*new_rows+n+8] * new_kernel[8];
+			temp_output = (temp_output * BOOSTBLURFACTOR) / kernelSum + 0.5;
+			
+			 smoothedim[n*cols+m] = (short int )temp_output;
+			temp_output=0; 
+		}
+	}
+    stopTimer(&totalTime);
+    printTimer(&totalTime);
+    
     free(tempim);
     free(kernel);
     return smoothedim;

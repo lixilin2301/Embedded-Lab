@@ -9,13 +9,15 @@ DSPLINK := /data/usr/local/share/bbframework/platform/beagle-linux/tools/dsplink
 #   ----------------------------------------------------------------------------
 #   General options, sources and libraries
 #   ----------------------------------------------------------------------------
-SRCS :=  pool_notify.c gpp_main.c
+SRCS :=  pool_notify.c gpp_main.c pgm_io.c canny_edge.c hysteresis.c neon.c
 OBJS :=
 DEBUG :=
 LDFLAGS := -lpthread -lm -static
-CFLAGS := -DDSP -DDEBUG
+CFLAGS := -DDSP -O3 -Wall -mtune=cortex-a8 -march=armv7-a -mfloat-abi=softfp -ftree-vectorize -ffast-math -fomit-frame-pointer -funroll-loops -mfpu=neon
 LIBS :=
 BIN := pool_notify
+#-DDEBUG 
+
 
 #   ----------------------------------------------------------------------------
 #   Compiler and Linker flags for Debug
