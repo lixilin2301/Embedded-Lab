@@ -1,6 +1,41 @@
 \section{Analysis}
-\subsection{speedup}
-\subsection{image errors verification}
+\subsection{Speedup}
+The execution times measured are shown in table~\ref{tab:exectimes}. We measured both the times for the \emph{Guassian blurring} and the overall times seperately. For the guassian code, the speedup is for the \emph{slower} of the two: $frac{baseline}{\max(dsp,neon)}$ The total speedup is simply computed as $\frac{baseline}{optimized}$. We observe a speedup factor of over 2, meaning we execute more than two times faster than the baseline implementation.
+
+\emph{TODO, maybe talk about amdall's law here to justify the speedup of 2 versus 4?}
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{l | r r r r | r r r}
+        & \multicolumn{4}{|c|}{Guassian}                & \multicolumn{3}{|c}{Total}                \\
+Image   & Baseline  & DSP   & NEON          & Speedup   & Baseline  & Optimized         & Speedup   \\
+\hline
+Square  & 30605     & 5768  & 6745          & 4.537     & 42291     & 20325             & 2.081     \\
+Tiger   & 77270     & 15137 & 15625         & 4.945     & 108520    & 49896             & 2.175     \\
+Klomp   & 160455    & 29449 & 29510         & 5.437     & 228814    & 101349            & 2.257     \\
+\end{tabular}
+\caption{The execution times measured in us}
+\label{tab:exectimes}
+\end{figure}
+
+
+An interesting followup question is the amount of overhead we have introduced in the rest of the application. This overhead is in the form of for example allocating the shared memory pool and taking care of communication and synchronization. To calculate this, we subtracted for both the baseline and optimized versions the guassian execution times from the total execution times to obtain the rest execution times. We then subtract the baseline rest from the optimized rest to obtain the overhead time. This overhead time is divided by the total optimized execution time to calculate the overhead factor.
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{l | r r r | r r r r r}
+        & \multicolumn{3}{|c|}{Baseline}    & \multicolumn{5}{|c}{Optimized}                        \\
+Image   & Guassian  & Total     & Rest      & Guassian  & Total     & Rest  & Overhead  & Ratio     \\
+\hline
+Square  & 30605     & 42291     & 11686     & 6745      & 20325     & 13580 & 1894      & 0.093     \\
+Tiger   & 77270     & 108520    & 31250     & 15625     & 49896     & 34271 & 3021      & 0.061     \\
+Klomp   & 160455    & 228814    & 68359     & 29510     & 101349    & 71839 & 3480      & 0.034     \\
+\end{tabular}
+\caption{Calculating the overhead as a fraction, all times in us}
+\label{tab:overhead}
+\end{figure}
+
+\subsection{Image Error verification}
 Since we made several changes in the algorithm where we introduced some slight innaccuracies (for example using a fixed-point representation instead of floating point in the DSP), errors (deviations from the references implementation) are to be expected. Large errors are obvious to the eye, but this might be less obvious if the errors are only small. In this chapter we will detect and quantify these errors, to ensure that our implementation can still be considered correct.
 
 \subsubsection{Error visualization}
