@@ -4,7 +4,7 @@ The execution times measured are shown in table~\ref{tab:exectimes}. We measured
 
 \emph{TODO, maybe talk about amdall's law here to justify the speedup of 2 versus 4?}
 
-\begin{figure}[h]
+\begin{figure*}
 \centering
 \begin{tabular}{l | r r r r | r r r}
         & \multicolumn{4}{|c|}{Guassian}                & \multicolumn{3}{|c}{Total}                \\
@@ -16,12 +16,12 @@ Klomp   & 160455    & 29449 & 29510         & 5.437     & 228814    & 101349    
 \end{tabular}
 \caption{The execution times measured in us}
 \label{tab:exectimes}
-\end{figure}
+\end{figure*}
 
 
 An interesting followup question is the amount of overhead we have introduced in the rest of the application. This overhead is in the form of for example allocating the shared memory pool and taking care of communication and synchronization. To calculate this, we subtracted for both the baseline and optimized versions the guassian execution times from the total execution times to obtain the rest execution times. We then subtract the baseline rest from the optimized rest to obtain the overhead time. This overhead time is divided by the total optimized execution time to calculate the overhead factor.
 
-\begin{figure}[h]
+\begin{figure*}
 \centering
 \begin{tabular}{l | r r r | r r r r r}
         & \multicolumn{3}{|c|}{Baseline}    & \multicolumn{5}{|c}{Optimized}                        \\
@@ -33,7 +33,7 @@ Klomp   & 160455    & 228814    & 68359     & 29510     & 101349    & 71839 & 34
 \end{tabular}
 \caption{Calculating the overhead as a fraction, all times in us}
 \label{tab:overhead}
-\end{figure}
+\end{figure*}
 
 \subsection{Image Error verification}
 Since we made several changes in the algorithm where we introduced some slight innaccuracies (for example using a fixed-point representation instead of floating point in the DSP), errors (deviations from the references implementation) are to be expected. Large errors are obvious to the eye, but this might be less obvious if the errors are only small. In this chapter we will detect and quantify these errors, to ensure that our implementation can still be considered correct.
@@ -56,7 +56,7 @@ An interesting observation is that we can clearly see that all the errors are in
     \end{algorithmic}
 \end{algorithm}
 
-\begin{figure}
+\begin{figure*}
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
             \includegraphics[width=\textwidth]{tiger_baseline}
@@ -75,12 +75,12 @@ An interesting observation is that we can clearly see that all the errors are in
     \end{subfigure}
     \caption{Using the error visualization on an image of a tiger}
     \label{fig:imgdiff}
-\end{figure}
+\end{figure*}
 
 \subsubsection{Error quantification}
 In the visualization we can clearly spot some differences, but a further quantification would be nice as well. For this, we decided to use the \emph{Mean Squared Error}, as defined in equation~\ref{eq:mse}. This is an error-estimator giving us a quantification of the error rate. Since this number on it's own has little meaning, we decided to calculate the MSE rate of the baseline implementation and our optimized versions, both with respect to the original image and calculate the ratio between the difference and the reference error rate, to give us an error estimation. The results are given in table~\ref{tab:mse}. We find the final error ratio to be acceptable.
 
-\begin{figure}[h]
+\begin{figure}
     \begin{equation}
     MSE = \frac{1}{n} \sum_{i=0}^{n-1} (A[i] - B[i])^{2}
     \end{equation}
@@ -88,7 +88,7 @@ In the visualization we can clearly spot some differences, but a further quantif
     \label{eq:mse}
 \end{figure}
 
-\begin{figure}[h!]
+\begin{figure*}
     \centering
     \begin{tabular}{l | l l l l}
     Image   & Reference MSE & Optimized MSE     & Difference    & Ratio     \\
@@ -99,4 +99,4 @@ In the visualization we can clearly spot some differences, but a further quantif
     \end{tabular}
     \caption{The calculated mean squared error}
     \label{tab:mse}
-\end{figure}
+\end{figure*}
