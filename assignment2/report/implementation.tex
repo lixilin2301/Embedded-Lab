@@ -1,5 +1,18 @@
 \section{Implementation}
-Obtaining the results from profiling we see that approximately 80\% of the time is spent on executing the \textit{gaussian_smooth} function. Observing the code of this function we see that it is divided into for loops. First the blurring is done in the X-direction and then in the Y-direction by applying the gaussian kernel. 
+Obtaining the results from profiling we see that approximately 80\% of the time is spent on executing the \textit{gaussian_smooth} function. Observing the code of this function we see that it is divided into two for loops (also seen in profiling). First the blurring is done by convolution in the X-direction and then in the Y-direction by applying the gaussian kernel (one dimensional convolution matrix) This process is briefly shown in figure~\ref{fig:convolution}. There is a data dependency between the two convolution processes where one must be followed by the other. So simply performing one convolution in one direction on one processing unit and the other direction on a different processor will not work. The most naive way of splitting the work between two processors and obtaining a speed up is to compute the gaussian filtering on both processors for different parts of the image. 
+
+\begin{figure*}
+\includegraphics[width=\textwidth]{drawings/gaussian_genaral}
+\caption{Convolution process}
+\label{fig:convolution}
+\end{figure*}
+
+
+\begin{figure*}
+\includegraphics[width=\textwidth]{drawings/gaussian_balancing}
+\caption{Splitting the work}
+\label{fig:balancing}
+\end{figure*}
 
 \input{dsp}
 \input{neon}
