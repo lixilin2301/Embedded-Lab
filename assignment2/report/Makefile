@@ -1,4 +1,4 @@
-SOURCES = conclusion.tex discussion.tex dsp.tex implementation.tex main.tex neon.tex
+SOURCES = conclusion.tex discussion.tex dsp.tex implementation.tex main.tex neon.tex analysis.tex
 
 all:	main.pdf
 
