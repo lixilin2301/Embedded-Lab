@@ -1,6 +1,6 @@
 \section{Analysis}
 \subsection{Speedup}
-The execution times measured are shown in table~\ref{tab:exectimes}. We measured both the times for the \emph{Guassian blurring} and the overall times seperately. For the guassian code, the speedup is for the \emph{slower} of the two: $frac{baseline}{\max(dsp,neon)}$ The total speedup is simply computed as $\frac{baseline}{optimized}$. We observe a speedup factor of over 2, meaning we execute more than two times faster than the baseline implementation.
+The execution times measured are shown in table~\ref{tab:exectimes}. We measured both the times for the \emph{Guassian blurring} and the overall times seperately. For the guassian code, the speedup is for the \emph{slower} of the two: $\frac{baseline}{\max(dsp,neon)}$ The total speedup is simply computed as $\frac{baseline}{optimized}$. We observe a speedup factor of over 2, meaning we execute more than two times faster than the baseline implementation.
 
 \emph{TODO, maybe talk about amdall's law here to justify the speedup of 2 versus 4?}
 
