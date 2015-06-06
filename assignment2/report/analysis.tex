@@ -46,10 +46,10 @@ An interesting observation is that we can clearly see that all the errors are in
 \begin{algorithm}[t]
     \caption{Constructing a image with the differences between two images}\label{alg:imgdiff}
     \begin{algorithmic}[1]
-        \Procedure{DiffImage}{$A[N],B[N]$}  \Comment{Images A and B both have a size of N pixels}
+        \Procedure{DiffImage}{$A[N],B[N]$}
         \State $C[N]\gets 0$
         \For{$i\gets 0, n-1$}
-           \State $C[i]\gets 255 - |A[i] - B[i]|$   \Comment{Subtract the difference of A and B from 255}
+           \State $C[i]\gets 255 - |A[i] - B[i]|$
         \EndFor
         \State \textbf{return} $C$
         \EndProcedure
