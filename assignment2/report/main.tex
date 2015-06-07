@@ -1,4 +1,4 @@
-\documentclass[11pt,twocolumn]{article}
+\documentclass[10pt,final,journal]{IEEEtran}
 \usepackage[english]{babel}
 \usepackage{listings}
 \usepackage{graphicx}
@@ -45,21 +45,30 @@ commentstyle=\color{purple}\ttfamily,
 stringstyle=\color{red}\ttfamily,
 }
 
-\title{Embedded Lab Assignment 2 \\\small{Group 7}}
+\title{Embedded Lab Assignment 2\\\small{Group 7}}
 \author{
-Haji Akhundov\\ \small{\textit{h.akhundov@student.tudelft.nl}}\\ \small{4390547} \and
-Misael Hernandez Leal\\ \small{\textit{m.a.hernandezleal@student.tudelft.nl}} \\ \small{4423615} \and
-Fei Tan\\ \small{\textit{f.tan@student.tudelft.nl}} \\ \small{4405722} \and
-Koray Yanik\\ \small{\textit{k.i.m.yanik@student.tudelft.nl}} \\ \small{4382781} \and
-Muneeb Yousaf\\ \small{\textit{m.m.yousaf@student.tudelft.nl}} \\ \small{4411129}
+		\IEEEauthorblockN{
+			Haji~Akhundov\IEEEauthorrefmark{1}
+			Misael~Hernandez~Leal\IEEEauthorrefmark{2}
+			Fei~Tan\IEEEauthorrefmark{3}
+			Koray~Yanik\IEEEauthorrefmark{4}
+			Muneeb~Yousaf\IEEEauthorrefmark{5}
+		}
+
+		\IEEEauthorblockA{
+			\IEEEauthorrefmark{1}h.akhundov@student.tudelft.nl			\small{4390547} \and
+			\IEEEauthorrefmark{2}m.a.hernandezleal@student.tudelft.nl 	\small{4423615} \and 	\\
+			\IEEEauthorrefmark{3}f.tan@student.tudelft.nl 				\small{4405722} \and
+			\IEEEauthorrefmark{4}k.i.m.yanik@student.tudelft.nl 		\small{4382781} \and 	\\
+			\IEEEauthorrefmark{5}m.m.yousaf@student.tudelft.nl 			\small{4411129}
+		}
 }
+
 \date{\today}
 
 \begin{document}
 
 \nocite{*}
-
-\twocolumn[\begin{@twocolumnfalse}
 
 \maketitle
 
@@ -76,10 +85,6 @@ the difficulties of working with this system, go into some depth about the
 obtained speedup and discuss further improvements that could be made.
 
 \end{abstract}
-
-\tableofcontents
-
-\end{@twocolumnfalse}]
 
 \input{introduction}
 
