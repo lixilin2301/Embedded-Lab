@@ -78,15 +78,14 @@ An interesting observation is that we can clearly see that all the errors are in
 \end{figure*}
 
 \subsubsection{Error quantification}
-In the visualization we can clearly spot some differences, but a further quantification would be nice as well. For this, we decided to use the \emph{Mean Squared Error}, as defined in equation~\ref{eq:mse}. This is an error-estimator giving us a quantification of the error rate. Since this number on it's own has little meaning, we decided to calculate the MSE rate of the baseline implementation and our optimized versions, both with respect to the original image and calculate the ratio between the difference and the reference error rate, to give us an error estimation. The results are given in table~\ref{tab:mse}. We find the final error ratio to be acceptable.
 
-\begin{figure}
-    \begin{equation}
+\begin{equation}
     MSE = \frac{1}{n} \sum_{i=0}^{n-1} (A[i] - B[i])^{2}
-    \end{equation}
-    \caption{Calculating the Mean Squared Error between images A and B, both n pixels large}
     \label{eq:mse}
-\end{figure}
+\end{equation}
+
+In the visualization we can clearly spot some differences, but a further quantification would be nice as well. For this, we decided to use the \emph{Mean Squared Error}, as defined in (\ref{eq:mse}). This is an error-estimator giving us a quantification of the error rate. Since this number on it's own has little meaning, we decided to calculate the MSE rate of the baseline implementation and our optimized versions, both with respect to the original image and calculate the ratio between the difference and the reference error rate, to give us an error estimation. The results are given in table~\ref{tab:mse}. We find the final error ratio to be acceptable.
+
 
 \begin{figure*}
     \centering
