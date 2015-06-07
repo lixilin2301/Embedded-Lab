@@ -8,9 +8,9 @@ The purpose of this assignment is to improve a sequential version of an image pr
 Figure~\ref{fig:workflow} shows the reader the overall approach to this problem and the basic work flow that we adhered to. In this report we will go through describing each component in the flow diagram presented. We would also discuss the communication model that was used to communicate the necessary data in the heterogeneous environment, and see that the communication model (ie. shared memory) used here has little overhead and imposes almost no additional delays when compared to the communication model(ie. message passing) that was utilized in the previous lab. The application profiling has made a great impact on steering our decisions as we will see (in Section Profiling). Furthermore every core has a hardware limitation in terms of how many operations can be performed at the same time, which defines the upper bound on how much speed-up can be obtained. At last results and their error verification are presented. In the future improvements sections we discuss what are the potential possibilities to further improve the execution speed of the application.
 
 \begin{figure*}
-\includegraphics[width=\linewidth]{drawings/communication}
+\includegraphics[width=\linewidth]{drawings/workflow}
 \caption{General approach to the problem}
-\label{fig:smnsmn}
+\label{fig:workflow}
 \end{figure*}
 
 
