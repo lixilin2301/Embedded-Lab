@@ -1,11 +1,5 @@
 \section{Future Work}
-
-some ideas:
-
-1. parallelise other potential functions. next biggest function for example.
-
-
-2. Perform a 2D convolution in one for loop.
-
-3. Further look at possible optimization within the dsp and the neon block. 
-
+Several changes could be made to the current application that could possibly improve the results more.
+First of all, further optimization are possible within the DSP and the NEON block. Secondly, other functions could possibly be computed in parallel as well.
+i.e. The \textit{non\_max\_supp() \& apply\_hysteresis()} are the next computationally intensive applications taking 8\% and 5\% each respectively.
+Even more, simply utilizing NEON in those functions could potentially speed up the overall implementation.
