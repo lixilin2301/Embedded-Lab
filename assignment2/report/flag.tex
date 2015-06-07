@@ -1,0 +1,13 @@
+\subsection{Bob_flag}
+ 
+ The following compiler flags are used to performs optimization during the compilation of source code: 
+
+O3: it provides the highest level of optimization of code for the execution time and code size.
+Wall: it enables all the compiler's warning messages 
+mtune =cortex-a8:  it tunes the generated code to run faster on cortex-a8 than any other processor of same architecture.
+march=armv7-a: This option takes the CPU name armv7-a and allows the gcc to generate a code that uses all the features of that family.      
+mfloat-abi=softfp: it specifies which floating point Application Binary Interface(ABI)to use.By specifying mfloat-abi=softfp, allows the gcc to generate code by using hardware floating point unit but still using the soft-float calling convention.
+mfpu=neon: This specifies what floating-point hardware (or hardware emulation) is available on the target.
+
+Moreover, we have used ftree-vectorize,ffast-math and fomit-frame-pointer flags during the compilation but did not get any speedup because these flags are implicitly enabled if -O3 optimization flag is used .            
+
