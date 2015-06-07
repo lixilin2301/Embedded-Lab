@@ -12,13 +12,12 @@ Originally, 7 neighbor values are taken on either side of a pixel. In our case, 
 
 \begin{figure}
 \centering
-
 \includegraphics[width=0.4\textwidth]{drawings/filter}
 \caption{Modified filter}
 \label{fig:newfilter}
 \end{figure}
 
-We also had modifications for the blurring of pixels located near the boundary. For example, the pixel located on the left-most side does not have left neighbors for Gaussian blur. In the C code, the boundary check is performed by if-statement conditional checking. In our implementation, instead of boundary check, we add 8 more cols (filled with zeros) on either the left or right most side of the image to ensure every pixel has 8 neighbors on both sides. Figure~\ref{fig:addcols} illustrates how the new image are stored for NEON calculation. 
+We also had modifications for the blurring of pixels located near the boundary. For example, the pixel located on the left-most side does not have left neighbors for Gaussian blur. In the C code, the boundary check is performed by if-statement conditional checking. In our implementation, instead of boundary check, we add 8 more cols (filled with zeros) on either the left or right most side of the image to ensure every pixel has 8 neighbors on both sides. Figure~\ref{fig:addcols} illustrates how the new image is stored for NEON calculation. 
 
 \begin{figure}
 \centering
@@ -27,7 +26,7 @@ We also had modifications for the blurring of pixels located near the boundary. 
 \label{fig:addcols}
 \end{figure}
 
-As a result, Figure~\ref{fig:neon} represents how the total product value of Gaussian smooth is performed for each pixel. The calculation based on neighbor values are performed four times, during each time, four neighbor values are  Since four values are calculated concurrently, values from each lane and product value of the current  need to sum up at the end
+As a result, Figure~\ref{fig:neon} represents how the total product value of Gaussian smooth is performed for each pixel. The calculations based on neighbor values are performed four times, during each time, four neighbor values are calculated concurrently. To obtain the final product value, values from each lane and blurred value based on the current pixel are summed up at the end.
 
 \begin{figure}
 \centering
