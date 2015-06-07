@@ -1,7 +1,7 @@
 \subsection{NEON}
 \subsubsection{Function Analysis}
 
-The nature of Gaussian blur is to convolve the image with Gaussian function. In the original program, the Gaussian filter, which is called kernel in the application, has fifteen Gaussian values to blur a single pixel. This implementation illustrates that seven neighbor values on both sides of a pixel, and the value of the pixel itself are taken to do the calculation. In C code, the calculation is executed by using for-loop iteration for each value. While in the NEON implementation, we decided to take the advantage of parallel computing of NEON; calculating multiple values at the same time.
+The Gaussian blur is actually to convolve the image with Gaussian function. In the original program, the Gaussian filter, which is called kernel in the application, has fifteen Gaussian values to blur a single pixel. This implementation illustrates that seven neighbor values on both sides of a pixel, and the value of the pixel itself are taken to do the calculation. In C code, the calculation is executed by using for-loop iteration for each value. While in the NEON implementation, we decided to take the advantage of parallel computing of NEON; calculating multiple values at the same time.
 
 \subsubsection{Implementation}
 
