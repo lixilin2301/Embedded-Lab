@@ -1,9 +1,12 @@
-SOURCES = conclusion.tex discussion.tex dsp.tex implementation.tex main.tex neon.tex analysis.tex introduction.tex appendix.tex profiling.tex
+SOURCES = conclusion.tex discussion.tex dsp.tex implementation.tex main.tex neon.tex analysis.tex introduction.tex profiling.tex
 
-all:	main.pdf
+all:	main.pdf appendix.pdf
 
 main.pdf:	$(SOURCES)
 	pdflatex main.tex && bibtex main && pdflatex main.tex && pdflatex main.tex
+
+appendix.pdf:	appendix.tex
+	pdflatex appendix.tex
 
 clean:
 	rm -f *.aux main.log main.bbl main.toc
