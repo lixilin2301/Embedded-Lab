@@ -1,13 +1,13 @@
 \section{Analysis}
 \subsection{Speedup}
-The execution times measured are shown in table~\ref{tab:exectimes}. We measured both the times for the \emph{Guassian blurring} and the overall times seperately. For the guassian code, the speedup is for the \emph{slower} of the two: $\frac{baseline}{\max(dsp,neon)}$ The total speedup is simply computed as $\frac{baseline}{optimized}$. We observe a speedup factor of over 2, meaning we execute more than two times faster than the baseline implementation.
+The execution times measured are shown in table~\ref{tab:exectimes}. The \emph{Gaussian blurring} and the overall execution times were both measured separately. For the \emph{Gaussian\_smoothing} code, the speedup is for the \emph{slower} of the two: $\frac{baseline}{\max(dsp,neon)}$ The total speedup is simply computed as $\frac{baseline}{optimized}$. A speedup of a factor of over two is achieved, meaning that the new execution time is more than two times faster than the baseline implementation.
 
 \emph{TODO, maybe talk about amdall's law here to justify the speedup of 2 versus 4?}
 
 \begin{table*}
 \centering
 \begin{tabular}{l | r r r r | r r r}
-        & \multicolumn{4}{|c|}{Guassian}                & \multicolumn{3}{|c}{Total}                \\
+        & \multicolumn{4}{|c|}{Gaussian}                & \multicolumn{3}{|c}{Total}                \\
 Image   & Baseline  & DSP   & NEON          & Speedup   & Baseline  & Optimized         & Speedup   \\
 \hline
 Square  & 30605     & 5768  & 6745          & 4.537     & 42291     & 20325             & 2.081     \\
@@ -25,7 +25,7 @@ An interesting followup question is the amount of overhead we have introduced in
 \centering
 \begin{tabular}{l | r r r | r r r r r}
         & \multicolumn{3}{|c|}{Baseline}    & \multicolumn{5}{|c}{Optimized}                        \\
-Image   & Guassian  & Total     & Rest      & Guassian  & Total     & Rest  & Overhead  & Ratio     \\
+Image   & Gaussian  & Total     & Rest      & Gaussian  & Total     & Rest  & Overhead  & Ratio     \\
 \hline
 Square  & 30605     & 42291     & 11686     & 6745      & 20325     & 13580 & 1894      & 0.093     \\
 Tiger   & 77270     & 108520    & 31250     & 15625     & 49896     & 34271 & 3021      & 0.061     \\
@@ -35,13 +35,13 @@ Klomp   & 160455    & 228814    & 68359     & 29510     & 101349    & 71839 & 34
 \label{tab:overhead}
 \end{table*}
 
-\subsection{Image Error verification}
-Since we made several changes in the algorithm where we introduced some slight innaccuracies (for example using a fixed-point representation instead of floating point in the DSP), errors (deviations from the references implementation) are to be expected. Large errors are obvious to the eye, but this might be less obvious if the errors are only small. In this chapter we will detect and quantify these errors, to ensure that our implementation can still be considered correct.
+\subsection{Error Analysis}
+Some slight inaccuracies (for example using a fixed-point representation instead of floating point in the DSP) have been introduced due to several changes in the algorithm, errors (deviations from the references implementation) are to be expected. Large errors are obvious to the eye, but this might be less obvious if the errors are only small. In this chapter we will detect and quantify these errors, to ensure that our implementation can still be considered correct.
 
-\subsubsection{Error visualization}
+\subsubsection{Error Visualization}
 Visualizing our errors is a fairly straightforward process. Because both images are constructed out of pixels with a grayscale value from 0 (black) to 255 (white), we can construct a new image by taking the difference between each pixel as a new pixel value. Note that this would give us a mapping where black indicates no difference, and brighter pixels indicating the difference. The inverse has more visual pop-out, so we subtract the difference from 255 to obtain our final pixel value. The implementation is described in Algorithm \ref{alg:imgdiff}. The result of this algorithm and a further comparison between the baseline and our implementation can be seen in figure~\ref{fig:imgdiff}.
 
-An interesting observation is that we can clearly see that all the errors are in the lower area of the image, which is indeed the part that has been blurred by the DSP in a fixed point representation\footnote{This image has been produced with the load balancing of 35\% and 65\% for NEON and DSP respectively.}.
+An interesting observation is that all the errors are in the lower area of the image, which is indeed the part that has been blurred by the DSP in a fixed point representation\footnote{This image has been produced with the load balancing of 35\% and 65\% for NEON and DSP respectively}.
 
 \begin{algorithm}[t]
     \caption{Constructing a image with the differences between two images}\label{alg:imgdiff}
@@ -84,7 +84,7 @@ An interesting observation is that we can clearly see that all the errors are in
     \label{eq:mse}
 \end{equation}
 
-In the visualization we can clearly spot some differences, but a further quantification would be nice as well. For this, we decided to use the \emph{Mean Squared Error}, as defined in (\ref{eq:mse}). This is an error-estimator giving us a quantification of the error rate. Since this number on it's own has little meaning, we decided to calculate the MSE rate of the baseline implementation and our optimized versions, both with respect to the original image and calculate the ratio between the difference and the reference error rate, to give us an error estimation. The results are given in table~\ref{tab:mse}. We find the final error ratio to be acceptable.
+In the visualization we can clearly spot some differences, but further quantification would be useful. For this, we decided to use the \emph{Mean Squared Error(MSE)}, as defined in (\ref{eq:mse}). This is an error-estimator giving a quantification of the error rate. Since this number on its own has little meaning, it was decided to calculate the MSE rate of the baseline implementation and the optimized versions, both with respect to the original image and calculate the ratio between the difference and the reference error rate, to give an error estimation. The results are given in table~\ref{tab:mse}. We find the final error ratio to be acceptable.
 
 \begin{table}
     \centering
