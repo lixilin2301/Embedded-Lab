@@ -1,6 +1,6 @@
 \section{Conclusion}
 \label{sec:Conclusion}
-In conclusion in this report we describe the optimization process of a sequential image processing algorithm on a heterogeneous system with multiple processing units.
+ In this report we have described the optimization process of a sequential image processing algorithm on a heterogeneous system with multiple processing units.
 By profiling the reference application we were able to focus our attention on the most compute intensive function of the reference application.
 At first we simply implemented that function on each available processing core independently and performed some measurements. By applying minor changes to the code, the two cores were merged together to work in parallel.
 By timing each of the calculations independently, the workload among the two available processing units were properly balanced.
