@@ -12,3 +12,5 @@ Another issue that had to be solved is memory usage. As it was originally coded,
 To improve memory usage, only the fraction of the image that is used by the DSP for its calculations is allocated. The result of the smoothed image is also stored directly to the shared memory as it is being calculated, instead of using a temporary array. These improvements were sufficient enough to get rid of the memory allocation problem and successfully run the application with larger images.
 
 Writing directly into the shared memory did impose a speed penalty in later stages of the calculation, so to avoid this the GPP copies the results into another buffer after both the DSP and NEON have completed their blurring.
+
+Other optimizing techniques were experimented with such as manual loop unrolling but showed no improvements in performance. Furthermore different flags specifically for the DSP compiler were tested, where only -O3 showed improvements. For more information on compiler flags see \hyperref[sec:flag]{Section \ref{sec:flag}}.
