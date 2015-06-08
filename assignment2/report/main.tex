@@ -76,10 +76,12 @@ stringstyle=\color{red}\ttfamily,
 \begin{abstract}
 This report describes the optimization process of an existing sequential image processing algorithm, namely edge detection on a heterogeneous system with multiple processing units.
 
-Given the reference application, we rewrite the code such that it runs on an embedded platform (Beagle board), utilizing a digital signal processor (DSP) and parallel computation extensions (SIMD) (TI Processor, NEON) to achieve a speedup over a purely sequential reference implementation.
+Given the reference application, the code is modified such that it runs on an embedded platform, utilizing a digital signal processor  and parallel computation extensions to achieve a speedup over a purely sequential reference implementation.
+Specifically the application was implemented on a TI processor that includes an ARM core with NEON support and a DSP.
 
-% The application was implemented on a TI processor that includes an ARM core with NEON support and a DSP.
-Profiling the reference application shows that 80\% of the processing time is spent in the gaussian filtering function. Further investigation revealed that the work load of this function could be distributed over the available processing units. By carefully load balancing of this function for the different processing units, we are able to achieve an approximate speedup of a factor of two.
+Profiling the reference application shows that 80\% of the processing time is spent in the gaussian filtering function. Further investigation revealed that the work load of this function could be distributed over the available processing units.
+By carefully load balancing this function among the available processing units, a speedup of a factor of two and above was achieved.
+
 \end{abstract}
 
 \input{introduction}
