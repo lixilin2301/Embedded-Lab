@@ -9,7 +9,14 @@ The total speedup is simply computed as
 ${baseline}/{optimized}$.
 A speedup of a factor of over two is achieved, meaning that the new execution time is more than two times faster than the baseline implementation.
 
-\emph{TODO, maybe talk about amdall's law here to justify the speedup of 2 versus 4?}
+\begin{subequations}
+\begin{align}
+    S \leq & \dfrac{1}{f_{s} + \dfrac{f_{p}}{n}}                    \label{eq:amdahl_1} \\
+           & \dfrac{1}{0.2   + \dfrac{0.8}  {8}} = 3 \frac{1}{3}    \label{eq:amdahl_2}
+\end{align}
+\end{subequations}
+
+Amdahl's law (\ref{eq:amdahl_1}) defines an upper-bound for the speedup, in terms of the fraction of the work that is parallelized ($f_{p}$), the fraction that remains sequential ($f_{s}$) and the amount of processors available for this ($n$). Since both the DSP and NEON do four calculations at a time our total amount of processors is eight. An estimate of 80\% of the total amount of work is paralellized. Filling in these values (\ref{eq:amdahl_2}) gives us an upperbound of $3 \frac{1}{3}$. Since our actual speedup is a bit over two, the difference of roughly one has to be additional overhead that we introduced (e.g. setting up the shared memory pool, allocating memory buffers, synchronization).
 
 \begin{table*}
 \centering
@@ -24,21 +31,6 @@ Klomp   & 160455    & 29449 & 29510         & 5.437     & 228814    & 101349    
 \caption{The execution times measured in $\mu$s}
 \label{tab:exectimes}
 \end{table*}
-
-\begin{table*}
-\centering
-\begin{tabular}{l | r r r | r r r r r}
-        & \multicolumn{3}{|c|}{Baseline}    & \multicolumn{5}{|c}{Optimized}                        \\
-Image   & Gaussian  & Total     & Rest      & Gaussian  & Total     & Rest  & Overhead  & Ratio     \\
-\hline
-Square  & 30605     & 42291     & 11686     & 6745      & 20325     & 13580 & 1894      & 0.093     \\
-Tiger   & 77270     & 108520    & 31250     & 15625     & 49896     & 34271 & 3021      & 0.061     \\
-Klomp   & 160455    & 228814    & 68359     & 29510     & 101349    & 71839 & 3480      & 0.034     \\
-\end{tabular}
-\caption{Calculating the overhead as a fraction, all times in $\mu$s}
-\label{tab:overhead}
-\end{table*}
-
 
 \begin{figure*}
     \centering
@@ -60,10 +52,6 @@ Klomp   & 160455    & 228814    & 68359     & 29510     & 101349    & 71839 & 34
     \caption{Using the error visualization on an image of a tiger}
     \label{fig:imgdiff}
 \end{figure*}
-
-
-An interesting followup question is the amount of overhead we have introduced in the rest of the application. This overhead is in the form of for example allocating the shared memory pool and taking care of communication and synchronization. To calculate this, we subtracted for both the baseline and optimized versions the guassian execution times from the total execution times to obtain the rest execution times. We then subtract the baseline rest from the optimized rest to obtain the overhead time. This overhead time is divided by the total optimized execution time to calculate the overhead factor.
-
 
 \subsection{Error Analysis}
 Some slight inaccuracies (for example using a fixed-point representation instead of floating point in the DSP) have been introduced due to several changes in the algorithm; hence, errors (deviations from the reference implementation) are to be expected. 
