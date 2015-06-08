@@ -30,7 +30,7 @@ The most naive way of splitting the work between two processors and obtaining a 
 \end{figure}
 
 
-On the GPP side we define FRAC which is an integer value from zero to hundred that specifies the fraction of calculations that must be done on the NEON. After integrating both compute units and making them work in parallel, both instances of gaussian smoothing calculations were measured in time and a FRAC that resulted in an even balance between GPP and DSP was chosen. Note that the two calculations have to be completed before the program can resume.
+On the GPP side we define FRAC which is an integer value from zero to hundred that specifies the fraction of calculations that must be done on the NEON. After integrating both compute units and making them work in parallel, both instances of gaussian smoothing calculations were measured in time and a FRAC that resulted in an even balance between GPP and DSP was chosen. The optimal load balancing ratio was NEON:DSP = 35:65. Note that the two calculations have to be completed before the program can resume.
 Hence, by load balancing we make sure that the synchronization happens as soon as possible and very little time is wasted on waiting for the slower processor to finish. Figure~\ref{fig:dataflow} shows the resulting dataflow of the current implementation. The subsequent sections go into more details of this process.
 
 
