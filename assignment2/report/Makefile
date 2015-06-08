@@ -3,7 +3,7 @@ SOURCES = conclusion.tex discussion.tex dsp.tex implementation.tex main.tex neon
 all:	main.pdf appendix.pdf
 
 main.pdf:	$(SOURCES)
-	pdflatex main.tex && bibtex main && pdflatex main.tex && pdflatex main.tex
+	pdflatex main.tex && pdflatex main.tex
 
 appendix.pdf:	appendix.tex
 	pdflatex appendix.tex
