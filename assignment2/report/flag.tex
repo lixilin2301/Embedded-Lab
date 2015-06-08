@@ -1,6 +1,6 @@
 \subsection{Optimization flags}
 
-The following compiler flags are used to perform optimization during the compilation of source code:
+The following compiler flags are used to perform optimization during the compilation of the ARM source code:
 
 \begin{itemize}
 \item{\textit{O3:}} provides the highest level of optimization of code for the execution time and code size
@@ -10,5 +10,4 @@ The following compiler flags are used to perform optimization during the compila
 \item{\textit{mfpu=neon:}} specifies what floating-point hardware (or hardware emulation) is available on the target
 \end{itemize}
 
-Moreover, the following flags were used: \emph{ftree-vectorize}, \emph{ffast-math} and \emph{fomit-frame-pointer} Nevertheless, no additional benefit in terms of speedup was observed because they are implicitly enabled if the \emph{-O3} optimization flag is used.
-
+Moreover, the following flags were used: \emph{ftree-vectorize}, \emph{ffast-math} and \emph{fomit-frame-pointer} Nevertheless, no additional benefit in terms of speedup was observed because they are implicitly enabled if the \emph{-O3} optimization flag is used. For DSP compilation \emph{-O3} flag was used.
